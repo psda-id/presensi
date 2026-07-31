@@ -4,15 +4,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+    
     <title>E-PUSDA | Sistem Informasi Manajemen</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/logo.png">
+    <link rel="apple-touch-icon" href="assets/logo.png">
 
     <!-- PWA -->
     <meta name="theme-color" content="#0d1b3e">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="manifest" id="manifest">
+    <link rel="manifest" href="manifest.json">
 
     <!-- Font & Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
 
@@ -33,6 +40,14 @@
         <h1>E<span>-</span>PU<b>SDA</b></h1>
         <p>Integrated Management System</p>
     </section>
+
+    <!-- GLOBAL LOADER -->
+    <div id="globalLoader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- OVERLAY -->
+    <div id="overlay"></div>
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
@@ -58,13 +73,30 @@
         </div>
     </aside>
 
-    <!-- MAIN -->
-    <main>
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
         <!-- HERO -->
         <section class="hero-section">
             <div class="hero-text">
-                <h1 id="welcomeText">Selamat Datang</h1>
-                <p id="heroDescription">Portal Manajemen Digital UPT PUSDA WS Bondoyudo Baru</p>
+                <h1 id="welcomeText">
+                    Selamat Datang,
+                    <br>
+                    Rekan PUSDA
+                </h1>
+                <p id="heroDescription">
+                    Portal Manajemen Terpadu
+                    UPT PUSDA WS Bondoyudo Baru
+                </p>
+                <div class="hero-badges">
+                    <div class="badge success">
+                        <i data-lucide="shield-check"></i>
+                        Official
+                    </div>
+                    <div class="badge online">
+                        <i data-lucide="activity"></i>
+                        Connected
+                    </div>
+                </div>
             </div>
             <div class="hero-image">
                 <img id="heroPhoto" alt="Hero Image">
@@ -72,16 +104,16 @@
         </section>
 
         <!-- DASHBOARD -->
-        <section>
-            <h2 class="sectionTitle">Layanan Digital</h2>
-            <div id="dashboardMenu" class="menuGrid"></div>
+        <section class="dashboard-section">
+            <h2 class="section-title">Layanan Digital</h2>
+            <div id="dashboardMenu" class="tools-grid"></div>
         </section>
     </main>
 
     <!-- MODAL LAPKIN -->
     <section id="lapkinModal" class="modal">
-        <div class="modalBox">
-            <div class="modalHeader">
+        <div class="modal-content">
+            <div class="modal-header">
                 <h2>Portal LAPKIN</h2>
                 <button onclick="closeModal('lapkinModal')"><i data-lucide="x"></i></button>
             </div>
@@ -91,36 +123,74 @@
 
     <!-- MODAL AGENDA -->
     <section id="agendaModal" class="modal">
-        <div class="modalBox">
-            <h2>Agenda Harian</h2>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Agenda Harian</h2>
+                <button onclick="closeModal('agendaModal')"><i data-lucide="x"></i></button>
+            </div>
             <form id="agendaForm">
-                <select id="pegawai"></select>
-                <input type="date" id="tanggal">
-                <input type="time" id="jamMasuk">
-                <input type="time" id="jamPulang">
-                <input type="text" id="judul" placeholder="Judul Agenda">
-                <textarea id="keterangan" rows="5" placeholder="Keterangan"></textarea>
-                <input type="file" id="foto">
-                <button type="button" id="btnKirim">Kirim Agenda</button>
+                <div class="form-group">
+                    <label>Nama Pegawai</label>
+                    <select id="pegawai"></select>
+                </div>
+                <div class="form-group">
+                    <label>Tanggal</label>
+                    <input type="date" id="tanggal">
+                </div>
+                <div class="form-group">
+                    <label>Jam Masuk</label>
+                    <input type="time" id="jamMasuk">
+                </div>
+                <div class="form-group">
+                    <label>Jam Pulang</label>
+                    <input type="time" id="jamPulang">
+                </div>
+                <div class="form-group">
+                    <label>Judul Agenda</label>
+                    <input type="text" id="judul" placeholder="Judul Agenda">
+                </div>
+                <div class="form-group">
+                    <label>Keterangan</label>
+                    <textarea id="keterangan" rows="5" placeholder="Keterangan"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Foto</label>
+                    <input type="file" id="foto">
+                </div>
+                <button type="button" class="btn btn-primary" id="btnKirim">Kirim Agenda</button>
             </form>
         </div>
     </section>
 
     <!-- BOTTOM NAV MOBILE -->
-    <nav class="bottomNav">
-        <a href="#" class="active"><i data-lucide="layout-grid"></i> Home</a>
-        <a href="raport.html"><i data-lucide="file-bar-chart"></i> Raport</a>
-        <a href="presensi.html"><i data-lucide="fingerprint"></i> Presensi</a>
-        <a href="wilayah.html"><i data-lucide="map"></i> Wilayah</a>
-        <a href="admin.html"><i data-lucide="shield-check"></i> Admin</a>
+    <nav class="bottom-nav">
+        <a href="#" class="bottom-item active"><i data-lucide="layout-grid"></i> Home</a>
+        <a href="raport.html" class="bottom-item"><i data-lucide="file-bar-chart"></i> Raport</a>
+        <a href="presensi.html" class="bottom-item"><i data-lucide="fingerprint"></i> Presensi</a>
+        <a href="wilayah.html" class="bottom-item"><i data-lucide="map"></i> Wilayah</a>
+        <a href="admin.html" class="bottom-item"><i data-lucide="shield-check"></i> Admin</a>
     </nav>
 
-    <!-- APP SCRIPT -->
-    <script src="js/api.js"></script>
+    <!-- TOAST CONTAINER -->
+    <div id="toastContainer"></div>
+
+    <!-- APP SCRIPTS -->
     <script src="js/utils.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/ui.js"></script>
     <script src="js/dashboard.js"></script>
+    <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
+    
+    <!-- INITIALIZATION -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            if (typeof App !== 'undefined' && App.init) {
+                App.init();
+            }
+        });
+    </script>
 
 </body>
 
