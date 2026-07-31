@@ -21,6 +21,8 @@
 
     <!-- EXTERNAL LIBS -->
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
     
     <!-- CUSTOM CSS -->
@@ -28,9 +30,10 @@
 </head>
 <body>
 
+    <!-- BACKGROUND -->
     <div class="fixed-bg"></div>
 
-        <!-- LOADING OVERLAY -->
+    <!-- LOADING OVERLAY (SPLASH SCREEN) -->
     <div id="loadingOverlay">
         <img id="splashBgLogo" class="splash-bg-logo" alt="">
         <div class="splash-brand-wrap">
@@ -45,11 +48,14 @@
         <div class="splash-year txt-orange">MMXXVI</div>
     </div>
 
+    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="brand">
             <img src="" id="sidebarLogo" alt="Logo">
             <div>
-                <h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+                <h1 style="font-weight: 800; font-size: 1.1rem;">
+                    <span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span>
+                </h1>
                 <p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p>
             </div>
         </div>
@@ -66,8 +72,10 @@
         </div>
     </aside>
 
+    <!-- MAIN CONTENT -->
     <main class="main-content">
         <div class="dashboard-container">
+            <!-- HERO SECTION -->
             <div class="hero-section-wrapper">
                 <div class="hero-card-frame">
                     <div class="hero-text">
@@ -84,6 +92,7 @@
                 </div>
             </div>
 
+            <!-- TOOLS AREA -->
             <div class="tools-area">
                 <div class="section-title">Layanan Digital</div>
                 <div class="tools-grid" id="mainTools"></div>
@@ -91,6 +100,7 @@
         </div>
     </main>
 
+    <!-- BOTTOM NAVIGATION (MOBILE) -->
     <nav class="bottom-nav">
         <a href="#" class="b-nav-item active"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
         <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
@@ -119,12 +129,27 @@
                 <i data-lucide="x" size="24" style="cursor:pointer;" onclick="closeModal('agendaModal')"></i>
             </div>
             <div class="form-grid">
-                <div class="form-group"><label class="form-label">Nama Personel</label><select id="agnNama" onchange="updateAgendaFields()"></select></div>
-                <div class="form-group"><label class="form-label">Jabatan</label><input type="text" id="agnJabatan" readonly style="opacity:0.6;"></div>
-                <div class="form-group"><label class="form-label">Tanggal Pelaksanaan</label><input type="date" id="agnTanggal"></div>
+                <div class="form-group">
+                    <label class="form-label">Nama Personel</label>
+                    <select id="agnNama" onchange="updateAgendaFields()"></select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Jabatan</label>
+                    <input type="text" id="agnJabatan" readonly style="opacity:0.6;">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tanggal Pelaksanaan</label>
+                    <input type="date" id="agnTanggal">
+                </div>
                 <div class="form-row-2">
-                    <div class="form-group"><label class="form-label">Jam Datang</label><input type="time" id="agnDatang"></div>
-                    <div class="form-group"><label class="form-label">Jam Pulang</label><input type="time" id="agnPulang"></div>
+                    <div class="form-group">
+                        <label class="form-label">Jam Datang</label>
+                        <input type="time" id="agnDatang">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Jam Pulang</label>
+                        <input type="time" id="agnPulang">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Judul Agenda</label>
@@ -140,7 +165,10 @@
                         <button class="btn-mic-inside" style="top:20px;" onclick="startMic('agnKet', this)"><i data-lucide="mic" size="18"></i></button>
                     </div>
                 </div>
-                <div class="form-group"><label class="form-label">Foto Dokumentasi</label><input type="file" id="agnFoto" accept="image/*"></div>
+                <div class="form-group">
+                    <label class="form-label">Foto Dokumentasi</label>
+                    <input type="file" id="agnFoto" accept="image/*">
+                </div>
                 <button class="btn-submit-action" id="btnSendAgenda" onclick="submitAgendaAction()">
                     <i data-lucide="send" size="18"></i> KIRIM LAPORAN SEKARANG
                 </button>
