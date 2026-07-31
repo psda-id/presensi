@@ -1,198 +1,151 @@
 <!DOCTYPE html>
 <html lang="id">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-    
-    <title>E-PUSDA | Sistem Informasi Manajemen</title>
-    
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="assets/logo.png">
-    <link rel="apple-touch-icon" href="assets/logo.png">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Sistem Informasi Manajemen - UPT PUSDA</title>
 
-    <!-- PWA -->
-    <meta name="theme-color" content="#0d1b3e">
+    <!-- PWA META TAGS -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    
+    <!-- APP ICONS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <!-- MANIFEST -->
+    <link rel="manifest" id="pwaManifest">
 
-    <!-- Font & Icons -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <!-- EXTERNAL LIBS -->
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
-
-    <!-- CSS -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+    
+    <!-- CUSTOM CSS -->
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/responsive.css">
 </head>
-
 <body>
 
-    <!-- BACKGROUND -->
-    <div class="background"></div>
+    <div class="fixed-bg"></div>
 
-    <!-- SPLASH SCREEN -->
-    <section id="loadingScreen">
-        <img id="logoSplash" alt="Logo Splash">
-        <h1>E<span>-</span>PU<b>SDA</b></h1>
-        <p>Integrated Management System</p>
-    </section>
-
-    <!-- GLOBAL LOADER -->
-    <div id="globalLoader">
-        <div class="spinner"></div>
-    </div>
-
-    <!-- OVERLAY -->
-    <div id="overlay"></div>
-
-    <!-- SIDEBAR -->
-    <aside class="sidebar">
-        <div class="brand">
-            <img id="logoSidebar" alt="Logo Sidebar">
-            <div>
-                <h2>E-PUSDA</h2>
-                <small>WS Bondoyudo Baru</small>
+    <div id="loadingOverlay">
+        <img id="splashBgLogo" class="splash-bg-logo" alt="">
+        <div class="splash-brand-wrap">
+            <div class="splash-v-bar"></div>
+            <div class="splash-main-text">
+                <h1 class="splash-title">E<span>-</span>PU<b>SDA</b></h1>
+                <p class="splash-subtext">Integrated Management System</p>
             </div>
         </div>
+        <div class="splash-year">MMXXVI</div>
+    </div>
 
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="" id="sidebarLogo" alt="Logo">
+            <div>
+                <h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+                <p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p>
+            </div>
+        </div>
         <nav>
-            <!-- Tambahkan class "nav-link" di setiap tag <a> -->
-            <a href="#" class="nav-link active"><i data-lucide="layout-grid"></i> Dashboard</a>
-            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint"></i> Presensi</a>
-            <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart"></i> Raport</a>
-            <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
-            <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin</a>
+            <a href="#" class="nav-link active" onclick="location.reload()"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+            <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+            <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
         </nav>
-
-        <!-- Ubah class "clock" menjadi "sidebar-clock" -->
         <div class="sidebar-clock">
-            <p>Waktu Server</p>
+            <p>WAKTU SERVER</p>
             <h2 id="liveClock">00:00</h2>
         </div>
     </aside>
 
-    <!-- MAIN CONTENT -->
     <main class="main-content">
-        <!-- HERO -->
-        <section class="hero-section">
-            <div class="hero-text">
-                <h1 id="welcomeText">
-                    Selamat Datang,
-                    <br>
-                    Rekan PUSDA
-                </h1>
-                <p id="heroDescription">
-                    Portal Manajemen Terpadu
-                    UPT PUSDA WS Bondoyudo Baru
-                </p>
-                <div class="hero-badges">
-                    <div class="badge success">
-                        <i data-lucide="shield-check"></i>
-                        Official
+        <div class="dashboard-container">
+            <div class="hero-section-wrapper">
+                <div class="hero-card-frame">
+                    <div class="hero-text">
+                        <h2 id="greetName">Selamat Datang,<br>Rekan <span style="color:var(--pu-blue)">PU</span><span style="color:var(--sda-toska)">SDA</span>.</h2>
+                        <p>Portal Manajemen Terpadu WS Bondoyudo Baru. Kelola aktivitas harian dan monitoring kinerja secara digital.</p>
+                        <div class="hero-badges-container">
+                            <div class="h-badge"><i data-lucide="shield-check" size="14"></i> OFFICIAL SYSTEM</div>
+                            <div class="h-badge success"><i data-lucide="activity" size="14"></i> CONNECTED</div>
+                        </div>
                     </div>
-                    <div class="badge online">
-                        <i data-lucide="activity"></i>
-                        Connected
+                    <div class="hero-img-popout">
+                        <img id="heroImage" src="" alt="Koordinator">
                     </div>
                 </div>
             </div>
-            <div class="hero-image">
-                <img id="heroPhoto" alt="Hero Image">
-            </div>
-        </section>
 
-        <!-- DASHBOARD -->
-        <section class="dashboard-section">
-            <h2 class="section-title">Layanan Digital</h2>
-            <div id="dashboardMenu" class="tools-grid"></div>
-        </section>
+            <div class="tools-area">
+                <div class="section-title">Layanan Digital</div>
+                <div class="tools-grid" id="mainTools"></div>
+            </div>
+        </div>
     </main>
 
-    <!-- MODAL LAPKIN -->
-    <section id="lapkinModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Portal LAPKIN</h2>
-                <button onclick="closeModal('lapkinModal')"><i data-lucide="x"></i></button>
-            </div>
-            <div id="lapkinGrid"></div>
-        </div>
-    </section>
-
-    <!-- MODAL AGENDA -->
-    <section id="agendaModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Agenda Harian</h2>
-                <button onclick="closeModal('agendaModal')"><i data-lucide="x"></i></button>
-            </div>
-            <form id="agendaForm">
-                <div class="form-group">
-                    <label>Nama Pegawai</label>
-                    <select id="pegawai"></select>
-                </div>
-                <div class="form-group">
-                    <label>Tanggal</label>
-                    <input type="date" id="tanggal">
-                </div>
-                <div class="form-group">
-                    <label>Jam Masuk</label>
-                    <input type="time" id="jamMasuk">
-                </div>
-                <div class="form-group">
-                    <label>Jam Pulang</label>
-                    <input type="time" id="jamPulang">
-                </div>
-                <div class="form-group">
-                    <label>Judul Agenda</label>
-                    <input type="text" id="judul" placeholder="Judul Agenda">
-                </div>
-                <div class="form-group">
-                    <label>Keterangan</label>
-                    <textarea id="keterangan" rows="5" placeholder="Keterangan"></textarea>
-                </div>
-                <div class="form-group">
-                    <label>Foto</label>
-                    <input type="file" id="foto">
-                </div>
-                <button type="button" class="btn btn-primary" id="btnKirim">Kirim Agenda</button>
-            </form>
-        </div>
-    </section>
-
-    <!-- BOTTOM NAV MOBILE -->
     <nav class="bottom-nav">
-        <a href="#" class="bottom-item active"><i data-lucide="layout-grid"></i> Home</a>
-        <a href="raport.html" class="bottom-item"><i data-lucide="file-bar-chart"></i> Raport</a>
-        <a href="presensi.html" class="bottom-item"><i data-lucide="fingerprint"></i> Presensi</a>
-        <a href="wilayah.html" class="bottom-item"><i data-lucide="map"></i> Wilayah</a>
-        <a href="admin.html" class="bottom-item"><i data-lucide="shield-check"></i> Admin</a>
+        <a href="#" class="b-nav-item active"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="raport.html" class="b-nav-item"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
+        <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
     </nav>
 
-    <!-- TOAST CONTAINER -->
-    <div id="toastContainer"></div>
+    <!-- MODAL LAPKIN -->
+    <div id="lapkinModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Portal LAPKIN</h3>
+                <i data-lucide="x" size="24" style="cursor:pointer;" onclick="closeModal('lapkinModal')"></i>
+            </div>
+            <div class="lapkin-grid" id="lapkinContainer"></div>
+            <button class="btn-close-modal" onclick="closeModal('lapkinModal')">TUTUP PORTAL</button>
+        </div>
+    </div>
 
-    <!-- APP SCRIPTS -->
-    <script src="js/utils.js"></script>
-    <script src="js/api.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/auth.js"></script>
+    <!-- MODAL AGENDA -->
+    <div id="agendaModal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">E-Agenda Harian</h3>
+                <i data-lucide="x" size="24" style="cursor:pointer;" onclick="closeModal('agendaModal')"></i>
+            </div>
+            <div class="form-grid">
+                <div class="form-group"><label class="form-label">Nama Personel</label><select id="agnNama" onchange="updateAgendaFields()"></select></div>
+                <div class="form-group"><label class="form-label">Jabatan</label><input type="text" id="agnJabatan" readonly style="opacity:0.6;"></div>
+                <div class="form-group"><label class="form-label">Tanggal Pelaksanaan</label><input type="date" id="agnTanggal"></div>
+                <div class="form-row-2">
+                    <div class="form-group"><label class="form-label">Jam Datang</label><input type="time" id="agnDatang"></div>
+                    <div class="form-group"><label class="form-label">Jam Pulang</label><input type="time" id="agnPulang"></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Judul Agenda</label>
+                    <div class="input-with-mic">
+                        <input type="text" id="agnJudul" placeholder="...">
+                        <button class="btn-mic-inside" onclick="startMic('agnJudul', this)"><i data-lucide="mic" size="18"></i></button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Rincian Kegiatan</label>
+                    <div class="input-with-mic">
+                        <textarea id="agnKet" rows="3" placeholder="..."></textarea>
+                        <button class="btn-mic-inside" style="top:20px;" onclick="startMic('agnKet', this)"><i data-lucide="mic" size="18"></i></button>
+                    </div>
+                </div>
+                <div class="form-group"><label class="form-label">Foto Dokumentasi</label><input type="file" id="agnFoto" accept="image/*"></div>
+                <button class="btn-submit-action" id="btnSendAgenda" onclick="submitAgendaAction()">
+                    <i data-lucide="send" size="18"></i> KIRIM LAPORAN SEKARANG
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOM JS -->
     <script src="js/app.js"></script>
-    
-    <!-- INITIALIZATION -->
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            lucide.createIcons();
-            if (typeof App !== 'undefined' && App.init) {
-                App.init();
-            }
-        });
-    </script>
-
 </body>
-
 </html>
