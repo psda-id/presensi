@@ -70,3 +70,108 @@
 @media (min-width:769px) {
     .mobile-header, .menu-toggle { display:none; }
 }
+
+/* =========================================================
+   SPLASH SCREEN & GLOBAL LOADER
+========================================================= */
+#loadingScreen, #globalLoader {
+    position: fixed;
+    inset: 0;
+    background: #0d1b3e;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 99999;
+    transition: opacity 1s ease;
+}
+
+#loadingScreen img {
+    width: 120px;
+    margin-bottom: 20px;
+}
+
+#loadingScreen h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #fff;
+}
+
+#loadingScreen h1 span { color: #3b82f6; }
+#loadingScreen h1 b { color: #2dd4bf; }
+
+#loadingScreen p {
+    margin-top: 10px;
+    font-size: 0.8rem;
+    letter-spacing: 3px;
+    color: #94a3b8;
+}
+
+/* =========================================================
+   BOTTOM NAVIGATION (MOBILE)
+========================================================= */
+.bottom-nav {
+    display: none; /* Default hidden, shown on mobile */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: rgba(15, 32, 77, 0.95);
+    backdrop-filter: blur(15px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 10px 0;
+    z-index: 1000;
+    justify-content: space-around;
+    align-items: center;
+}
+
+.bottom-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    color: #94a3b8;
+    text-decoration: none;
+    padding: 5px 10px;
+    border-radius: 10px;
+    transition: 0.3s;
+}
+
+.bottom-item i {
+    width: 20px;
+    height: 20px;
+}
+
+.bottom-item.active {
+    color: #3b82f6;
+    background: rgba(59, 130, 246, 0.1);
+}
+
+/* =========================================================
+   RESPONSIVE MOBILE LAYOUT FIX
+========================================================= */
+@media (max-width: 768px) {
+    /* Sembunyikan sidebar default di mobile, buat slide */
+    .sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.35s ease;
+        z-index: 1001;
+    }
+    
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    /* Main content full width di mobile */
+    .main-content {
+        margin-left: 0 !important;
+        padding: 20px !important;
+        padding-bottom: 80px !important; /* Ruang untuk bottom nav */
+    }
+
+    /* Tampilkan bottom nav di mobile */
+    .bottom-nav {
+        display: flex;
+    }
+}
