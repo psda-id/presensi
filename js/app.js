@@ -31,7 +31,9 @@ async function initApp() {
 
 async function loadApplication() {
     showLoading();
-    appData = await fetchDashboardData();
+    
+    // Ubah dari fetchDashboardData() menjadi API.getDashboard()
+    appData = await API.getDashboard(); 
 
     if (!appData) throw new Error("Dashboard data kosong.");
 
