@@ -60,15 +60,17 @@
         </div>
 
         <nav>
-            <a href="#" class="active"><i data-lucide="layout-grid"></i> Dashboard</a>
-            <a href="presensi.html"><i data-lucide="fingerprint"></i> Presensi</a>
-            <a href="raport.html"><i data-lucide="file-bar-chart"></i> Raport</a>
-            <a href="wilayah.html"><i data-lucide="map"></i> Wilayah</a>
-            <a href="admin.html"><i data-lucide="shield-check"></i> Admin</a>
+            <!-- Tambahkan class "nav-link" di setiap tag <a> -->
+            <a href="#" class="nav-link active"><i data-lucide="layout-grid"></i> Dashboard</a>
+            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint"></i> Presensi</a>
+            <a href="raport.html" class="nav-link"><i data-lucide="file-bar-chart"></i> Raport</a>
+            <a href="wilayah.html" class="nav-link"><i data-lucide="map"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check"></i> Admin</a>
         </nav>
 
-        <div class="clock">
-            <span>Waktu Server</span>
+        <!-- Ubah class "clock" menjadi "sidebar-clock" -->
+        <div class="sidebar-clock">
+            <p>Waktu Server</p>
             <h2 id="liveClock">00:00</h2>
         </div>
     </aside>
