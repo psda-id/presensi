@@ -3,25 +3,17 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
     <title>E-PUSDA | Sistem Informasi Manajemen</title>
 
     <!-- PWA -->
     <meta name="theme-color" content="#0d1b3e">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
-
-    <!-- Manifest -->
     <link rel="manifest" id="manifest">
 
-    <!-- Font -->
-    <link
-        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap"
-        rel="stylesheet">
-
-    <!-- Lucide -->
+    <!-- Font & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
 
     <!-- CSS -->
@@ -30,278 +22,98 @@
 
 <body>
 
-    <!-- ================================================= -->
     <!-- BACKGROUND -->
-    <!-- ================================================= -->
-
     <div class="background"></div>
 
-    <!-- ================================================= -->
     <!-- SPLASH SCREEN -->
-    <!-- ================================================= -->
-
     <section id="loadingScreen">
-
-        <img id="logoSplash">
-
-        <h1>
-            E<span>-</span>PU<b>SDA</b>
-        </h1>
-
-        <p>
-            Integrated Management System
-        </p>
-
+        <img id="logoSplash" alt="Logo Splash">
+        <h1>E<span>-</span>PU<b>SDA</b></h1>
+        <p>Integrated Management System</p>
     </section>
 
-    <!-- ================================================= -->
     <!-- SIDEBAR -->
-    <!-- ================================================= -->
-
     <aside class="sidebar">
-
         <div class="brand">
-
-            <img id="logoSidebar">
-
+            <img id="logoSidebar" alt="Logo Sidebar">
             <div>
-
                 <h2>E-PUSDA</h2>
-
-                <small>
-                    WS Bondoyudo Baru
-                </small>
-
+                <small>WS Bondoyudo Baru</small>
             </div>
-
         </div>
 
         <nav>
-
-            <a href="#" class="active">
-                <i data-lucide="layout-grid"></i>
-                Dashboard
-            </a>
-
-            <a href="presensi.html">
-                <i data-lucide="fingerprint"></i>
-                Presensi
-            </a>
-
-            <a href="raport.html">
-                <i data-lucide="file-bar-chart"></i>
-                Raport
-            </a>
-
-            <a href="wilayah.html">
-                <i data-lucide="map"></i>
-                Wilayah
-            </a>
-
-            <a href="admin.html">
-                <i data-lucide="shield-check"></i>
-                Admin
-            </a>
-
+            <a href="#" class="active"><i data-lucide="layout-grid"></i> Dashboard</a>
+            <a href="presensi.html"><i data-lucide="fingerprint"></i> Presensi</a>
+            <a href="raport.html"><i data-lucide="file-bar-chart"></i> Raport</a>
+            <a href="wilayah.html"><i data-lucide="map"></i> Wilayah</a>
+            <a href="admin.html"><i data-lucide="shield-check"></i> Admin</a>
         </nav>
 
         <div class="clock">
-
             <span>Waktu Server</span>
-
-            <h2 id="liveClock">
-                00:00
-            </h2>
-
+            <h2 id="liveClock">00:00</h2>
         </div>
-
     </aside>
 
-    <!-- ================================================= -->
     <!-- MAIN -->
-    <!-- ================================================= -->
-
     <main>
-
         <!-- HERO -->
-
         <section class="hero">
-
             <div class="heroText">
-
-                <h1 id="welcomeText">
-                    Selamat Datang
-                </h1>
-
-                <p id="heroDescription">
-
-                    Portal Manajemen Digital
-                    UPT PUSDA WS Bondoyudo Baru
-
-                </p>
-
+                <h1 id="welcomeText">Selamat Datang</h1>
+                <p id="heroDescription">Portal Manajemen Digital UPT PUSDA WS Bondoyudo Baru</p>
             </div>
-
             <div class="heroImage">
-
-                <img id="heroPhoto">
-
+                <img id="heroPhoto" alt="Hero Image">
             </div>
-
         </section>
 
         <!-- DASHBOARD -->
-
         <section>
-
-            <h2 class="sectionTitle">
-
-                Layanan Digital
-
-            </h2>
-
-            <div id="dashboardMenu" class="menuGrid">
-
-            </div>
-
+            <h2 class="sectionTitle">Layanan Digital</h2>
+            <div id="dashboardMenu" class="menuGrid"></div>
         </section>
-
     </main>
 
-    <!-- ================================================= -->
     <!-- MODAL LAPKIN -->
-    <!-- ================================================= -->
-
     <section id="lapkinModal" class="modal">
-
         <div class="modalBox">
-
             <div class="modalHeader">
-
-                <h2>
-
-                    Portal LAPKIN
-
-                </h2>
-
-                <button onclick="closeModal('lapkinModal')">
-
-                    <i data-lucide="x"></i>
-
-                </button>
-
+                <h2>Portal LAPKIN</h2>
+                <button onclick="closeModal('lapkinModal')"><i data-lucide="x"></i></button>
             </div>
-
-            <div id="lapkinGrid">
-
-            </div>
-
+            <div id="lapkinGrid"></div>
         </div>
-
     </section>
 
-    <!-- ================================================= -->
     <!-- MODAL AGENDA -->
-    <!-- ================================================= -->
-
     <section id="agendaModal" class="modal">
-
         <div class="modalBox">
-
-            <h2>
-
-                Agenda Harian
-
-            </h2>
-
+            <h2>Agenda Harian</h2>
             <form id="agendaForm">
-
                 <select id="pegawai"></select>
-
                 <input type="date" id="tanggal">
-
                 <input type="time" id="jamMasuk">
-
                 <input type="time" id="jamPulang">
-
-                <input type="text"
-                    id="judul"
-                    placeholder="Judul Agenda">
-
-                <textarea
-                    id="keterangan"
-                    rows="5"
-                    placeholder="Keterangan">
-                </textarea>
-
-                <input
-                    type="file"
-                    id="foto">
-
-                <button
-                    type="button"
-                    id="btnKirim">
-
-                    Kirim Agenda
-
-                </button>
-
+                <input type="text" id="judul" placeholder="Judul Agenda">
+                <textarea id="keterangan" rows="5" placeholder="Keterangan"></textarea>
+                <input type="file" id="foto">
+                <button type="button" id="btnKirim">Kirim Agenda</button>
             </form>
-
         </div>
-
     </section>
 
-    <!-- ================================================= -->
     <!-- BOTTOM NAV MOBILE -->
-    <!-- ================================================= -->
-
     <nav class="bottomNav">
-
-        <a href="#" class="active">
-
-            <i data-lucide="layout-grid"></i>
-
-            Home
-
-        </a>
-
-        <a href="raport.html">
-
-            <i data-lucide="file-bar-chart"></i>
-
-            Raport
-
-        </a>
-
-        <a href="presensi.html">
-
-            <i data-lucide="fingerprint"></i>
-
-            Presensi
-
-        </a>
-
-        <a href="wilayah.html">
-
-            <i data-lucide="map"></i>
-
-            Wilayah
-
-        </a>
-
-        <a href="admin.html">
-
-            <i data-lucide="shield-check"></i>
-
-            Admin
-
-        </a>
-
+        <a href="#" class="active"><i data-lucide="layout-grid"></i> Home</a>
+        <a href="raport.html"><i data-lucide="file-bar-chart"></i> Raport</a>
+        <a href="presensi.html"><i data-lucide="fingerprint"></i> Presensi</a>
+        <a href="wilayah.html"><i data-lucide="map"></i> Wilayah</a>
+        <a href="admin.html"><i data-lucide="shield-check"></i> Admin</a>
     </nav>
 
-    <!-- APP -->
-
+    <!-- APP SCRIPT -->
     <script src="app.js"></script>
 
 </body>
