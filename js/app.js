@@ -15,7 +15,7 @@ const App = (() => {
     =========================================================== */
     async function init() {
         try {
-            UI.showLoading();
+            showLoading();
             initClock();
             bindModalEvents();
             
@@ -30,12 +30,38 @@ const App = (() => {
             renderAgenda();
             startHeroSlide();
             
-            UI.hideLoading();
+            hideLoading();
         } catch (err) {
             console.error("Init Error:", err);
-            UI.hideLoading();
+            hideLoading();
             alert("Gagal memuat aplikasi.");
         }
+    }
+
+    /* ===========================================================
+       LOADING & SPLASH SCREEN
+    =========================================================== */
+    function showLoading() {
+        const splash = document.getElementById("loadingScreen");
+        const loader = document.getElementById("globalLoader");
+        if (splash) { splash.style.display = "flex"; splash.style.opacity = "1"; }
+        if (loader) { loader.style.display = "flex"; loader.style.opacity = "1"; }
+    }
+
+    function hideLoading() {
+        const splash = document.getElementById("loadingScreen");
+        const loader = document.getElementById("globalLoader");
+        
+        setTimeout(() => {
+            if (splash) {
+                splash.style.opacity = "0";
+                setTimeout(() => { splash.style.display = "none"; }, 1000);
+            }
+            if (loader) {
+                loader.style.opacity = "0";
+                setTimeout(() => { loader.style.display = "none"; }, 500);
+            }
+        }, 1200);
     }
 
     /* ===========================================================
@@ -43,8 +69,8 @@ const App = (() => {
     =========================================================== */
     function renderLogo() {
         const logo = appData.config?.Logo || GITHUB_LOGO_URL;
-        const sidebar = document.getElementById("sidebarLogo");
-        const splash = document.getElementById("splashBgLogo");
+        const sidebar = document.getElementById("logoSidebar");
+        const splash = document.getElementById("logoSplash");
 
         if (sidebar) sidebar.src = logo;
         if (splash) splash.src = logo;
@@ -110,7 +136,7 @@ const App = (() => {
 
             card.onclick = () => {
                 if (tool.url) location.href = tool.url;
-                else if (tool.modal) UI.openModal(tool.modal);
+                else if (tool.modal) openModal(tool.modal);
                 else if (tool.external) window.open(tool.external, "_blank");
             };
 
@@ -192,9 +218,22 @@ const App = (() => {
         });
     }
 
+    function openModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.style.display = "flex";
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) modal.style.display = "none";
+    }
+
     /* ===========================================================
-       PUBLIC EXPORTS
+       PUBLIC EXPORTS & GLOBAL EXPOSE (Fix closeModal error)
     =========================================================== */
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+
     return { init };
 
 })();
