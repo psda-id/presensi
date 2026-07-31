@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>E-Raport Kinerja - UPT PUSDA</title>
+
+    <!-- PWA META TAGS -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="E-PUSDA">
+    <meta name="theme-color" content="#0d1b3e">
+    
+    <!-- APP ICONS -->
+    <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
+    
+    <!-- MANIFEST -->
+    <link rel="manifest" id="pwaManifest">
+
+    <!-- EXTERNAL LIBS -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&family=JetBrains+Mono:wght@500;700&display=swap&text=ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-:()., " rel="stylesheet">
+    <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js"></script>
+    
+    <!-- CUSTOM CSS -->
+    <link rel="stylesheet" href="css/raport.css">
+</head>
+<body>
+
+    <div class="fixed-bg"></div>
+    
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loader-ring"></div>
+        <p style="font-weight: 700; letter-spacing: 1px; font-size: 0.9rem;">Memuat Data Kinerja...</p>
+    </div>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="brand">
+            <img src="" id="sidebarLogo" alt="Logo">
+            <div>
+                <h1 style="font-weight: 800; font-size: 1.1rem;"><span style="color:var(--pu-blue)">PU</span> <span style="color:var(--sda-toska)">SDA</span></h1>
+                <p style="font-size: 0.55rem; opacity: 0.6; font-weight: 800;">WS BONDOYUDO BARU</p>
+            </div>
+        </div>
+        <nav>
+            <a href="index.html" class="nav-link"><i data-lucide="layout-grid" size="18"></i> Dashboard</a>
+            <a href="#" class="nav-link active"><i data-lucide="file-bar-chart" size="18"></i> E-Raport</a>
+            <a href="presensi.html" class="nav-link"><i data-lucide="fingerprint" size="18"></i> E-Presensi</a>
+            <a href="wilayah.html" class="nav-link"><i data-lucide="map" size="18"></i> Wilayah</a>
+            <a href="admin.html" class="nav-link"><i data-lucide="shield-check" size="18"></i> Admin Panel</a>
+        </nav>
+        <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="main-content">
+        <div class="dashboard-container">
+            <div class="page-header">
+                <div>
+                    <h1>E-Raport Kinerja</h1>
+                    <p style="opacity:0.6; font-size:1rem; margin-top:10px;">Monitor performa objektif personel WS Bondoyudo Baru.</p>
+                </div>
+                <button class="btn-pro btn-print" onclick="window.print()"><i data-lucide="printer" size="18"></i> CETAK PDF</button>
+            </div>
+
+            <div class="filter-card">
+                <div class="filter-group">
+                    <label class="filter-label">Mulai Tanggal</label>
+                    <input type="date" id="startD">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Sampai Tanggal</label>
+                    <input type="date" id="endD">
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Wilayah WS</label>
+                    <select id="wilF"><option value="ALL">Semua Wilayah</option></select>
+                </div>
+                <button class="btn-pro btn-update" onclick="triggerReportFetch()" style="height: 52px; margin-top: auto;"><i data-lucide="refresh-cw" size="18"></i> UPDATE</button>
+            </div>
+
+            <div class="raport-grid" id="raportGrid"></div>
+        </div>
+    </main>
+
+    <!-- PRINT AREA -->
+    <div id="printArea">
+        <header class="kop-header">
+            <img src="" id="printKopLogo" class="kop-logo">
+            <div class="kop-text">
+                <p style="font-size: 10pt; font-weight: 600; letter-spacing: 1px;">PEMERINTAH PROVINSI JAWA TIMUR</p>
+                <h1>DINAS PEKERJAAN UMUM SUMBER DAYA AIR</h1>
+                <h2>UPT PUSDA WS BONDOYUDO BARU DI LUMAJANG</h2>
+                <div class="sub-kop">LAPORAN REKAPITULASI EVALUASI KINERJA PEGAWAI (E-RAPORT)</div>
+            </div>
+        </header>
+        <div id="printGrid" class="raport-grid"></div>
+        <div style="margin-top: 40px; display: flex; justify-content: flex-end; text-align: center; page-break-inside: avoid;">
+            <div>
+                <p style="font-size: 11pt; margin-bottom: 80px;">Lumajang, <span id="printDate"></span><br>Kepala UPT PUSDA WS Bondoyudo Baru</p>
+                <p style="font-size: 12pt; font-weight: 800; text-decoration: underline;">( NAMA KEPALA UPT )</p>
+                <p style="font-size: 10pt;">NIP. 19XXXXXXXXXXXXXX</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+        <a href="index.html" class="b-nav-item"><i data-lucide="layout-grid" size="24"></i><span>Home</span></a>
+        <a href="#" class="b-nav-item active"><i data-lucide="file-bar-chart" size="24"></i><span>Raport</span></a>
+        <a href="presensi.html" class="b-nav-fab"><i data-lucide="fingerprint" size="32"></i></a>
+        <a href="wilayah.html" class="b-nav-item"><i data-lucide="map" size="24"></i><span>Wilayah</span></a>
+        <a href="admin.html" class="b-nav-item"><i data-lucide="shield-check" size="24"></i><span>Admin</span></a>
+    </nav>
+
+    <!-- CUSTOM JS -->
+    <script src="js/raport.js"></script>
+</body>
+</html>
