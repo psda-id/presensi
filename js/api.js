@@ -1,6 +1,5 @@
 /* ===========================================================
-   api.js
-   E-PUSDA Hybrid Architecture
+   api.js | E-PUSDA Hybrid Architecture
    Frontend <-> Google Apps Script
 =========================================================== */
 
@@ -9,269 +8,94 @@ const API = (() => {
     // ==========================================================
     // KONFIGURASI
     // ==========================================================
-
-    const BASE_URL =
-        "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
+    const BASE_URL = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
 
     // ==========================================================
-    // PRIVATE
+    // PRIVATE: Core Request Function
     // ==========================================================
-
     async function request(action, method = "GET", data = null) {
-
         try {
-
             let url = BASE_URL;
-
-            const option = {
-                method: method
-            };
+            const option = { method };
 
             if (method === "GET") {
-
                 url += "?action=" + action;
-
             } else {
-
-                option.headers = {
-                    "Content-Type": "application/json"
-                };
-
-                option.body = JSON.stringify({
-                    action,
-                    ...data
-                });
-
+                option.headers = { "Content-Type": "application/json" };
+                option.body = JSON.stringify({ action, ...data });
             }
 
             const response = await fetch(url, option);
-
-            if (!response.ok) {
-
-                throw new Error(
-                    "HTTP Error " + response.status
-                );
-
-            }
-
-            const json = await response.json();
-
-            return json;
-
+            
+            if (!response.ok) throw new Error("HTTP Error " + response.status);
+            
+            return await response.json();
         } catch (err) {
-
-            console.error("API Error :", err);
-
+            console.error("API Error:", err);
             throw err;
-
         }
-
     }
 
     // ==========================================================
     // DASHBOARD
     // ==========================================================
-
-    async function getDashboard() {
-
-        return await request(
-            "getDashboardData",
-            "GET"
-        );
-
-    }
+    const getDashboard = () => request("getDashboardData", "GET");
 
     // ==========================================================
     // PRESENSI
     // ==========================================================
-
-    async function getPegawai() {
-
-        const data = await getDashboard();
-
-        return data.pegawai || [];
-
-    }
-
-    async function submitPresensi(payload) {
-
-        return await request(
-            "submitPresensi",
-            "POST",
-            payload
-        );
-
-    }
+    const getPegawai = async () => (await getDashboard()).pegawai || [];
+    const submitPresensi = (payload) => request("submitPresensi", "POST", payload);
 
     // ==========================================================
     // RAPORT
     // ==========================================================
-
-    async function getRaport(id) {
-
-        return await request(
-            "getRaport&id=" + id,
-            "GET"
-        );
-
-    }
+    const getRaport = (id) => request("getRaport&id=" + id, "GET");
 
     // ==========================================================
     // AGENDA
     // ==========================================================
-
-    async function submitAgenda(payload) {
-
-        return await request(
-            "submitAgenda",
-            "POST",
-            payload
-        );
-
-    }
+    const submitAgenda = (payload) => request("submitAgenda", "POST", payload);
 
     // ==========================================================
     // WILAYAH
     // ==========================================================
-
-    async function getWilayah() {
-
-        return await request(
-            "getWilayah",
-            "GET"
-        );
-
-    }
+    const getWilayah = () => request("getWilayah", "GET");
 
     // ==========================================================
     // TOOLS
     // ==========================================================
-
-    async function getTools() {
-
-        const data = await getDashboard();
-
-        return data.tools || [];
-
-    }
+    const getTools = async () => (await getDashboard()).tools || [];
 
     // ==========================================================
     // ADMIN
     // ==========================================================
-
-    async function login(username, password) {
-
-        return await request(
-            "login",
-            "POST",
-            {
-                username,
-                password
-            }
-        );
-
-    }
-
-    async function savePegawai(data) {
-
-        return await request(
-            "savePegawai",
-            "POST",
-            data
-        );
-
-    }
-
-    async function saveKorlap(data) {
-
-        return await request(
-            "saveKorlap",
-            "POST",
-            data
-        );
-
-    }
-
-    async function saveTool(data) {
-
-        return await request(
-            "saveTool",
-            "POST",
-            data
-        );
-
-    }
-
-    async function deletePegawai(id) {
-
-        return await request(
-            "deletePegawai",
-            "POST",
-            {
-                id
-            }
-        );
-
-    }
-
-    async function deleteKorlap(id) {
-
-        return await request(
-            "deleteKorlap",
-            "POST",
-            {
-                id
-            }
-        );
-
-    }
-
-    async function deleteTool(id) {
-
-        return await request(
-            "deleteTool",
-            "POST",
-            {
-                id
-            }
-        );
-
-    }
+    const login = (username, password) => request("login", "POST", { username, password });
+    const savePegawai = (data) => request("savePegawai", "POST", data);
+    const saveKorlap = (data) => request("saveKorlap", "POST", data);
+    const saveTool = (data) => request("saveTool", "POST", data);
+    const deletePegawai = (id) => request("deletePegawai", "POST", { id });
+    const deleteKorlap = (id) => request("deleteKorlap", "POST", { id });
+    const deleteTool = (id) => request("deleteTool", "POST", { id });
 
     // ==========================================================
-    // EXPORT
+    // EXPORT PUBLIC METHODS
     // ==========================================================
-
     return {
-
         getDashboard,
-
         getPegawai,
-
         getRaport,
-
         getWilayah,
-
         getTools,
-
         submitPresensi,
-
         submitAgenda,
-
         login,
-
         savePegawai,
-
         saveKorlap,
-
         saveTool,
-
         deletePegawai,
-
         deleteKorlap,
-
         deleteTool
-
     };
 
 })();
