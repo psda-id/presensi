@@ -2,50 +2,28 @@
    auth.js
 ===================================================== */
 
-const Auth = (()=>{
+const Auth = (() => {
 
-    async function login(username,password){
-
-        const result=
-            await API.login(username,password);
-
-        if(result.status==="success"){
-
-            localStorage.setItem(
-                "token",
-                result.token
-            );
-
+    async function login(username, password) {
+        const result = await API.login(username, password);
+        
+        if (result.status === "success") {
+            localStorage.setItem("token", result.token);
             return true;
-
         }
-
+        
         return false;
-
     }
 
-    function logout(){
-
+    function logout() {
         localStorage.removeItem("token");
-
-        location.href="index.html";
-
+        location.href = "index.html";
     }
 
-    function isLogin(){
-
-        return localStorage.getItem("token")!=null;
-
+    function isLogin() {
+        return localStorage.getItem("token") !== null;
     }
 
-    return{
-
-        login,
-
-        logout,
-
-        isLogin
-
-    };
+    return { login, logout, isLogin };
 
 })();
