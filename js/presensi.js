@@ -719,11 +719,28 @@ function setS(el, st) {
     haptic();
     const p = dbF[uIdx];
     const pid = p.ID || p.id;
+    const now = new Date();
+    const timeVal = (now.getHours() * 100) + now.getMinutes();
 
-    if (st === 'HADIR' && checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR hari ini.", "error"); return; }
-    if (st === 'PULANG') {
+    if (st === 'HADIR') {
+        if (checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR hari ini.", "error"); return; }
+    } else if (st === 'PULANG') {
         if (checkAtt(pid, 'PULANG')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG hari ini.", "error"); return; }
         if (!checkAtt(pid, 'HADIR')) { showToast("Urutan Salah", "Anda harus melakukan absen HADIR terlebih dahulu sebelum PULANG.", "error"); return; }
+    } else if (st === 'QUICK RESPONSE') {
+        // ✅ PENGECEKAN CERDAS DI FRONTEND
+        if (timeVal < 1000) { // Jam Pagi (QR Hadir)
+            if (checkAtt(pid, 'HADIR')) { 
+                sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR / QR HADIR hari ini.", "error"); return; 
+            }
+        } else { // Jam Sore (QR Pulang)
+            if (checkAtt(pid, 'PULANG')) { 
+                sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG / QR PULANG hari ini.", "error"); return; 
+            }
+            if (!checkAtt(pid, 'HADIR')) { 
+                sndError.play(); showToast("Belum Absen Masuk", "Anda belum absen HADIR / QR HADIR hari ini. Tidak bisa melakukan QR Pulang.", "error"); return; 
+            }
+        }
     }
 
     document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
