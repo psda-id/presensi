@@ -311,7 +311,7 @@ function upLoc() {
     if (!navigator.geolocation) { g.innerText = "GPS tidak didukung"; return; }
     navigator.geolocation.getCurrentPosition(p => {
         if (p.coords.accuracy > 250) { 
-            sndError.play(); showToast("Sinyal Terlalu Lemah", `Akurasi GPS ${p.coords.accuracy.toFixed(0)}m (>250m). Presensi ditolak. Pastikan Anda di luar ruangan.", "error"); 
+            sndError.play(); showToast("Sinyal Terlalu Lemah", `Akurasi GPS ${p.coords.accuracy.toFixed(0)}m (>250m). Presensi ditolak. Pastikan Anda di luar ruangan.`, "error"); 
             g.innerHTML = `<i data-lucide="x-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--danger)"></i> Sinyal Lemah`; lucide.createIcons();
             uPos = { lat: 0, lng: 0 };
             updateWorkflow(); return; 
