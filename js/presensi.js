@@ -463,19 +463,21 @@ function applyFilters() { const s = document.getElementById('searchInput').value
 function upUI(w = "ALL") { const p = dbF[uIdx]; if (!p) { document.getElementById('pName').innerText = "TIDAK DITEMUKAN"; document.getElementById('pImg').src = placeholderImg; document.getElementById('pWil').innerText = "WILAYAH: " + (w === 'all' ? 'ALL' : w); document.getElementById('pJob').innerText = "Pencarian Nihil"; return; } const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500'; document.getElementById('pWrap').classList.add('loading'); const img = document.getElementById('pImg'); img.src = (p.Link_Foto_Profile || p.link_foto_profile) ? url : placeholderImg; img.onload = () => document.getElementById('pWrap').classList.remove('loading'); document.getElementById('pName').innerText = p.Nama || p.nama; document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF"; document.getElementById('pWil').innerHTML = `<i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`; lucide.createIcons(); }
 function navU(d) { if (!dbF.length) return; uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
 
-// ✅ MAPS SATELIT (Esri World Imagery)
+// ✅ MAPS SATELIT + NAMA JALAN LENGKAP (Tanpa Watermark)
 function initMap() { 
     if (map) return; 
-    map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 15); 
     
-    // Menggunakan Citra Satelit
+    // ✅ attributionControl: false untuk menyembunyikan teks watermark Esri/Leaflet
+    map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-8.13, 113.22], 15); 
+    
+    // 1. Base Layer: Citra Satelit (Esri World Imagery)
     L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
         maxZoom: 19
     }).addTo(map); 
     
-    // Menambahkan batas wilayah dan nama jalan di atas citra satelit agar jelas
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+    // 2. Overlay Layer: Nama Jalan, Kota, & Lokasi (CartoDB Dark Labels)
+    // Layer ini transparan dan hanya berisi teks/jalan, sehingga sangat jelas menimpa citra satelit
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
         maxZoom: 19
     }).addTo(map);
 
