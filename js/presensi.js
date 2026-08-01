@@ -110,7 +110,44 @@ window.onload = () => {
     lucide.createIcons(); loadData();
     updateAttendanceStatusIndicator(); setInterval(updateAttendanceStatusIndicator, 60000);
     setInterval(() => { const c = document.getElementById('liveClock'); if (c) c.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }, 1000);
+    checkAppVersion(); // ✅ PWA UPDATE NOTIFICATION
 };
+
+// ✅ PWA UPDATE NOTIFICATION PREMIUM
+function checkAppVersion() {
+    const currentVersion = "v2.6.0"; // Ubah angka ini setiap kali Anda update aplikasi
+    const savedVersion = localStorage.getItem('app_version');
+    
+    if (savedVersion && savedVersion !== currentVersion) {
+        showUpdateModal();
+    }
+    localStorage.setItem('app_version', currentVersion);
+}
+
+function showUpdateModal() {
+    const modal = document.getElementById('notificationModal');
+    const content = document.getElementById('notifModalContent');
+    
+    content.className = 'notif-modal-content notif-info';
+    document.getElementById('notifIcon').setAttribute('data-lucide', 'download-cloud');
+    document.getElementById('notifTitle').innerText = "Pembaruan Tersedia!";
+    document.getElementById('notifMessage').innerText = "Versi terbaru aplikasi E-PUSDA telah dirilis. Muat ulang halaman untuk mendapatkan fitur terbaru dan performa yang lebih cepat.";
+    
+    const btnOk = document.getElementById('btnNotifOk');
+    btnOk.innerHTML = '<i data-lucide="refresh-cw" size="18"></i> Muat Ulang Sekarang';
+    
+    modal.style.display = 'flex';
+    requestAnimationFrame(() => { modal.classList.add('show'); });
+    
+    btnOk.onclick = () => {
+        if ('caches' in window) {
+            caches.keys().then(names => names.forEach(name => caches.delete(name)));
+        }
+        location.reload(true);
+    };
+    
+    lucide.createIcons();
+}
 
 function showToast(title, message, type = "info") {
     const modal = document.getElementById('notificationModal');
@@ -121,6 +158,7 @@ function showToast(title, message, type = "info") {
     const btnOk = document.getElementById('btnNotifOk');
     content.className = 'notif-modal-content'; content.classList.add(`notif-${type}`);
     titleEl.innerText = title; msgEl.innerText = message;
+    btnOk.innerHTML = '<i data-lucide="check" size="18"></i> Mengerti'; // Reset btn text
     const icons = { success: 'check-circle', error: 'x-circle', warning: 'alert-triangle', info: 'info' };
     iconEl.setAttribute('data-lucide', icons[type] || 'info');
     lucide.createIcons();
@@ -410,7 +448,64 @@ function processFallbackImage(url, type) { const img = new Image(); img.onload =
 
 function savePhoto(c, type) { const d = c.toDataURL('image/jpeg', DeviceProfile.config.jpegQuality); sndShutter.play(); if (type === 'selfie') { document.getElementById('sImg').src = d; document.getElementById('sImg').style.display = 'block'; document.getElementById('sPh').style.display = 'none'; sB64 = d; } else { document.getElementById('kImg').src = d; document.getElementById('kImg').style.display = 'block'; document.getElementById('kPh').style.display = 'none'; kB64 = d; } showToast("Berhasil", "Foto berhasil diambil dan disimpan", "success"); saveAutoRecovery(); }
 
-async function capturePhoto() { const v = document.getElementById('vStream'); if (v.readyState !== 4) { showToast("Peringatan", "Kamera belum siap...", "warning"); return; } const c = document.createElement('canvas'); const [w, h] = cType === 'selfie' ? DeviceProfile.config.selfieResolution : DeviceProfile.config.kerjaResolution; c.width = w; c.height = h; const ctx = c.getContext('2d'); if (cType === 'selfie') { ctx.translate(c.width, 0); ctx.scale(-1, 1); } const vW = v.videoWidth, vH = v.videoHeight, tr = c.width / c.height, sr = vW / vH; let sx, sy, sw, sh; if (sr > tr) { sh = vH; sw = sh * tr; sx = (vW - sw) / 2; sy = 0; } else { sw = vW; sh = sw / tr; sx = 0; sy = (vH - sh) / 2; } ctx.drawImage(v, sx, sy, sw, sh, 0, 0, c.width, c.height); ctx.setTransform(1, 0, 0, 1, 0, 0); if (cType === 'selfie' && isFaceApiLoaded) { setLoading(true, "Memindai Wajah..."); try { const d = await faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: .3 })); if (!d) { setLoading(false); sndError.play(); showToast("Gagal Deteksi", "Wajah tidak terdeteksi!", "error"); return; } } catch (e) { } setLoading(false); } sndShutter.play(); addWatermark(c); const d = c.toDataURL('image/jpeg', DeviceProfile.config.jpegQuality); if (cType === 'selfie') { document.getElementById('sImg').src = d; document.getElementById('sImg').style.display = 'block'; document.getElementById('sPh').style.display = 'none'; sB64 = d; } else { document.getElementById('kImg').src = d; document.getElementById('kImg').style.display = 'block'; document.getElementById('kPh').style.display = 'none'; kB64 = d; } saveAutoRecovery(); stopCam(); }
+// ✅ AI IMAGE QUALITY CHECK
+function checkImageQuality(canvas) {
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const data = ctx.getImageData(0, 0, w, h).data;
+    let sumBrightness = 0, sumBrightnessSq = 0, count = 0;
+    
+    for (let i = 0; i < data.length; i += 40) {
+        const brightness = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
+        sumBrightness += brightness;
+        sumBrightnessSq += brightness * brightness;
+        count++;
+    }
+    
+    const avgBrightness = sumBrightness / count;
+    const variance = (sumBrightnessSq / count) - (avgBrightness * avgBrightness);
+    
+    if (avgBrightness < 40) return { valid: false, msg: "Foto terlalu gelap. Arahkan ke tempat terang." };
+    if (avgBrightness > 230) return { valid: false, msg: "Foto terlalu silau/terang." };
+    if (variance < 15) return { valid: false, msg: "Foto terdeteksi blur/kabur. Pegang kamera dengan stabil." };
+    
+    return { valid: true };
+}
+
+async function capturePhoto() { 
+    const v = document.getElementById('vStream'); 
+    if (v.readyState !== 4) { showToast("Peringatan", "Kamera belum siap...", "warning"); return; } 
+    const c = document.createElement('canvas'); 
+    const [w, h] = cType === 'selfie' ? DeviceProfile.config.selfieResolution : DeviceProfile.config.kerjaResolution; 
+    c.width = w; c.height = h; 
+    const ctx = c.getContext('2d'); 
+    if (cType === 'selfie') { ctx.translate(c.width, 0); ctx.scale(-1, 1); } 
+    const vW = v.videoWidth, vH = v.videoHeight, tr = c.width / c.height, sr = vW / vH; 
+    let sx, sy, sw, sh; 
+    if (sr > tr) { sh = vH; sw = sh * tr; sx = (vW - sw) / 2; sy = 0; } else { sw = vW; sh = sw / tr; sx = 0; sy = (vH - sh) / 2; } 
+    ctx.drawImage(v, sx, sy, sw, sh, 0, 0, c.width, c.height); 
+    ctx.setTransform(1, 0, 0, 1, 0, 0); 
+    if (cType === 'selfie' && isFaceApiLoaded) { 
+        setLoading(true, "Memindai Wajah..."); 
+        try { 
+            const d = await faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: .3 })); 
+            if (!d) { setLoading(false); sndError.play(); showToast("Gagal Deteksi", "Wajah tidak terdeteksi!", "error"); return; }
+            
+            // ✅ CEK KUALITAS FOTO (Kecerahan & Blur)
+            const quality = checkImageQuality(c);
+            if (!quality.valid) {
+                setLoading(false); sndError.play(); 
+                showToast("Kualitas Foto Buruk", quality.msg, "error"); 
+                return; 
+            }
+        } catch (e) { } 
+        setLoading(false); 
+    } 
+    sndShutter.play(); addWatermark(c); 
+    const d = c.toDataURL('image/jpeg', DeviceProfile.config.jpegQuality); 
+    if (cType === 'selfie') { document.getElementById('sImg').src = d; document.getElementById('sImg').style.display = 'block'; document.getElementById('sPh').style.display = 'none'; sB64 = d; } else { document.getElementById('kImg').src = d; document.getElementById('kImg').style.display = 'block'; document.getElementById('kPh').style.display = 'none'; kB64 = d; } 
+    saveAutoRecovery(); stopCam(); 
+}
 
 function addWatermark(c) { const ctx = c.getContext('2d'); const W = c.width, H = c.height; const baseSize = Math.min(W, H); const margin = baseSize * 0.04; const nameFontSize = Math.round(baseSize * 0.032), jobFontSize = Math.round(baseSize * 0.022), infoFontSize = Math.round(baseSize * 0.020), footerFontSize = Math.round(baseSize * 0.018), iconSize = Math.round(baseSize * 0.025), logoSize = Math.round(baseSize * 0.09); const logoX = margin, logoY = H - margin - logoSize; if (logoCache.complete && logoCache.naturalWidth) { ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.strokeStyle = 'rgba(45,212,191,0.5)'; ctx.lineWidth = 2; ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3; ctx.beginPath(); ctx.roundRect(logoX, logoY, logoSize, logoSize, logoSize * 0.18); ctx.fill(); ctx.shadowBlur = 0; ctx.stroke(); ctx.restore(); const logoInnerPad = logoSize * 0.12; ctx.drawImage(logoCache, logoX + logoInnerPad, logoY + logoInnerPad, logoSize - logoInnerPad * 2, logoSize - logoInnerPad * 2); } const textStart = logoX + logoSize + baseSize * 0.02, textAreaWidth = W - textStart - margin, p = dbF[uIdx], nama = (p.Nama || p.nama || "STAFF").toUpperCase(), jabatan = (p.Jabatan || "PPA").toUpperCase(); const shadowConfig = { shadowColor: 'rgba(0,0,0,0.85)', shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 2 }, line1Y = logoY + logoSize * 0.28; ctx.save(); ctx.textBaseline = 'middle'; ctx.shadowColor = shadowConfig.shadowColor; ctx.shadowBlur = shadowConfig.shadowBlur; ctx.shadowOffsetX = shadowConfig.shadowOffsetX; ctx.shadowOffsetY = shadowConfig.shadowOffsetY; ctx.fillStyle = '#ffffff'; ctx.font = `800 ${nameFontSize}px 'Plus Jakarta Sans'`; let displayName = nama, metrics = ctx.measureText(displayName + ' • ' + jabatan); if (metrics.width > textAreaWidth) { const ratio = textAreaWidth / metrics.width; displayName = nama.substring(0, Math.floor(nama.length * ratio * 0.9)) + '...'; } ctx.fillText(displayName, textStart, line1Y); const nameWidth = ctx.measureText(displayName).width; ctx.fillStyle = '#2dd4bf'; ctx.font = `600 ${jobFontSize}px 'Plus Jakarta Sans'`; ctx.fillText(' • ' + jabatan, textStart + nameWidth + 6, line1Y); ctx.restore(); const line2Y = logoY + logoSize * 0.58, iconColor = '#2dd4bf', textColor = '#ffffff'; ctx.save(); ctx.textBaseline = 'middle'; ctx.shadowColor = shadowConfig.shadowColor; ctx.shadowBlur = shadowConfig.shadowBlur; ctx.shadowOffsetX = shadowConfig.shadowOffsetX; ctx.shadowOffsetY = shadowConfig.shadowOffsetY; drawMapPinIcon(ctx, textStart, line2Y - iconSize / 2, iconSize, iconColor); const gpsStr = `${uPos.lat.toFixed(4)}, ${uPos.lng.toFixed(4)}`; ctx.fillStyle = textColor; ctx.font = `500 ${infoFontSize}px 'JetBrains Mono'`; ctx.fillText(gpsStr, textStart + iconSize + 8, line2Y); const timeX = textStart + iconSize + 8 + ctx.measureText(gpsStr).width + 20; if (timeX + iconSize + 80 < W - margin) { drawClockIcon(ctx, timeX, line2Y - iconSize / 2, iconSize, iconColor); const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); ctx.fillStyle = textColor; ctx.fillText(timeStr, timeX + iconSize + 8, line2Y); const dateX = timeX + iconSize + 8 + ctx.measureText(timeStr).width + 20; if (dateX + iconSize + 100 < W - margin) { drawCalendarIcon(ctx, dateX, line2Y - iconSize / 2, iconSize, iconColor); const dateStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }); ctx.fillStyle = textColor; ctx.fillText(dateStr, dateX + iconSize + 8, line2Y); } } ctx.restore(); const line3Y = logoY + logoSize * 0.88; ctx.save(); ctx.textBaseline = 'middle'; ctx.shadowColor = shadowConfig.shadowColor; ctx.shadowBlur = shadowConfig.shadowBlur; ctx.shadowOffsetX = shadowConfig.shadowOffsetX; ctx.shadowOffsetY = shadowConfig.shadowOffsetY; ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = `700 ${footerFontSize}px 'Plus Jakarta Sans'`; ctx.fillText('UPT PUSDA WS BONDOYUDO BARU', textStart, line3Y); ctx.restore(); }
 
@@ -460,32 +555,51 @@ async function loadData() {
 function renderChips() { const w = ["ALL", ...new Set(dbE.map(p => (p.Wilayah || p.wilayah || "").trim()).filter(x => x))]; document.getElementById('wilChips').innerHTML = w.map(x => `<div class="chip-pill ${x === 'ALL' ? 'active' : ''}" data-wil="${x}" onclick="setWil('${x}',this)">${x}</div>`).join(''); }
 function setWil(w, el) { document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active')); el.classList.add('active'); applyFilters(); }
 function applyFilters() { const s = document.getElementById('searchInput').value.toLowerCase().trim(), activeChip = document.querySelector('.chip-pill.active'), w = (activeChip?.getAttribute('data-wil') || 'ALL').toLowerCase(); dbF = dbE.filter(p => { const pw = (p.Wilayah || p.wilayah || "").trim().toLowerCase(), pn = (p.Nama || p.nama || "").toLowerCase(); return (w === 'all' || pw === w) && (!s || pn.includes(s)); }); uIdx = 0; upUI(w === 'all' ? 'ALL' : w); }
-function upUI(w = "ALL") { const p = dbF[uIdx]; if (!p) { document.getElementById('pName').innerText = "TIDAK DITEMUKAN"; document.getElementById('pImg').src = placeholderImg; document.getElementById('pWil').innerText = "WILAYAH: " + (w === 'all' ? 'ALL' : w); document.getElementById('pJob').innerText = "Pencarian Nihil"; return; } const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500'; document.getElementById('pWrap').classList.add('loading'); const img = document.getElementById('pImg'); img.src = (p.Link_Foto_Profile || p.link_foto_profile) ? url : placeholderImg; img.onload = () => document.getElementById('pWrap').classList.remove('loading'); document.getElementById('pName').innerText = p.Nama || p.nama; document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF"; document.getElementById('pWil').innerHTML = `<i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`; lucide.createIcons(); }
+
+// ✅ SKELETON LOADING TRANSITION
+function upUI(w = "ALL") { 
+    // Tampilkan konten asli, sembunyikan skeleton
+    const skelHero = document.getElementById('skelHeroImg');
+    const pImg = document.getElementById('pImg');
+    if (skelHero) skelHero.style.display = 'none';
+    if (pImg) pImg.style.display = 'block';
+    const skelName = document.getElementById('skelNameContainer');
+    const realName = document.getElementById('realNameContainer');
+    if (skelName) skelName.style.display = 'none';
+    if (realName) realName.style.display = 'flex';
+    const pJob = document.getElementById('pJob');
+    if (pJob) pJob.style.display = 'block';
+
+    const p = dbF[uIdx]; 
+    if (!p) { 
+        document.getElementById('pName').innerText = "TIDAK DITEMUKAN"; 
+        document.getElementById('pImg').src = placeholderImg; 
+        document.getElementById('pWil').innerText = "WILAYAH: " + (w === 'all' ? 'ALL' : w); 
+        document.getElementById('pJob').innerText = "Pencarian Nihil"; 
+        return; 
+    } 
+    const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500'; 
+    document.getElementById('pWrap').classList.add('loading'); 
+    const img = document.getElementById('pImg'); 
+    img.src = (p.Link_Foto_Profile || p.link_foto_profile) ? url : placeholderImg; 
+    img.onload = () => document.getElementById('pWrap').classList.remove('loading'); 
+    document.getElementById('pName').innerText = p.Nama || p.nama; 
+    document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF"; 
+    document.getElementById('pWil').innerHTML = `<i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`; 
+    lucide.createIcons(); 
+}
 function navU(d) { if (!dbF.length) return; uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
 
 // ✅ MAPS SATELIT + NAMA JALAN LENGKAP (Tanpa Watermark)
 function initMap() { 
     if (map) return; 
-    
-    // ✅ attributionControl: false untuk menyembunyikan teks watermark Esri/Leaflet
     map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-8.13, 113.22], 15); 
-    
-    // 1. Base Layer: Citra Satelit (Esri World Imagery)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        maxZoom: 19
-    }).addTo(map); 
-    
-    // 2. Overlay Layer: Nama Jalan, Kota, & Lokasi (CartoDB Dark Labels)
-    // Layer ini transparan dan hanya berisi teks/jalan, sehingga sangat jelas menimpa citra satelit
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19
-    }).addTo(map);
-
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(map); 
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
     marker = L.marker([-8.13, 113.22]).addTo(map); 
     requestAnimationFrame(() => { requestAnimationFrame(() => { if (map) map.invalidateSize(); }); }); 
 }
 
-// Cek apakah sudah absen Hadir/Pulang hari ini
 function checkAtt(id, st) {
     return dbP.some(l => {
         const lid = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
@@ -603,7 +717,6 @@ async function submitWithRetry(attempt = 1) {
             clearHeavyData();
             setTimeout(() => location.reload(), 2500);
         } else if (j.status === 'error') {
-            // Jika ditolak karena aturan, JANGAN di-retry!
             setLoading(false);
             btn.disabled = false;
             sndError.play().catch(() => { });
@@ -613,7 +726,6 @@ async function submitWithRetry(attempt = 1) {
         }
     } catch (e) {
         console.error("Error submit:", e);
-        // Jika masuk blok catch, berarti memang error JARINGAN
         if (attempt < 4) {
             showToast("Menunggu Antrian...", "Koneksi tidak stabil, mencoba ulang otomatis...", "warning");
             setTimeout(() => submitWithRetry(attempt + 1), 3000);
