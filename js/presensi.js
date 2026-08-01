@@ -430,33 +430,60 @@ function updateWorkflow() { const gpsReady = uPos.lat !== 0, statusReady = selec
 function onNotesInput() { updateNotesCounter(); updateWorkflow(); saveAutoRecovery(); }
 function loadFromCache() { const c = localStorage.getItem('pusda_pegawai_v1'); if (c) { dbE = JSON.parse(c); dbF = [...dbE]; renderChips(); upUI(); return true; } return false; }
 
-async function loadData() { const hasCache = DeviceProfile.tier === 'low' ? false : loadFromCache(); const statusText = document.getElementById('initStatusText'); try { if (!hasCache) statusText.innerText = "Sinkronisasi..."; const [r1, r2] = await Promise.all([fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }), fetch(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' })]); const [d1, d2] = await Promise.all([r1.json(), r2.json()]); dbE = d1.pegawai || []; dbF = [...dbE]; dbP = d2.data || []; if (DeviceProfile.tier !== 'low') { try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } catch (e) { console.warn('LocalStorage full'); } } document.getElementById('sidebarLogo').src = d1.config?.Logo || GITHUB_LOGO_URL; renderChips(); applyFilters(); } catch (e) { if (!hasCache) showToast("Koneksi Lemah", "Sinyal kurang stabil, mencoba memuat cache lokal", "warning"); } finally { const o = document.getElementById('initialLoadingOverlay'); if (o) { o.style.opacity = '0'; o.style.pointerEvents = 'none'; setTimeout(() => o.style.display = 'none', 400); } } }
+async function loadData() { 
+    const hasCache = DeviceProfile.tier === 'low' ? false : loadFromCache(); 
+    const statusText = document.getElementById('initStatusText'); 
+    try { 
+        if (!hasCache) statusText.innerText = "Sinkronisasi..."; 
+        const [r1, r2] = await Promise.all([fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }), fetch(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' })]); 
+        const [d1, d2] = await Promise.all([r1.json(), r2.json()]); 
+        dbE = d1.pegawai || []; dbF = [...dbE]; dbP = d2.data || []; 
+        if (DeviceProfile.tier !== 'low') { try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } catch (e) { console.warn('LocalStorage full'); } } 
+        
+        document.getElementById('sidebarLogo').src = d1.config?.Logo || GITHUB_LOGO_URL; 
+        
+        // ✅ UPDATE ATURAN WAKTU DI UI BERDASARKAN SHEET CONF
+        const cfg = d1.config || {};
+        const jHadir = cfg.Jam_Hadir || "07:40";
+        const jTelat = cfg.Jam_Terlambat_Ringan || "08:00";
+        STATUS_CONFIG.HADIR.message = `<b>Aturan Waktu:</b><br>• ≤ ${jHadir} = Poin 50 (Tepat Waktu)<br>• ${jHadir} - ${jTelat} = Poin 40 (Terlambat Ringan)<br>• > ${jTelat} = Poin 25 (Terlambat Berat)`;
+
+        renderChips(); applyFilters(); 
+    } catch (e) { 
+        if (!hasCache) showToast("Koneksi Lemah", "Sinyal kurang stabil, mencoba memuat cache lokal", "warning"); 
+    } finally { 
+        const o = document.getElementById('initialLoadingOverlay'); 
+        if (o) { o.style.opacity = '0'; o.style.pointerEvents = 'none'; setTimeout(() => o.style.display = 'none', 400); } 
+    } 
+}
 
 function renderChips() { const w = ["ALL", ...new Set(dbE.map(p => (p.Wilayah || p.wilayah || "").trim()).filter(x => x))]; document.getElementById('wilChips').innerHTML = w.map(x => `<div class="chip-pill ${x === 'ALL' ? 'active' : ''}" data-wil="${x}" onclick="setWil('${x}',this)">${x}</div>`).join(''); }
 function setWil(w, el) { document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active')); el.classList.add('active'); applyFilters(); }
 function applyFilters() { const s = document.getElementById('searchInput').value.toLowerCase().trim(), activeChip = document.querySelector('.chip-pill.active'), w = (activeChip?.getAttribute('data-wil') || 'ALL').toLowerCase(); dbF = dbE.filter(p => { const pw = (p.Wilayah || p.wilayah || "").trim().toLowerCase(), pn = (p.Nama || p.nama || "").toLowerCase(); return (w === 'all' || pw === w) && (!s || pn.includes(s)); }); uIdx = 0; upUI(w === 'all' ? 'ALL' : w); }
 function upUI(w = "ALL") { const p = dbF[uIdx]; if (!p) { document.getElementById('pName').innerText = "TIDAK DITEMUKAN"; document.getElementById('pImg').src = placeholderImg; document.getElementById('pWil').innerText = "WILAYAH: " + (w === 'all' ? 'ALL' : w); document.getElementById('pJob').innerText = "Pencarian Nihil"; return; } const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500'; document.getElementById('pWrap').classList.add('loading'); const img = document.getElementById('pImg'); img.src = (p.Link_Foto_Profile || p.link_foto_profile) ? url : placeholderImg; img.onload = () => document.getElementById('pWrap').classList.remove('loading'); document.getElementById('pName').innerText = p.Nama || p.nama; document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF"; document.getElementById('pWil').innerHTML = `<i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`; lucide.createIcons(); }
 function navU(d) { if (!dbF.length) return; uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
-function initMap() { 
-  if (map) return; 
-  map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 15); 
-  
-  // ✅ MAPS SATELIT (Esri World Imagery)
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-    attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
-    maxZoom: 19
-  }).addTo(map); 
-  
-  // Tambahkan label nama jalan/kota di atas citra satelit biar jelas
-  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
-    maxZoom: 19
-  }).addTo(map);
 
-  marker = L.marker([-8.13, 113.22]).addTo(map); 
-  requestAnimationFrame(() => { requestAnimationFrame(() => { if (map) map.invalidateSize(); }); }); 
+// ✅ MAPS SATELIT (Esri World Imagery)
+function initMap() { 
+    if (map) return; 
+    map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 15); 
+    
+    // Menggunakan Citra Satelit
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
+        maxZoom: 19
+    }).addTo(map); 
+    
+    // Menambahkan batas wilayah dan nama jalan di atas citra satelit agar jelas
+    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19
+    }).addTo(map);
+
+    marker = L.marker([-8.13, 113.22]).addTo(map); 
+    requestAnimationFrame(() => { requestAnimationFrame(() => { if (map) map.invalidateSize(); }); }); 
 }
 
-// ✅ Cek apakah sudah absen Hadir/Pulang hari ini
+// Cek apakah sudah absen Hadir/Pulang hari ini
 function checkAtt(id, st) {
     return dbP.some(l => {
         const lid = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
@@ -491,7 +518,6 @@ async function openForm() {
         dbP = (await r.json()).data || [];
     } catch (e) { }
 
-    // ✅ Tandai tombol yang sudah dilakukan agar pegawai tahu
     const pid = p.ID || p.id;
     if (checkAtt(pid, 'HADIR')) {
         document.getElementById('btnHadirMain').classList.add('active');
@@ -530,18 +556,17 @@ function setS(el, st) {
     if (st === 'HADIR' && checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR hari ini.", "error"); return; }
     if (st === 'PULANG') {
         if (checkAtt(pid, 'PULANG')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG hari ini.", "error"); return; }
-        // ✅ PERBAIKAN: Hapus validasi jam HP. Biarkan backend yang menolak jika belum jam 10:00
         if (!checkAtt(pid, 'HADIR')) { showToast("Urutan Salah", "Anda harus melakukan absen HADIR terlebih dahulu sebelum PULANG.", "error"); return; }
     }
 
     document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
     el.classList.add('active'); selectedStatus = st; updateStatusInfo(st);
 
-    // ✅ PERBAIKAN: Hapus perhitungan nilai di HP. Backend yang hitung pakai jam server.
+    // Validasi jam dan perhitungan nilai dihapus, diserahkan ke backend (anti-curang)
     updateWorkflow(); saveAutoRecovery();
 }
 
-// ✅ PERBAIKAN UTAMA: Menghentikan retry jika server menolak karena aturan
+// Menghentikan retry jika server menolak karena aturan
 async function submitWithRetry(attempt = 1) {
     const btn = document.getElementById('btnSubmitPresensi'), n = document.getElementById('notes').value.trim();
     if (!selectedStatus) return showToast("Peringatan", "Pilih status presensi!", "warning");
@@ -560,7 +585,6 @@ async function submitWithRetry(attempt = 1) {
     setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
     const p = dbF[uIdx];
     
-    // ✅ PERBAIKAN: Hapus variabel nilai dari payload
     const payload = {
         action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus,
         selfie: sB64, workPhoto: kB64, surat: suratB64 || '-', keterangan: n,
@@ -577,7 +601,7 @@ async function submitWithRetry(attempt = 1) {
             clearHeavyData();
             setTimeout(() => location.reload(), 2500);
         } else if (j.status === 'error') {
-            // ✅ Jika ditolak karena aturan (bukan error jaringan), JANGAN di-retry!
+            // Jika ditolak karena aturan, JANGAN di-retry!
             setLoading(false);
             btn.disabled = false;
             sndError.play().catch(() => { });
