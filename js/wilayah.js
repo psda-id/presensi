@@ -75,7 +75,6 @@ async function init(isRefresh = false) {
         const rp = await fetch(API_URL + `?action=getPresensiByDate&date=${selectedDate}`);
         const dp = await rp.json();
         dbP = dp.data || [];
-        console.log(`✅ Berhasil memuat ${dbP.length} data presensi untuk tanggal ${selectedDate}`);
         
         updateKorlapStats();
         filterData();
@@ -120,7 +119,12 @@ function filterData() {
     dbE.forEach(p => {
         if ((wil === 'ALL' || p.Wilayah === wil) && (!search || p.Nama.toLowerCase().includes(search))) {
             const pID = String(p.ID);
-            monitoringMap[pID] = { id: pID, nama: p.Nama, wil: p.Wilayah, foto: p.Link_Foto_Profile, hp: String(p.NoHP || p.no_hp || ""), in: "-", out: "-", sid: "", sin: null, kin: null, gin: null, sout: null, kout: null, gout: null };
+            monitoringMap[pID] = { 
+                id: pID, nama: p.Nama, wil: p.Wilayah, foto: p.Link_Foto_Profile, hp: String(p.NoHP || p.no_hp || ""), 
+                in: "-", out: "-", sid: "", 
+                sin: null, kin: null, gin: null, 
+                sout: null, kout: null, gout: null 
+            };
         }
     });
 
@@ -130,22 +134,40 @@ function filterData() {
         if (!ts || getLocalDateString(ts) !== filterDate) return;
         const pID = String(log['ID Pegawai'] || log.id_pegawai || log.ID);
         if (monitoringMap[pID]) {
-            const status = (log.Status || "").toLowerCase();
+            const status = (log.Status || log.status || "").toLowerCase();
             const jam = new Date(ts).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'});
-            const isMorning = status.includes('hadir') || status.includes('terlambat') || status.includes('qr') || status.includes('quick');
             
-            if (isMorning && monitoringMap[pID].in === "-") {
+            // ✅ PERBAIKAN: Baca header foto dengan fleksibel ( underscore / spasi )
+            const fSelfie = log['Foto_Selfie'] || log['Foto Selfie'] || log.foto_selfie || null;
+            const fKerja = log['Foto_Kerja'] || log['Foto Kerja'] || log['Foto Lokasi'] || log.foto_kerja || log.foto_lokasi || null;
+            const fSurat = log['Surat'] || log.surat || null;
+            const gpsData = log.GPS || log.gps || null;
+
+            // ✅ PERBAIKAN: Klasifikasi Status yang Akurat
+            const isSID = status.includes('izin') || status.includes('sakit') || status.includes('dinas');
+            const isMorning = status.includes('hadir') || status.includes('terlambat') || status.includes('qr hadir') || status.includes('quick response');
+            const isPulang = status.includes('pulang') || status.includes('qr pulang');
+
+            if (isSID) {
+                // Jika Izin/Sakit/Dinas, masukkan ke kategori SID beserta fotonya
+                monitoringMap[pID].sid = log.Status || log.status;
                 monitoringMap[pID].in = jam; 
-                monitoringMap[pID].sin = log['Foto Selfie'] || log.foto_selfie; 
-                monitoringMap[pID].kin = log['Foto Lokasi'] || log['Foto Kerja'] || log.foto_lokasi || log.foto_kerja; 
-                monitoringMap[pID].gin = log.GPS || log.gps;
-            } else if (status.includes('pulang')) {
-                monitoringMap[pID].out = jam; 
-                monitoringMap[pID].sout = log['Foto Selfie'] || log.foto_selfie; 
-                monitoringMap[pID].kout = log['Foto Lokasi'] || log['Foto Kerja'] || log.foto_lokasi || log.foto_kerja; 
-                monitoringMap[pID].gout = log.GPS || log.gps;
-            } else if (['izin', 'sakit', 'dinas'].includes(status)) {
-                monitoringMap[pID].sid = log.Status;
+                monitoringMap[pID].sin = fSelfie;
+                monitoringMap[pID].kin = fKerja || fSurat; 
+                monitoringMap[pID].gin = gpsData;
+            } else {
+                if (isMorning && monitoringMap[pID].in === "-") {
+                    monitoringMap[pID].in = jam; 
+                    monitoringMap[pID].sin = fSelfie; 
+                    monitoringMap[pID].kin = fKerja; 
+                    monitoringMap[pID].gin = gpsData;
+                } 
+                if (isPulang) {
+                    monitoringMap[pID].out = jam; 
+                    monitoringMap[pID].sout = fSelfie; 
+                    monitoringMap[pID].kout = fKerja; 
+                    monitoringMap[pID].gout = gpsData;
+                }
             }
         }
     });
@@ -251,9 +273,13 @@ function updateKorlapStats() {
         let h=0, p_out=0, s=0;
         wilStaff.forEach(stf => {
             const logs = logsByStaff[String(stf.ID)] || [];
-            if (logs.some(l => ['hadir','terlambat'].includes((l.Status || "").toLowerCase()))) h++;
-            if (logs.some(l => (l.Status || "").toLowerCase() === 'pulang')) p_out++;
-            if (logs.some(l => ['izin','sakit','dinas'].includes((l.Status || "").toLowerCase()))) s++;
+            // ✅ PERBAIKAN: Gunakan string includes() agar 'Terlambat Ringan' & 'QR Hadir' terhitung
+            logs.forEach(l => {
+                const st = (l.Status || l.status || "").toLowerCase();
+                if (st.includes('hadir') || st.includes('terlambat')) h++;
+                if (st.includes('pulang')) p_out++;
+                if (st.includes('izin') || st.includes('sakit') || st.includes('dinas')) s++;
+            });
         });
         return `
             <div class="korlap-card">
@@ -303,12 +329,63 @@ function startVoice(targetId, btn) {
     recognition.onend = () => btn.classList.remove('active');
     recognition.start();
 }
+
+// ✅ PERBAIKAN: Upload Foto Agenda
+async function compressImage(base64, options = {}) {
+    const { maxWidth = 800, maxHeight = 800, quality = 0.5 } = options;
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let w = img.width, h = img.height;
+            if (w > maxWidth) { h = h * (maxWidth / w); w = maxWidth; }
+            if (h > maxHeight) { w = w * (maxHeight / h); h = maxHeight; }
+            canvas.width = w; canvas.height = h;
+            canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => reject(new Error('Gagal memuat gambar'));
+        img.src = base64;
+    });
+}
+
 async function submitAgenda() {
     const btn = document.getElementById('btnSubmitAgenda');
     const originalText = btn.innerHTML;
     btn.innerHTML = '<i data-lucide="loader-2" class="spin" size="18"></i> Mengirim...';
     btn.disabled = true;
     lucide.createIcons();
+
+    let fotoBase64 = null;
+    const fileInput = document.getElementById('agnFoto');
+    
+    // Cek dan kompres foto jika ada
+    if (fileInput && fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        if (!file.type.startsWith('image/')) {
+            alert("File harus berupa gambar.");
+            btn.innerHTML = originalText; btn.disabled = false; lucide.createIcons();
+            return;
+        }
+        try {
+            const reader = new FileReader();
+            fotoBase64 = await new Promise((resolve, reject) => {
+                reader.onload = async (ev) => {
+                    try {
+                        const compressed = await compressImage(ev.target.result, { maxWidth: 800, maxHeight: 800, quality: 0.5 });
+                        resolve(compressed);
+                    } catch (err) { reject(err); }
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        } catch (e) {
+            alert("Gagal memproses foto: " + e.message);
+            btn.innerHTML = originalText; btn.disabled = false; lucide.createIcons();
+            return;
+        }
+    }
+
     const payload = {
         action: 'submitAgenda',
         idPegawai: dbK.find(k => k.Nama === document.getElementById('agnNamaInput').value)?.ID || '',
@@ -319,8 +396,9 @@ async function submitAgenda() {
         jamPulang: document.getElementById('agnPulang').value,
         agenda: document.getElementById('agnJudulInput').value,
         keterangan: document.getElementById('agnKetInput').value,
-        foto: null 
+        foto: fotoBase64 // ✅ Kirim base64 foto
     };
+    
     try {
         const res = await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
         const result = await res.json();
