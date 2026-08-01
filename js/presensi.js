@@ -439,13 +439,150 @@ function upUI(w = "ALL") { const p = dbF[uIdx]; if (!p) { document.getElementByI
 function navU(d) { if (!dbF.length) return; uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
 function initMap() { if (map) return; map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 13); L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map); marker = L.marker([-8.13, 113.22]).addTo(map); requestAnimationFrame(() => { requestAnimationFrame(() => { if (map) map.invalidateSize(); }); }); }
 
-async function openForm() { if (!dbF.length) return; const p = dbF[uIdx]; document.getElementById('stepSelector').style.display = 'none'; document.getElementById('stepForm').style.display = 'flex'; document.getElementById('statusInfo').style.display = 'none'; document.getElementById('statusBadge').classList.remove('show'); selectedStatus = ''; document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active')); document.getElementById('specialStatusGrid').classList.remove('show'); lucide.createIcons(); const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500'; document.getElementById('formHeroImg').src = url || placeholderImg; document.getElementById('formName').innerText = p.Nama || p.nama; document.getElementById('formJobWil').innerHTML = `<i data-lucide="briefcase" size="14" style="vertical-align:middle"></i> ${p.Jabatan || "PPA"} | <i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> ${p.Wilayah || "UPT"}`; lucide.createIcons(); try { const r = await fetch(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }); dbP = (await r.json()).data || []; } catch (e) { } if (checkAtt(p.ID || p.id, 'HADIR')) document.getElementById('btnHadirMain').classList.add('active'); if (checkAtt(p.ID || p.id, 'PULANG')) document.getElementById('btnPulangMain').classList.add('active'); updateNotesCounter(); updateWorkflow(); setTimeout(() => { initMap(); upLoc(); loadAutoRecovery(); }, 300); }
+// ✅ PERBAIKAN: Cek apakah sudah absen Hadir/Pulang hari ini
+function checkAtt(id, st) {
+    return dbP.some(l => {
+        const lid = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
+        const ls = (l.Status || l.status || "").toLowerCase();
+        if (lid !== String(id)) return false;
+        if (st === 'HADIR') return ls.includes('hadir') || ls.includes('terlambat');
+        if (st === 'PULANG') return ls.includes('pulang');
+        return false;
+    });
+}
+
+async function openForm() {
+    if (!dbF.length) return;
+    const p = dbF[uIdx];
+    document.getElementById('stepSelector').style.display = 'none';
+    document.getElementById('stepForm').style.display = 'flex';
+    document.getElementById('statusInfo').style.display = 'none';
+    document.getElementById('statusBadge').classList.remove('show');
+    selectedStatus = '';
+    document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
+    document.getElementById('specialStatusGrid').classList.remove('show');
+    lucide.createIcons();
+
+    const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500';
+    document.getElementById('formHeroImg').src = url || placeholderImg;
+    document.getElementById('formName').innerText = p.Nama || p.nama;
+    document.getElementById('formJobWil').innerHTML = `<i data-lucide="briefcase" size="14" style="vertical-align:middle"></i> ${p.Jabatan || "PPA"} | <i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> ${p.Wilayah || "UPT"}`;
+    lucide.createIcons();
+
+    try {
+        const r = await fetch(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' });
+        dbP = (await r.json()).data || [];
+    } catch (e) { }
+
+    // ✅ Tandai tombol yang sudah dilakukan agar pegawai tahu
+    const pid = p.ID || p.id;
+    if (checkAtt(pid, 'HADIR')) {
+        document.getElementById('btnHadirMain').classList.add('active');
+        document.getElementById('btnHadirMain').style.opacity = '0.5';
+        document.getElementById('btnHadirMain').style.pointerEvents = 'none';
+    }
+    if (checkAtt(pid, 'PULANG')) {
+        document.getElementById('btnPulangMain').classList.add('active');
+        document.getElementById('btnPulangMain').style.opacity = '0.5';
+        document.getElementById('btnPulangMain').style.pointerEvents = 'none';
+    }
+
+    updateNotesCounter();
+    updateWorkflow();
+    setTimeout(() => { initMap(); upLoc(); loadAutoRecovery(); }, 300);
+}
+
 function closeForm() { document.getElementById('stepSelector').style.display = 'flex'; document.getElementById('stepForm').style.display = 'none'; }
-function checkAtt(id, st) { return dbP.some(l => { const lid = String(l['ID Pegawai'] || l.id_pegawai || l.ID); const ls = (l.Status || l.status || "").toLowerCase(); if (lid !== String(id)) return false; if (st === 'HADIR') return ls.includes('hadir') || ls.includes('terlambat'); if (st === 'PULANG') return ls.includes('pulang'); return false; }); }
 
-function setS(el, st) { if (uPos.lat === 0) return showToast("Peringatan", "Tunggu GPS mengunci lokasi!", "warning"); const g = validasiGeoFencing(), outside = g.status === 'OUT_ZONE', exc = ['IZIN', 'SAKIT', 'DINAS', 'QUICK RESPONSE'].includes(st); if (outside && !exc) { sndError.play(); showToast("Ditolak", `Anda berada di luar area geo-fencing (${g.jarak}m). Silakan mendekat atau gunakan status khusus.`, "error"); const info = document.getElementById('statusInfo'); info.style.display = 'block'; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)"; info.innerHTML = `<div class="info-title"><i data-lucide="alert-triangle" size="18"></i><span>⚠️ GEO-FENCING DITOLAK</span></div><div class="info-body">Anda berada <strong>${g.jarak}m</strong> dari ${g.nama} (radius: ${g.radius}m). Silakan mendekat atau gunakan Status Khusus.</div>`; lucide.createIcons(); return; } haptic(); const now = new Date(), tm = now.getHours() * 60 + now.getMinutes(), p = dbF[uIdx]; if (st === 'HADIR' && checkAtt(p.ID || p.id, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR hari ini.", "error"); return; } if (st === 'PULANG') { if (checkAtt(p.ID || p.id, 'PULANG')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG hari ini.", "error"); return; } if (tm < 600) { showToast("Belum Waktunya", "Belum jam pulang. Silakan coba lagi nanti.", "warning"); return; } if (!checkAtt(p.ID || p.id, 'HADIR')) { showToast("Urutan Salah", "Anda harus melakukan absen HADIR terlebih dahulu sebelum PULANG.", "error"); return; } } document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active')); el.classList.add('active'); selectedStatus = st; updateStatusInfo(st); if (st === 'HADIR') { if (tm <= 460) calculatedScore = 50; else if (tm <= 800) calculatedScore = 40; else calculatedScore = 25; } else if (st === 'PULANG') { calculatedScore = 50; } else { calculatedScore = 50; } updateWorkflow(); saveAutoRecovery(); }
+function setS(el, st) {
+    if (uPos.lat === 0) return showToast("Peringatan", "Tunggu GPS mengunci lokasi!", "warning");
+    const g = validasiGeoFencing(), outside = g.status === 'OUT_ZONE', exc = ['IZIN', 'SAKIT', 'DINAS', 'QUICK RESPONSE'].includes(st);
+    if (outside && !exc) {
+        sndError.play();
+        showToast("Ditolak", `Anda berada di luar area geo-fencing (${g.jarak}m). Silakan mendekat atau gunakan status khusus.`, "error");
+        const info = document.getElementById('statusInfo');
+        info.style.display = 'block'; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
+        info.innerHTML = `<div class="info-title"><i data-lucide="alert-triangle" size="18"></i><span>⚠️ GEO-FENCING DITOLAK</span></div><div class="info-body">Anda berada <strong>${g.jarak}m</strong> dari ${g.nama} (radius: ${g.radius}m). Silakan mendekat atau gunakan Status Khusus.</div>`;
+        lucide.createIcons(); return;
+    }
 
-async function submitWithRetry(attempt = 1) { const btn = document.getElementById('btnSubmitPresensi'), n = document.getElementById('notes').value.trim(); if (!selectedStatus) return showToast("Peringatan", "Pilih status presensi!", "warning"); if (!n || n.length < 5) return showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning"); if (!sB64) return showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning"); if (!kB64) return showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning"); const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus); if (needSurat && !suratB64) { setLoading(true, "Memeriksa kelengkapan..."); const userChoice = await showSuratModal(); if (userChoice === 'attach') { setLoading(false); uploadSurat(); return; } } btn.disabled = true; setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data..."); const p = dbF[uIdx]; const payload = { action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus, selfie: sB64, workPhoto: kB64, surat: suratB64 || '-', keterangan: n, gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore }; try { const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }); const j = await r.json(); if (j.status === 'success' || j.result === 'success') { sndSuccess.play().catch(() => { }); showToast("Presensi Berhasil!", "Data Anda telah tersinkronisasi ke server dengan aman.", "success"); clearHeavyData(); setTimeout(() => location.reload(), 2500); } else { throw new Error(j.message || "Gagal menyimpan data"); } } catch (e) { console.error("Error submit:", e); if (attempt < 4) { showToast("Menunggu Antrian...", "Server sedikit padat, mencoba ulang otomatis...", "warning"); setTimeout(() => submitWithRetry(attempt + 1), 3000); } else { sndError.play().catch(() => { }); showToast("Gagal Mengirim", "Koneksi tidak stabil atau server sangat sibuk. Coba lagi nanti.", "error"); btn.disabled = false; setLoading(false); } } }
+    haptic();
+    const now = new Date(), tm = now.getHours() * 100 + now.getMinutes(), p = dbF[uIdx];
+    const pid = p.ID || p.id;
+
+    if (st === 'HADIR' && checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR hari ini.", "error"); return; }
+    if (st === 'PULANG') {
+        if (checkAtt(pid, 'PULANG')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG hari ini.", "error"); return; }
+        if (tm < 1000) { showToast("Belum Waktunya", "Belum jam pulang. Silakan coba lagi nanti.", "warning"); return; }
+        if (!checkAtt(pid, 'HADIR')) { showToast("Urutan Salah", "Anda harus melakukan absen HADIR terlebih dahulu sebelum PULANG.", "error"); return; }
+    }
+
+    document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
+    el.classList.add('active'); selectedStatus = st; updateStatusInfo(st);
+
+    if (st === 'HADIR') { if (tm <= 740) calculatedScore = 50; else if (tm <= 800) calculatedScore = 40; else calculatedScore = 25; }
+    else if (st === 'PULANG') { calculatedScore = 50; }
+    else { calculatedScore = 50; }
+
+    updateWorkflow(); saveAutoRecovery();
+}
+
+// ✅ PERBAIKAN UTAMA: Menghentikan retry jika server menolak karena aturan
+async function submitWithRetry(attempt = 1) {
+    const btn = document.getElementById('btnSubmitPresensi'), n = document.getElementById('notes').value.trim();
+    if (!selectedStatus) return showToast("Peringatan", "Pilih status presensi!", "warning");
+    if (!n || n.length < 5) return showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning");
+    if (!sB64) return showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning");
+    if (!kB64) return showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning");
+
+    const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus);
+    if (needSurat && !suratB64) {
+        setLoading(true, "Memeriksa kelengkapan...");
+        const userChoice = await showSuratModal();
+        if (userChoice === 'attach') { setLoading(false); uploadSurat(); return; }
+    }
+
+    btn.disabled = true;
+    setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
+    const p = dbF[uIdx];
+    const payload = {
+        action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus,
+        selfie: sB64, workPhoto: kB64, surat: suratB64 || '-', keterangan: n,
+        gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore
+    };
+
+    try {
+        const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+        const j = await r.json();
+
+        if (j.status === 'success' || j.result === 'success') {
+            sndSuccess.play().catch(() => { });
+            showToast("Presensi Berhasil!", "Data Anda telah tersinkronisasi ke server dengan aman.", "success");
+            clearHeavyData();
+            setTimeout(() => location.reload(), 2500);
+        } else if (j.status === 'error') {
+            // ✅ Jika ditolak karena aturan (bukan error jaringan), JANGAN di-retry!
+            setLoading(false);
+            btn.disabled = false;
+            sndError.play().catch(() => { });
+            showToast("Presensi Ditolak", j.message || "Gagal menyimpan data.", "error");
+        } else {
+            throw new Error(j.message || "Format respons server tidak dikenal");
+        }
+    } catch (e) {
+        console.error("Error submit:", e);
+        // Jika masuk blok catch, berarti memang error JARINGAN
+        if (attempt < 4) {
+            showToast("Menunggu Antrian...", "Koneksi tidak stabil, mencoba ulang otomatis...", "warning");
+            setTimeout(() => submitWithRetry(attempt + 1), 3000);
+        } else {
+            sndError.play().catch(() => { });
+            showToast("Gagal Mengirim", "Koneksi internet terputus atau server sangat sibuk. Coba lagi nanti.", "error");
+            btn.disabled = false;
+            setLoading(false);
+        }
+    }
+}
 
 function setLoading(s, t) { const o = document.getElementById('sendingOverlay'); document.getElementById('overlayText').innerText = t; o.style.display = s ? 'flex' : 'none'; o.style.pointerEvents = s ? 'all' : 'none'; }
 function startVoice(id, btn) { const S = window.SpeechRecognition || window.webkitSpeechRecognition; if (!S) return; const r = new S(); r.lang = 'id-ID'; r.onstart = () => { btn.classList.add('active'); haptic(); }; r.onresult = e => { const t = e.results[0][0].transcript; if (id === 'searchInput') { document.getElementById('searchInput').value = t; applyFilters(); } else { const n = document.getElementById('notes'); n.value += (n.value ? ' ' : '') + t; onNotesInput(); } }; r.onend = () => btn.classList.remove('active'); r.start(); }
