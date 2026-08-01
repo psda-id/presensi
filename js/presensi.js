@@ -448,45 +448,29 @@ function processFallbackImage(url, type) { const img = new Image(); img.onload =
 
 function savePhoto(c, type) { const d = c.toDataURL('image/jpeg', DeviceProfile.config.jpegQuality); sndShutter.play(); if (type === 'selfie') { document.getElementById('sImg').src = d; document.getElementById('sImg').style.display = 'block'; document.getElementById('sPh').style.display = 'none'; sB64 = d; } else { document.getElementById('kImg').src = d; document.getElementById('kImg').style.display = 'block'; document.getElementById('kPh').style.display = 'none'; kB64 = d; } showToast("Berhasil", "Foto berhasil diambil dan disimpan", "success"); saveAutoRecovery(); }
 
-// ✅ BLUR FIX: Menggunakan Sobel Edge Detection untuk akurasi blur
+// ✅ FIX BLUR DETECTION: Kembali ke Variance Luminansi dengan batas wajar
 function checkImageQuality(canvas) {
     const ctx = canvas.getContext('2d');
     const w = canvas.width, h = canvas.height;
     const data = ctx.getImageData(0, 0, w, h).data;
-    let sumBrightness = 0, count = 0, sumEdge = 0;
+    let sumBrightness = 0, sumBrightnessSq = 0, count = 0;
     
-    // Cek Kecerahan
     for (let i = 0; i < data.length; i += 40) {
         const brightness = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
         sumBrightness += brightness;
+        sumBrightnessSq += brightness * brightness;
         count++;
     }
-    const avgBrightness = sumBrightness / count;
-    if (avgBrightness < 40) return { valid: false, msg: "Foto terlalu gelap. Arahkan ke tempat terang." };
-    if (avgBrightness > 230) return { valid: false, msg: "Foto terlalu silau/terang." };
-
-    // Cek Blur dengan Gradien Tepi (Sobel sederhana)
-    // Bandingkan piksel dengan piksel di sebelahnya, jika perbedaannya kecil semua -> blur
-    for (let y = 1; y < h - 1; y += 2) { // Skip baris untuk performa
-        for (let x = 1; x < w - 1; x += 2) {
-            const i = (y * w + x) * 4;
-            const i_right = (y * w + (x + 1)) * 4;
-            const i_down = ((y + 1) * w + x) * 4;
-            
-            const px = data[i] * 0.299 + data[i+1] * 0.587 + data[i+2] * 0.114;
-            const px_right = data[i_right] * 0.299 + data[i_right+1] * 0.587 + data[i_right+2] * 0.114;
-            const px_down = data[i_down] * 0.299 + data[i_down+1] * 0.587 + data[i_down+2] * 0.114;
-            
-            const gx = Math.abs(px - px_right);
-            const gy = Math.abs(px - px_down);
-            sumEdge += (gx + gy);
-        }
-    }
-    const totalPixelsChecked = (w / 2) * (h / 2);
-    const avgEdge = sumEdge / totalPixelsChecked;
     
-    // Threshold blur diturunkan dari 15 (variance) menjadi ~8 (edge gradient)
-    if (avgEdge < 8) return { valid: false, msg: "Foto terdeteksi blur/kabur. Pegang kamera dengan stabil." };
+    const avgBrightness = sumBrightness / count;
+    const variance = (sumBrightnessSq / count) - (avgBrightness * avgBrightness);
+    
+    if (avgBrightness < 30) return { valid: false, msg: "Foto terlalu gelap. Arahkan ke tempat terang." };
+    if (avgBrightness > 235) return { valid: false, msg: "Foto terlalu silau/terang." };
+    
+    // Threshold variance diturunkan menjadi 10 (sebelumnya 15)
+    // Ini akan menolak foto hitam putih polos, tapi menerima foto wajah/warna yang jelas
+    if (variance < 10) return { valid: false, msg: "Foto terdeteksi blur/kabur. Pegang kamera dengan stabil." };
     
     return { valid: true };
 }
