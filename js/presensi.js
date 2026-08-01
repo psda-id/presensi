@@ -439,7 +439,7 @@ function upUI(w = "ALL") { const p = dbF[uIdx]; if (!p) { document.getElementByI
 function navU(d) { if (!dbF.length) return; uIdx = (uIdx + d + dbF.length) % dbF.length; upUI(); }
 function initMap() { if (map) return; map = L.map('map', { zoomControl: false }).setView([-8.13, 113.22], 13); L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(map); marker = L.marker([-8.13, 113.22]).addTo(map); requestAnimationFrame(() => { requestAnimationFrame(() => { if (map) map.invalidateSize(); }); }); }
 
-// ✅ PERBAIKAN: Cek apakah sudah absen Hadir/Pulang hari ini
+// ✅ Cek apakah sudah absen Hadir/Pulang hari ini
 function checkAtt(id, st) {
     return dbP.some(l => {
         const lid = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
@@ -507,23 +507,20 @@ function setS(el, st) {
     }
 
     haptic();
-    const now = new Date(), tm = now.getHours() * 100 + now.getMinutes(), p = dbF[uIdx];
+    const p = dbF[uIdx];
     const pid = p.ID || p.id;
 
     if (st === 'HADIR' && checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR hari ini.", "error"); return; }
     if (st === 'PULANG') {
         if (checkAtt(pid, 'PULANG')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG hari ini.", "error"); return; }
-        if (tm < 1000) { showToast("Belum Waktunya", "Belum jam pulang. Silakan coba lagi nanti.", "warning"); return; }
+        // ✅ PERBAIKAN: Hapus validasi jam HP. Biarkan backend yang menolak jika belum jam 10:00
         if (!checkAtt(pid, 'HADIR')) { showToast("Urutan Salah", "Anda harus melakukan absen HADIR terlebih dahulu sebelum PULANG.", "error"); return; }
     }
 
     document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
     el.classList.add('active'); selectedStatus = st; updateStatusInfo(st);
 
-    if (st === 'HADIR') { if (tm <= 740) calculatedScore = 50; else if (tm <= 800) calculatedScore = 40; else calculatedScore = 25; }
-    else if (st === 'PULANG') { calculatedScore = 50; }
-    else { calculatedScore = 50; }
-
+    // ✅ PERBAIKAN: Hapus perhitungan nilai di HP. Backend yang hitung pakai jam server.
     updateWorkflow(); saveAutoRecovery();
 }
 
@@ -545,10 +542,12 @@ async function submitWithRetry(attempt = 1) {
     btn.disabled = true;
     setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
     const p = dbF[uIdx];
+    
+    // ✅ PERBAIKAN: Hapus variabel nilai dari payload
     const payload = {
         action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus,
         selfie: sB64, workPhoto: kB64, surat: suratB64 || '-', keterangan: n,
-        gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-", nilai: calculatedScore
+        gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-"
     };
 
     try {
