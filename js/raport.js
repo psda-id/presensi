@@ -64,7 +64,13 @@ function buildReportUrl() {
     const start = document.getElementById('startD').value;
     const end = document.getElementById('endD').value;
     const reg = document.getElementById('wilF').value;
-    return `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}&detail=true&limit=9999`;
+    
+    // ✅ Baca nilai dari input pencarian (jika elemen ada)
+    const searchEl = document.getElementById('searchName');
+    const search = searchEl ? searchEl.value.trim() : '';
+    
+    // ✅ Sisipkan parameter &search= ke URL
+    return `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}&detail=true&limit=9999&search=${encodeURIComponent(search)}`;
 }
 
 // APP INITIALIZATION
