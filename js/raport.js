@@ -7,8 +7,12 @@ const logsMap = new Map();
 
 // INISIALISASI PWA MANIFEST
 const manifest = {
-    "name": "E-PUSDA UPT Management", "short_name": "E-PUSDA", "start_url": "./",
-    "display": "standalone", "background_color": "#0d1b3e", "theme_color": "#1e40af",
+    "name": "E-PUSDA UPT Management",
+    "short_name": "E-PUSDA",
+    "start_url": "./",
+    "display": "standalone",
+    "background_color": "#0d1b3e",
+    "theme_color": "#1e40af",
     "icons": [
         { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png" },
         { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
@@ -338,59 +342,11 @@ function toggleDetail(btn, card, pegawaiId) {
     lucide.createIcons({ node: btn });
 }
 
-// ✅ PREMIUM PDF GENERATION (Menggantikan window.onbeforeprint)
-function generatePDF() {
-    // 1. Salin konten layar ke area cetak tersembunyi
-    const printArea = document.getElementById('printArea');
-    const printGrid = document.getElementById('printGrid');
-    
-    // Kloning kartu agar kalender yang tersembunyi di layar tetap tampil di PDF
-    const originalCards = document.querySelectorAll('#raportGrid .pegawai-card');
-    printGrid.innerHTML = ''; // Kosongkan dulu
-    
-    originalCards.forEach(card => {
-        const clone = card.cloneNode(true);
-        // Buka paksa panel kalender di hasil PDF
-        const panel = clone.querySelector('.hidden-calendar-panel');
-        if (panel) {
-            panel.classList.add('active');
-            const pegawaiId = card.dataset.pegawaiId;
-            const logs = logsMap.get(String(pegawaiId)) || [];
-            const startDate = document.getElementById('startD').value;
-            panel.innerHTML = buildCalendarHTML(logs, startDate);
-        }
-        printGrid.appendChild(clone);
-    });
-
-    // Tampilkan area cetak sementara agar html2pdf bisa membacanya
-    printArea.style.position = 'absolute';
-    printArea.style.left = '-9999px';
-    printArea.style.visibility = 'visible';
-
-    // 2. Konfigurasi PDF
-    const opt = {
-        margin:       [10, 10, 10, 10], // Margin atas, kanan, bawah, kiri (mm)
-        filename:     'E-Raport_Presensi_PUSDA.pdf',
-        image:        { type: 'jpeg', quality: 0.95 },
-        html2canvas:  { scale: 2, useCORS: true, backgroundColor: '#ffffff' },
-        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-
-    // 3. Generate dan Unduh PDF
-    showToast("Membuat PDF", "Mohon tunggu, dokumen sedang diproses...", "info");
-    
-    html2pdf().set(opt).from(printArea).save().then(() => {
-        // Sembunyikan kembali area cetak setelah selesai
-        printArea.style.visibility = 'hidden';
-        printArea.style.position = 'absolute';
-        showToast("Berhasil", "File PDF telah diunduh.", "success");
-    }).catch(err => {
-        console.error("PDF Error:", err);
-        showToast("Gagal", "Terjadi kesalahan saat membuat PDF.", "error");
-        printArea.style.visibility = 'hidden';
-    });
-}
+// PRINT LOGIC
+window.onbeforeprint = () => {
+    document.getElementById('printGrid').innerHTML = document.getElementById('raportGrid').innerHTML;
+    lucide.createIcons();
+};
 
 // START APP
-window.onload = initApp;
+window.onload = initApp;  apakah seperti ini penulisan untuk cetak pdf
