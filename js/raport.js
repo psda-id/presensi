@@ -65,11 +65,11 @@ function buildReportUrl() {
     const end = document.getElementById('endD').value;
     const reg = document.getElementById('wilF').value;
     
-    // ✅ Baca nilai dari input pencarian (jika elemen ada)
+    // ✅ Baca nilai dari input pencarian
     const searchEl = document.getElementById('searchName');
     const search = searchEl ? searchEl.value.trim() : '';
     
-    // ✅ Sisipkan parameter &search= ke URL
+    // ✅ Sisipkan parameter &search= dan &limit=9999 agar semua data tampil
     return `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}&detail=true&limit=9999&search=${encodeURIComponent(search)}`;
 }
 
@@ -84,23 +84,8 @@ async function initApp() {
         if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     }, 1000);
 
-    const cached = localStorage.getItem('pusda_raport_cache');
-    let cacheValid = false;
-    if (cached) {
-        try {
-            const parsed = JSON.parse(cached);
-            if (Date.now() - parsed.time < 300000) {
-                renderCards(parsed.data);
-                cacheValid = true;
-                toggleLoading(false);
-            }
-        } catch(e) {
-            localStorage.removeItem('pusda_raport_cache');
-        }
-    }
-
-    if (!cacheValid) toggleLoading(true);
-
+    // ✅ HAPUS CACHE LOCALSTORAGE AGAR FILTER SELALU FRESH (Mencegah bug filter tidak berfungsi)
+    toggleLoading(true);
     fetchReportDataInBackground();
     fetchDashboardDataInBackground();
 }
@@ -112,29 +97,25 @@ async function fetchReportDataInBackground() {
         let result;
         try { result = JSON.parse(text); } catch (e) {
             console.error("Server mengembalikan HTML:", text);
-            if (!localStorage.getItem('pusda_raport_cache')) toggleLoading(false);
+            toggleLoading(false);
             return;
         }
         
         if (result.status === 'success') {
-            localStorage.setItem('pusda_raport_cache', JSON.stringify({ time: Date.now(), data: result.data }));
+            // ✅ Hapus localStorage.setItem agar tidak menyimpan hasil filter lama
             renderCards(result.data);
             toggleLoading(false);
         } else {
             console.error("Error dari server:", result.message);
-            if (!localStorage.getItem('pusda_raport_cache')) {
-                alert("Error: " + result.message);
-                renderCards([]);
-                toggleLoading(false);
-            }
-        }
-    } catch (e) {
-        console.error("Gagal memuat laporan:", e);
-        if (!localStorage.getItem('pusda_raport_cache')) {
-            alert("Gagal memuat laporan: " + e.message);
+            alert("Error: " + result.message);
             renderCards([]);
             toggleLoading(false);
         }
+    } catch (e) {
+        console.error("Gagal memuat laporan:", e);
+        alert("Gagal memuat laporan: " + e.message);
+        renderCards([]);
+        toggleLoading(false);
     }
 }
 
@@ -348,7 +329,7 @@ function toggleDetail(btn, card, pegawaiId) {
     lucide.createIcons({ node: btn });
 }
 
-// PRINT LOGIC
+// PRINT LOGIC (Untuk tombol PRINT bawaan browser)
 window.onbeforeprint = () => {
     document.getElementById('printGrid').innerHTML = document.getElementById('raportGrid').innerHTML;
     lucide.createIcons();
@@ -357,7 +338,7 @@ window.onbeforeprint = () => {
 // START APP
 window.onload = initApp;
 
-// ✅ FUNGSI BUKA HALAMAN PDF DI TAB BARU
+// ✅ FUNGSI BUKA HALAMAN PDF DI TAB BARU (Untuk tombol EXPORT PDF)
 function openPDFGenerator() {
     const start = document.getElementById('startD').value;
     const end = document.getElementById('endD').value;
