@@ -574,9 +574,15 @@ async function loadData() {
     const statusText = document.getElementById('initStatusText'); 
     try { 
         if (!hasCache) statusText.innerText = "Sinkronisasi..."; 
-        const [r1, r2] = await Promise.all([fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }), fetch(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' })]); 
+        const [r1, r2] = await Promise.all([
+            fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }), 
+            fetch(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' })
+        ]); 
         const [d1, d2] = await Promise.all([r1.json(), r2.json()]); 
-        dbE = d1.pegawai || []; dbF = [...dbE]; dbP = d2.data || []; 
+        dbE = d1.pegawai || []; 
+        dbF = [...dbE]; 
+        dbP = d2.data || []; 
+        
         if (DeviceProfile.tier !== 'low') { 
             try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } catch (e) { console.warn('LocalStorage penuh, cache dilewati'); } 
         } 
@@ -584,11 +590,37 @@ async function loadData() {
         document.getElementById('sidebarLogo').src = d1.config?.Logo || GITHUB_LOGO_URL; 
         
         const cfg = d1.config || {};
+        
+        // ✅ ATURAN JAM DINAMIS
         const jHadir = cfg.Jam_Hadir || "07:40";
         const jTelat = cfg.Jam_Terlambat_Ringan || "08:00";
         STATUS_CONFIG.HADIR.message = `<b>Aturan Waktu:</b><br>• ≤ ${jHadir} = Poin 50 (Tepat Waktu)<br>• ${jHadir} - ${jTelat} = Poin 40 (Terlambat Ringan)<br>• > ${jTelat} = Poin 25 (Terlambat Berat)`;
 
-        renderChips(); applyFilters(); 
+        // ✅ KONTEN DINAMIS DARI SHEET CONF
+        if (cfg.Teks_Sambutan) {
+            const elWelcome = document.getElementById('dynamicWelcome');
+            if (elWelcome) elWelcome.innerText = cfg.Teks_Sambutan;
+        }
+        if (cfg.TeksDeskripsi) {
+            const elDesc = document.getElementById('dynamicDesc');
+            if (elDesc) elDesc.innerText = cfg.TeksDeskripsi;
+        }
+        if (cfg.Teks_Tombol_Mulai) {
+            const elBtn = document.getElementById('dynamicBtnStart');
+            if (elBtn) elBtn.innerHTML = `<i data-lucide="scan-face" size="26"></i> ${cfg.Teks_Tombol_Mulai}`;
+            lucide.createIcons();
+        }
+
+        // ✅ DYNAMIC BACKGROUND DARI SHEET CONF
+        if (cfg.URL_Background) {
+            const bgEl = document.querySelector('.fixed-bg');
+            if (bgEl) {
+                bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`);
+            }
+        }
+
+        renderChips(); 
+        applyFilters(); 
     } catch (e) { 
         console.error("Load API Error:", e);
         if (!hasCache) {
@@ -602,7 +634,11 @@ async function loadData() {
         }
     } finally { 
         const o = document.getElementById('initialLoadingOverlay'); 
-        if (o) { o.style.opacity = '0'; o.style.pointerEvents = 'none'; setTimeout(() => o.style.display = 'none', 400); } 
+        if (o) { 
+            o.style.opacity = '0'; 
+            o.style.pointerEvents = 'none'; 
+            setTimeout(() => o.style.display = 'none', 400); 
+        } 
     } 
 }
 
@@ -807,24 +843,4 @@ async function submitWithRetry(attempt = 1) {
 function setLoading(s, t) { const o = document.getElementById('sendingOverlay'); document.getElementById('overlayText').innerText = t; o.style.display = s ? 'flex' : 'none'; o.style.pointerEvents = s ? 'all' : 'none'; }
 function startVoice(id, btn) { const S = window.SpeechRecognition || window.webkitSpeechRecognition; if (!S) return; const r = new S(); r.lang = 'id-ID'; r.onstart = () => { btn.classList.add('active'); haptic(); }; r.onresult = e => { const t = e.results[0][0].transcript; if (id === 'searchInput') { document.getElementById('searchInput').value = t; applyFilters(); } else { const n = document.getElementById('notes'); n.value += (n.value ? ' ' : '') + t; onNotesInput(); } }; r.onend = () => btn.classList.remove('active'); r.start(); }
 function haptic() { if (navigator.vibrate) navigator.vibrate(50); }
-        // ✅ KONTEN DINAMIS DARI SHEET CONF
-        const cfg = d1.config || {};
         
-        // Ganti teks sambutan jika ditemukan di Sheet
-        if (cfg.Teks_Sambutan) {
-            const elWelcome = document.getElementById('dynamicWelcome');
-            if (elWelcome) elWelcome.innerText = cfg.Teks_Sambutan;
-        }
-        
-        // Ganti deskripsi jika ditemukan di Sheet
-        if (cfg.TeksDeskripsi) {
-            const elDesc = document.getElementById('dynamicDesc');
-            if (elDesc) elDesc.innerText = cfg.TeksDeskripsi;
-        }
-        
-        // Ganti teks tombol mulai jika ditemukan di Sheet
-        if (cfg.Teks_Tombol_Mulai) {
-            const elBtn = document.getElementById('dynamicBtnStart');
-            if (elBtn) elBtn.innerHTML = `<i data-lucide="scan-face" size="26"></i> ${cfg.Teks_Tombol_Mulai}`;
-            lucide.createIcons(); // Muat ulang ikon agar tidak hilang
-        }
