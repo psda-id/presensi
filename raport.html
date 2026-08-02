@@ -80,13 +80,14 @@
                     <input type="date" id="endD">
                 </div>
                 <div class="filter-group">
-                    <label class="filter-label">Wilayah WS</label>
-                    <select id="wilF"><option value="ALL">Semua Wilayah</option></select>
-                </div>
-                <div class="filter-group">
                     <label class="filter-label">Cari Nama</label>
                     <input type="text" id="searchName" placeholder="Ketik nama pegawai..." oninput="triggerReportFetch()">
                 </div>
+                <div class="filter-group">
+                    <label class="filter-label">Wilayah WS</label>
+                    <select id="wilF"><option value="ALL">Semua Wilayah</option></select>
+                </div>
+                
                 <button class="btn-pro btn-update" onclick="triggerReportFetch()" style="height: 52px; margin-top: auto;"><i data-lucide="refresh-cw" size="18"></i> UPDATE</button>
             </div>
 
