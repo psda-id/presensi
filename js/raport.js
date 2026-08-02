@@ -159,6 +159,18 @@ function triggerReportFetch() {
     fetchReportDataInBackground();
 }
 
+function generatePDF() {
+    const element = document.getElementById('printArea'); // Area yang ingin dijadikan PDF
+    const opt = {
+        margin:       10,
+        filename:     'E-Raport_Presensi.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(element).save();
+}
+
 // RENDERING FUNCTIONS
 function buildCalendarHTML(logs, startDateStr) {
     const startDate = new Date(startDateStr);
