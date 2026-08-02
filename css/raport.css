@@ -146,3 +146,65 @@ input:focus, select:focus { border-color: var(--sda-toska); box-shadow: 0 0 0 3p
     .bottom-nav { display: flex; }
     .filter-card { padding: 20px; gap: 15px; }
 }
+/* =========================================================
+   PREMIUM SKELETON LOADING
+========================================================= */
+.skeleton-card {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border);
+    border-radius: 35px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.skel-top {
+    background: rgba(15, 32, 77, 0.6);
+    padding: 30px 20px;
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    border-bottom: 5px solid rgba(255,255,255,0.1);
+    min-height: 140px;
+}
+.skel-photo {
+    width: 80px;
+    height: 110px;
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+.skel-info { flex: 1; display: flex; flex-direction: column; gap: 10px; padding-bottom: 15px; }
+.skel-line { height: 12px; border-radius: 6px; }
+.skel-line.w-60 { width: 60%; }
+.skel-line.w-40 { width: 40%; }
+.skel-grade {
+    width: 45px; height: 45px; border-radius: 14px; flex-shrink: 0; margin-bottom: 15px;
+}
+.skel-body {
+    padding: 30px 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    background: rgba(255,255,255,0.02);
+}
+.skel-score {
+    width: 120px; height: 40px; border-radius: 8px; margin-bottom: 10px;
+}
+.skel-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+}
+.skel-stat-pill { height: 50px; border-radius: 18px; }
+
+/* Efek Kedip (Shimmer) */
+.shimmer {
+    background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+    background-size: 200% 100%;
+    animation: shimmer-animation 1.5s infinite linear;
+}
+@keyframes shimmer-animation {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
