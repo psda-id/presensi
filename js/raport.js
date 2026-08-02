@@ -349,4 +349,4 @@ window.onbeforeprint = () => {
 };
 
 // START APP
-window.onload = initApp;  apakah seperti ini penulisan untuk cetak pdf
+window.onload = initApp;
