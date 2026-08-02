@@ -459,3 +459,11 @@ flex-direction:column!important;
 }
 
 }
+/* PREMIUM DYNAMIC BACKGROUND */
+.fixed-bg {
+    background: linear-gradient(rgba(13, 27, 62, 0.85), rgba(13, 27, 62, 0.95)), var(--dynamic-bg-url, radial-gradient(circle at top right, #1e40af, #0d1b3e 85%));
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed; /* Agar gambar tidak scroll */
+    transition: background 0.5s ease;
+}
