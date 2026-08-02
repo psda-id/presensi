@@ -64,7 +64,7 @@ function buildReportUrl() {
     const start = document.getElementById('startD').value;
     const end = document.getElementById('endD').value;
     const reg = document.getElementById('wilF').value;
-    return `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}&detail=true`;
+    return `${API_URL}?action=getReportData&start=${start}&end=${end}&region=${reg}&detail=true&limit=9999`;
 }
 
 // APP INITIALIZATION
