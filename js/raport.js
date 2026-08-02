@@ -54,10 +54,44 @@ function initFilters() {
     document.getElementById('endD').value = getLocalDateString(now);
 }
 
+// ✅ PREMIUM SKELETON LOADING IMPLEMENTATION
 function toggleLoading(show) {
     const overlay = document.getElementById('loadingOverlay');
-    if(show) overlay.classList.add('active');
-    else overlay.classList.remove('active');
+    const grid = document.getElementById('raportGrid');
+    
+    if(show) {
+        // ✅ MATIKAN OVERLAY GELAP AGAR SKELETON TERLIHAT
+        // overlay.classList.add('active'); 
+        
+        // Tampilkan 6 kartu Skeleton saat loading
+        let skeletonHTML = '';
+        for (let i = 0; i < 6; i++) {
+            skeletonHTML += `
+                <div class="skeleton-card">
+                    <div class="skel-top">
+                        <div class="skel-photo shimmer"></div>
+                        <div class="skel-info">
+                            <div class="skel-line w-60 shimmer"></div>
+                            <div class="skel-line w-40 shimmer"></div>
+                        </div>
+                        <div class="skel-grade shimmer"></div>
+                    </div>
+                    <div class="skel-body">
+                        <div class="skel-score shimmer"></div>
+                        <div class="skel-stats">
+                            <div class="skel-stat-pill shimmer"></div>
+                            <div class="skel-stat-pill shimmer"></div>
+                            <div class="skel-stat-pill shimmer"></div>
+                            <div class="skel-stat-pill shimmer"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        grid.innerHTML = skeletonHTML;
+    } else {
+        // overlay.classList.remove('active');
+    }
 }
 
 function buildReportUrl() {
@@ -84,7 +118,7 @@ async function initApp() {
         if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     }, 1000);
 
-    // ✅ HAPUS CACHE LOCALSTORAGE AGAR FILTER SELALU FRESH (Mencegah bug filter tidak berfungsi)
+    // ✅ HAPUS CACHE LOCALSTORAGE AGAR FILTER SELALU FRESH
     toggleLoading(true);
     fetchReportDataInBackground();
     fetchDashboardDataInBackground();
@@ -102,7 +136,6 @@ async function fetchReportDataInBackground() {
         }
         
         if (result.status === 'success') {
-            // ✅ Hapus localStorage.setItem agar tidak menyimpan hasil filter lama
             renderCards(result.data);
             toggleLoading(false);
         } else {
