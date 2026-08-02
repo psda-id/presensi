@@ -350,3 +350,13 @@ window.onbeforeprint = () => {
 
 // START APP
 window.onload = initApp;
+
+// ✅ FUNGSI BUKA HALAMAN PDF DI TAB BARU
+function openPDFGenerator() {
+    const start = document.getElementById('startD').value;
+    const end = document.getElementById('endD').value;
+    const reg = document.getElementById('wilF').value;
+    
+    // Buka halaman generate-pdf.html di tab baru beserta parameternya
+    window.open(`generate-pdf.html?start=${start}&end=${end}&region=${reg}`, '_blank');
+}
