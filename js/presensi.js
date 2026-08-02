@@ -807,3 +807,24 @@ async function submitWithRetry(attempt = 1) {
 function setLoading(s, t) { const o = document.getElementById('sendingOverlay'); document.getElementById('overlayText').innerText = t; o.style.display = s ? 'flex' : 'none'; o.style.pointerEvents = s ? 'all' : 'none'; }
 function startVoice(id, btn) { const S = window.SpeechRecognition || window.webkitSpeechRecognition; if (!S) return; const r = new S(); r.lang = 'id-ID'; r.onstart = () => { btn.classList.add('active'); haptic(); }; r.onresult = e => { const t = e.results[0][0].transcript; if (id === 'searchInput') { document.getElementById('searchInput').value = t; applyFilters(); } else { const n = document.getElementById('notes'); n.value += (n.value ? ' ' : '') + t; onNotesInput(); } }; r.onend = () => btn.classList.remove('active'); r.start(); }
 function haptic() { if (navigator.vibrate) navigator.vibrate(50); }
+        // ✅ KONTEN DINAMIS DARI SHEET CONF
+        const cfg = d1.config || {};
+        
+        // Ganti teks sambutan jika ditemukan di Sheet
+        if (cfg.Teks_Sambutan) {
+            const elWelcome = document.getElementById('dynamicWelcome');
+            if (elWelcome) elWelcome.innerText = cfg.Teks_Sambutan;
+        }
+        
+        // Ganti deskripsi jika ditemukan di Sheet
+        if (cfg.TeksDeskripsi) {
+            const elDesc = document.getElementById('dynamicDesc');
+            if (elDesc) elDesc.innerText = cfg.TeksDeskripsi;
+        }
+        
+        // Ganti teks tombol mulai jika ditemukan di Sheet
+        if (cfg.Teks_Tombol_Mulai) {
+            const elBtn = document.getElementById('dynamicBtnStart');
+            if (elBtn) elBtn.innerHTML = `<i data-lucide="scan-face" size="26"></i> ${cfg.Teks_Tombol_Mulai}`;
+            lucide.createIcons(); // Muat ulang ikon agar tidak hilang
+        }
