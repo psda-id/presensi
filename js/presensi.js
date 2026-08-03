@@ -145,7 +145,18 @@ const logoCache = new Image(); logoCache.crossOrigin = "anonymous"; logoCache.sr
 window.onload = () => {
     lucide.createIcons(); loadData();
     updateAttendanceStatusIndicator(); setInterval(updateAttendanceStatusIndicator, 60000);
-    setInterval(() => { const c = document.getElementById('liveClock'); if (c) c.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) }, 1000);
+    
+    // ✅ Update jam sidebar DAN jam vertikal
+    setInterval(() => { 
+        const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        const c = document.getElementById('liveClock'); 
+        if (c) c.innerText = timeStr;
+        
+        // ✅ Jam vertikal di halaman pilih nama
+        const vc = document.getElementById('verticalClock');
+        if (vc) vc.innerText = timeStr;
+    }, 1000);
+    
     checkAppVersion();
 };
 
