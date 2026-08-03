@@ -160,14 +160,26 @@ body {
 }
 
 /* =========================================
-   6. HALAMAN PILIH NAMA (STEP SELECTOR)
-   Foto tetap di tengah atas card, UKURAN LEBIH BESAR
+   6. HERO SECTION WRAPPER (FIX: Tipografi Vertikal)
+   ========================================= */
+.hero-section {
+    position: relative;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-right: 50px;
+    margin-bottom: 0;
+}
+
+/* =========================================
+   7. HALAMAN PILIH NAMA (STEP SELECTOR)
    ========================================= */
 .photo-hero-wrap { 
     position: relative; 
-    z-index: 1; 
+    z-index: 2; 
     width: 100%; 
-    max-width: 260px; /* ✅ Diperbesar dari 200px */
+    max-width: 260px; 
     aspect-ratio: 2/3; 
     display: flex; 
     justify-content: center; 
@@ -257,7 +269,107 @@ body {
 .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); }
 
 /* =========================================
-   7. SEARCH, CHIPS & ACTION
+   8. TIPOGRAFI VERTIKAL DEKORATIF
+   ========================================= */
+.vertical-deco-wrap {
+    position: absolute;
+    top: 8%;
+    right: -15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    z-index: 0;
+    pointer-events: none;
+    opacity: 0.9;
+    max-height: 85%;
+}
+
+.vertical-typo-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.typo-outline,
+.typo-solid {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    line-height: 1;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.typo-outline {
+    font-size: clamp(2rem, 4.5vw, 3.5rem);
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgba(45, 212, 191, 0.4);
+    animation: typoBreath 4s ease-in-out infinite;
+}
+
+.typo-solid {
+    font-size: clamp(0.8rem, 1.5vw, 1.1rem);
+    color: rgba(59, 130, 246, 0.3);
+    letter-spacing: 8px;
+    animation: typoBreath 4s ease-in-out infinite 1s;
+}
+
+.vertical-clock-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.vclock-line {
+    width: 2px;
+    height: 30px;
+    background: linear-gradient(to bottom, transparent, var(--sda-toska), transparent);
+    animation: linePulse 2s ease-in-out infinite;
+}
+
+.vclock-time {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--sda-toska);
+    letter-spacing: 3px;
+    text-shadow: 0 0 15px rgba(45, 212, 191, 0.5);
+    animation: clockGlow 3s ease-in-out infinite;
+}
+
+.vertical-dots {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.vertical-dots span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(249, 115, 22, 0.5);
+    animation: dotFloat 3s ease-in-out infinite;
+}
+
+.vertical-dots span:nth-child(2) {
+    animation-delay: 0.5s;
+    background: rgba(59, 130, 246, 0.5);
+}
+
+.vertical-dots span:nth-child(3) {
+    animation-delay: 1s;
+    background: rgba(45, 212, 191, 0.5);
+}
+
+/* =========================================
+   9. SEARCH, CHIPS & ACTION
    ========================================= */
 .search-area-unified { position: relative; width: 100%; max-width: 600px; }
 
@@ -344,12 +456,11 @@ body {
 .btn-orange-action:hover { transform: translateY(-2px); }
 
 /* =========================================
-   8. HALAMAN PRESENSI (FORM)
-   ✅ Foto di KIRI, teks di KANAN (horizontal)
+   10. HALAMAN PRESENSI (FORM)
    ========================================= */
 .form-header-premium { 
     display: flex; 
-    flex-direction: row; /* ✅ Horizontal: foto kiri, teks kanan */
+    flex-direction: row;
     align-items: center; 
     gap: 16px; 
     width: 100%; 
@@ -383,7 +494,7 @@ body {
     flex: 1; 
     display: flex; 
     flex-direction: column; 
-    align-items: flex-start; /* ✅ Teks rata kiri */
+    align-items: flex-start;
 }
 
 .header-info-text h3 { 
@@ -451,7 +562,7 @@ body {
 }
 
 /* =========================================
-   9. PRESENCE CONTROLS
+   11. PRESENCE CONTROLS
    ========================================= */
 .presence-main-controls { 
     display: grid; 
@@ -621,7 +732,7 @@ body {
 .btn-submit-final:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 20px 50px rgba(16,185,129,.5); }
 
 /* =========================================
-   10. NOTES & TEXTAREA
+   12. NOTES & TEXTAREA
    ========================================= */
 .textarea-wrapper { position: relative; width: 100%; }
 
@@ -768,7 +879,7 @@ body {
 .status-late-heavy .badge-text h4 { color: #ef4444; }
 
 /* =========================================
-   11. CAMERA GRID
+   13. CAMERA GRID
    ========================================= */
 .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
 
@@ -853,7 +964,7 @@ body {
 .cam-action-btn.btn-gallery:hover { background: rgba(45,212,191,.2); }
 
 /* =========================================
-   12. OVERLAYS & LOADERS
+   14. OVERLAYS & LOADERS
    ========================================= */
 #sendingOverlay, #initialLoadingOverlay { 
     position: fixed; 
@@ -895,7 +1006,7 @@ body {
 }
 
 /* =========================================
-   13. MODALS
+   15. MODALS
    ========================================= */
 #notificationModal, #suratModal { 
     display: none; 
@@ -1062,7 +1173,7 @@ body {
 .permission-btn-secondary { background: rgba(255,255,255,.05); color: rgba(255,255,255,.7); border: 1px solid var(--glass-border); }
 
 /* =========================================
-   14. CAMERA UI
+   16. CAMERA UI
    ========================================= */
 #cameraUI { 
     display: none; 
@@ -1236,7 +1347,7 @@ body {
 }
 
 /* =========================================
-   15. BOTTOM NAV
+   17. BOTTOM NAV
    ========================================= */
 .bottom-nav { 
     display: none; 
@@ -1283,389 +1394,3 @@ body {
     box-shadow: 0 10px 25px rgba(249,115,22,.6); 
 }
 
-/* =========================================
-   16. UTILITIES
-   ========================================= */
-.workflow-locked { opacity: .25; filter: grayscale(.5); pointer-events: none; transition: .4s; }
-#fallbackCameraInput, #galleryInput, #suratInput { display: none; }
-
-.skeleton, .skeleton-box { 
-    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%); 
-    background-size: 200% 100%; 
-    animation: shimmer 1.5s infinite; 
-    border-radius: 12px; 
-}
-
-.skel-photo { width: 100%; height: 100%; border-radius: 16px; }
-.skel-title { width: 60%; height: 24px; margin-bottom: 10px; }
-.skel-text { width: 90%; height: 14px; margin-bottom: 8px; }
-.skel-card { width: 100%; height: 120px; border-radius: 20px; }
-
-/* =========================================
-   17. KEYFRAMES
-   ========================================= */
-@keyframes fadeInUp { 
-    from { opacity: 0; transform: translateY(15px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
-@keyframes fadeIn { 
-    from { opacity: 0; transform: translateY(10px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
-@keyframes formSlideUp { 
-    from { opacity: 0; transform: translateY(40px) scale(0.98); } 
-    to { opacity: 1; transform: translateY(0) scale(1); } 
-}
-
-@keyframes slideRight { 
-    from { opacity: 0; transform: translateX(-20px); } 
-    to { opacity: 1; transform: translateX(0); } 
-}
-
-@keyframes gridExpand { 
-    from { opacity: 0; transform: translateY(-10px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
-@keyframes slideIn { 
-    from { opacity: 0; transform: translateY(-5px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-@keyframes pulse-logo-loader { 
-    0%,100% { transform: scale(.8); opacity: .1; } 
-    50% { transform: scale(1.1); opacity: .3; } 
-}
-
-@keyframes blink { 
-    0%,100% { opacity: 1; } 
-    50% { opacity: .3; } 
-}
-
-@keyframes pulseGlow { 
-    0% { box-shadow: 0 0 0 0 currentColor; } 
-    70% { box-shadow: 0 0 0 12px transparent; } 
-    100% { box-shadow: 0 0 0 0 transparent; } 
-}
-
-@keyframes shimmer { 
-    0% { background-position: 200% 0; } 
-    100% { background-position: -200% 0; } 
-}
-
-/* =========================================
-   18. RESPONSIVE MOBILE - PADDING MINIM
-   ========================================= */
-@media (max-width: 768px) {
-    .sidebar { display: none; }
-    
-    .main-content { 
-        margin-left: 0; 
-        padding: 12px 8px 110px; 
-        width: 100%; 
-    }
-    
-    .bottom-nav { display: flex; }
-    
-    /* ✅ Halaman pilih nama: foto LEBIH BESAR di mobile */
-    .photo-hero-wrap { 
-        max-width: 180px; /* ✅ Lebih besar dari sebelumnya (130px) */
-        margin-bottom: -14px; 
-    }
-    
-    .unified-card { 
-        padding: 35px 12px 18px; 
-        border-radius: 24px; 
-        gap: 14px; 
-    }
-    
-    .scroller-controls { 
-        grid-template-columns: 42px 1fr 42px; 
-        gap: 6px; 
-    }
-    
-    .btn-circle-nav { 
-        width: 42px; 
-        height: 42px; 
-    }
-    
-    .name-scroller-box h2 { 
-        font-size: clamp(1.1rem, 4.5vw, 1.6rem); 
-    }
-    
-    .name-scroller-box p { 
-        font-size: 0.65rem; 
-        letter-spacing: 1px; 
-        margin-top: -6px; 
-    }
-    
-    .search-area-unified input { 
-        padding: 16px 55px 16px 18px; 
-        font-size: 0.95rem; 
-        border-radius: 30px; 
-    }
-    
-    .mic-trigger { 
-        width: 40px; 
-        height: 40px; 
-        right: 8px; 
-    }
-    
-    .chips-list-row { gap: 6px; }
-    
-    .chip-pill { 
-        padding: 9px 14px; 
-        font-size: .7rem; 
-        border-radius: 20px; 
-    }
-    
-    .btn-orange-action { 
-        padding: 18px 14px; 
-        font-size: 0.95rem; 
-        border-radius: 30px; 
-        gap: 8px; 
-    }
-    
-    .btn-back-accent { 
-        padding: 10px 18px; 
-        font-size: .78rem; 
-        border-radius: 14px; 
-        margin-bottom: 12px; 
-    }
-    
-    /* ✅✅✅ HALAMAN PRESENSI MOBILE: Foto KIRI, teks KANAN ✅✅✅ */
-    .form-header-premium { 
-        flex-direction: row; /* ✅ TETAP HORIZONTAL di mobile */
-        align-items: center; 
-        padding-left: 0; 
-        gap: 12px; 
-        margin-bottom: 8px; 
-    }
-    
-    .photo-pop-out { 
-        width: 80px; 
-        height: 110px; 
-    }
-    
-    .photo-pop-out img { 
-        width: 120%; 
-        max-height: 140px; 
-    }
-    
-    .header-info-text { 
-        padding-bottom: 0; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: flex-start; /* ✅ Teks rata kiri, di samping foto */
-    }
-    
-    .header-info-text h3 { 
-        font-size: clamp(1rem, 4vw, 1.3rem); 
-        margin-bottom: 4px; 
-    }
-    
-    .header-info-text p { 
-        justify-content: flex-start; 
-        font-size: .72rem; 
-    }
-    
-    .form-unified-box { 
-        padding: 16px 10px; 
-        border-radius: 24px; 
-        gap: 12px; 
-    }
-    
-    .map-view-frame { 
-        height: 160px; 
-        border-radius: 16px; 
-    }
-    
-    .presence-main-controls { gap: 8px; }
-    
-    .btn-presence-mega { 
-        padding: 16px 8px; 
-        border-radius: 14px; 
-        font-size: 0.8rem; 
-    }
-    
-    .collapse-header { 
-        padding: 12px 16px; 
-        font-size: 0.75rem; 
-        margin-top: 8px; 
-        border-radius: 10px 30px 20px 30px; 
-    }
-    
-    .special-status-grid { gap: 8px; margin-top: 8px; }
-    
-    .btn-special-status { 
-        padding: 12px 6px; 
-        font-size: 0.65rem; 
-        border-radius: 12px; 
-    }
-    
-    .status-badge { 
-        padding: 6px 12px; 
-        font-size: .65rem; 
-    }
-    
-    .status-info-note { 
-        padding: 12px 14px; 
-        border-radius: 16px; 
-        font-size: .8rem; 
-    }
-    
-    .status-info-note .info-title { font-size: .85rem; }
-    .status-info-note .info-body { font-size: .75rem; }
-    
-    .attendance-status-badge { 
-        padding: 10px 12px; 
-        border-radius: 12px; 
-        gap: 8px; 
-    }
-    
-    .badge-icon { width: 28px; height: 28px; }
-    .badge-text h4 { font-size: 0.78rem; }
-    .badge-text p { font-size: 0.68rem; }
-    
-    .textarea-wrapper textarea { 
-        padding: 12px 14px 32px 14px; 
-        border-radius: 16px; 
-        font-size: .88rem; 
-        min-height: 85px; 
-    }
-    
-    .textarea-counter { 
-        bottom: 8px; 
-        right: 12px; 
-        font-size: .62rem; 
-    }
-    
-    .textarea-clear { 
-        top: 8px; 
-        right: 8px; 
-        width: 26px; 
-        height: 26px; 
-    }
-    
-    .cam-grid-5050 { gap: 8px; }
-    
-    .cam-slot-frame, .cam-slot-kerja { 
-        border-radius: 16px; 
-    }
-    
-    .cam-slot-actions { 
-        padding: 6px; 
-        gap: 4px; 
-    }
-    
-    .cam-action-btn { 
-        padding: 8px 4px; 
-        font-size: .62rem; 
-        border-radius: 10px; 
-        gap: 4px; 
-    }
-    
-    .btn-submit-final { 
-        padding: 18px 14px; 
-        font-size: 0.95rem; 
-        border-radius: 28px; 
-        margin-top: 6px; 
-    }
-    
-    /* Camera UI mobile */
-    .scan-header { 
-        padding: 14px 14px 18px; 
-        gap: 10px; 
-    }
-    
-    .scan-header-logo { 
-        width: 40px; 
-        height: 40px; 
-    }
-    
-    .scan-header-logo img { width: 26px; height: 26px; }
-    .scan-header-title { font-size: .6rem; letter-spacing: 2px; }
-    .scan-header-subtitle { font-size: .65rem; }
-    
-    .scan-header-status { 
-        padding: 5px 10px; 
-        font-size: .6rem; 
-    }
-    
-    .scan-info { 
-        bottom: 150px; 
-        left: 10px; 
-        right: 10px; 
-        padding: 10px 14px; 
-        border-radius: 12px; 
-    }
-    
-    .scan-info-label { font-size: .52rem; }
-    .scan-info-value { font-size: .72rem; }
-    
-    .scan-instruction { 
-        bottom: 230px; 
-        font-size: .75rem; 
-        padding: 10px 16px; 
-        max-width: 92%; 
-    }
-    
-    .shutter { 
-        width: 72px; 
-        height: 72px; 
-        bottom: 40px; 
-        border-width: 5px; 
-    }
-    
-    .btn-close-cam { 
-        top: 16px; 
-        right: 14px; 
-        width: 40px; 
-        height: 40px; 
-    }
-    
-    /* Modal mobile */
-    .notif-modal-content, .surat-modal-content { 
-        padding: 24px 18px; 
-        border-radius: 20px; 
-        max-width: 92vw; 
-    }
-    
-    .permission-modal-content { 
-        padding: 24px 18px; 
-        border-radius: 20px; 
-        max-width: 92vw; 
-    }
-    
-    .permission-btn { 
-        padding: 13px; 
-        font-size: .85rem; 
-    }
-}
-
-/* Tablet kecil */
-@media (min-width: 769px) and (max-width: 1024px) {
-    .sidebar { 
-        width: 220px; 
-        padding: 18px; 
-    }
-    
-    .main-content { 
-        margin-left: 220px; 
-        width: calc(100% - 220px); 
-        padding: 24px 24px 100px; 
-    }
-    
-    .unified-card { 
-        padding: 40px 25px 25px; 
-        border-radius: 35px; 
-    }
-    
-    .photo-hero-wrap { 
-        max-width: 220px; 
-    }
-}
