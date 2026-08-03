@@ -1862,3 +1862,83 @@ body {
         right: -25px;
     }
 }
+/* =========================================
+   23. PATCH: TIPOGRAFI VERTIKAL PROPORSIONAL
+   (Letakkan di paling bawah file CSS)
+   ========================================= */
+
+/* Hilangkan padding kanan agar foto & card benar-benar di tengah */
+.hero-section {
+    padding-right: 0;
+}
+
+/* ✅ Posisi menempel di kanan FOTO (bukan tepi layar),
+   tinggi proporsional dengan foto (260px × 1.5 = 390px) */
+.vertical-deco-wrap {
+    top: 0;
+    right: auto;                      /* ✅ Tidak keluar layar lagi */
+    left: calc(50% + 150px);          /* ✅ setengah lebar foto (130) + gap 20 */
+    height: 390px;                    /* ✅ sama dengan tinggi foto */
+    max-height: none;
+    overflow: hidden;                 /* ✅ tidak menjulur ke bawah */
+    gap: 12px;
+    padding-top: 6px;
+    justify-content: flex-start;
+}
+
+/* ✅ Ukuran teks lebih kecil & rapi */
+.typo-outline {
+    font-size: 1.6rem;
+    letter-spacing: 3px;
+    -webkit-text-stroke: 1.2px rgba(45, 212, 191, 0.4);
+}
+
+.typo-solid {
+    font-size: 0.65rem;
+    letter-spacing: 4px;
+}
+
+.vclock-time {
+    font-size: 0.8rem;
+    letter-spacing: 2px;
+}
+
+.vclock-line {
+    height: 18px;
+}
+
+/* ---------- MOBILE ---------- */
+@media (max-width: 768px) {
+    .vertical-deco-wrap {
+        right: auto;
+        left: calc(50% + 100px);      /* foto mobile 180px → 90 + gap 10 */
+        height: 270px;                /* 180 × 1.5 = 270 */
+        gap: 8px;
+        opacity: 0.55;
+    }
+    .typo-outline {
+        font-size: 1.05rem;
+        letter-spacing: 2px;
+        -webkit-text-stroke: 1px rgba(45, 212, 191, 0.3);
+    }
+    .typo-solid { font-size: 0.5rem; letter-spacing: 3px; }
+    .vclock-time { font-size: 0.65rem; }
+    .vclock-line { height: 12px; width: 1.5px; }
+}
+
+/* ---------- TABLET ---------- */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .vertical-deco-wrap {
+        right: auto;
+        left: calc(50% + 125px);      /* foto tablet 220px → 110 + gap 15 */
+        height: 330px;
+    }
+}
+
+/* ---------- DESKTOP BESAR ---------- */
+@media (min-width: 1101px) {
+    .vertical-deco-wrap {
+        right: auto;
+        left: calc(50% + 150px);
+    }
+}
