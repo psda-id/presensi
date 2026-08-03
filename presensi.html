@@ -85,25 +85,44 @@
     <!-- MAIN CONTENT -->
     <main class="main-content">
         <section id="stepSelector" class="step-container">
-            <div class="photo-hero-wrap" id="pWrap"><img id="pImg" src="" alt="Pegawai"></div>
-            <div class="unified-card">
-                <div class="name-scroller-box">
-                    <p id="pWil" style="font-size:.75rem;font-weight:800;color:var(--sda-toska);letter-spacing:2px;margin-bottom:5px">WILAYAH: ...</p>
-                    <div class="scroller-controls">
-                        <button class="btn-circle-nav" onclick="navU(-1)"><i data-lucide="chevron-left" size="24"></i></button>
-                        <h2 id="pName">MEMUAT...</h2>
-                        <button class="btn-circle-nav" onclick="navU(1)"><i data-lucide="chevron-right" size="24"></i></button>
-                    </div>
-                    <p id="pJob">PPA</p>
-                </div>
-                <div class="search-area-unified">
-                    <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="applyFilters()" inputmode="text">
-                    <button class="mic-trigger" onclick="startVoice('searchInput',this)"><i data-lucide="mic" size="24"></i></button>
-                </div>
-                <div class="chips-list-row" id="wilChips"></div>
-                <button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face" size="26"></i> MULAI PRESENSI DIGITAL</button>
+    
+    <!-- ✅ TIPOGRAFI VERTIKAL DEKORATIF -->
+    <div class="vertical-deco-wrap">
+        <div class="vertical-typo-group">
+            <span class="typo-outline">E-PUSDA</span>
+            <span class="typo-solid">DIGITAL</span>
+        </div>
+        <div class="vertical-clock-group">
+            <div class="vclock-line"></div>
+            <span class="vclock-time" id="verticalClock">00:00</span>
+            <div class="vclock-line"></div>
+        </div>
+        <div class="vertical-dots">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+
+    <!-- FOTO PEGAWAI -->
+    <div class="photo-hero-wrap" id="pWrap"><img id="pImg" src="" alt="Pegawai"></div>
+    
+    <div class="unified-card">
+        <div class="name-scroller-box">
+            <p id="pWil" style="font-size:.75rem;font-weight:800;color:var(--sda-toska);letter-spacing:2px;margin-bottom:5px">WILAYAH: ...</p>
+            <div class="scroller-controls">
+                <button class="btn-circle-nav" onclick="navU(-1)"><i data-lucide="chevron-left" size="24"></i></button>
+                <h2 id="pName">MEMUAT...</h2>
+                <button class="btn-circle-nav" onclick="navU(1)"><i data-lucide="chevron-right" size="24"></i></button>
             </div>
-        </section>
+            <p id="pJob">PPA</p>
+        </div>
+        <div class="search-area-unified">
+            <input type="text" id="searchInput" placeholder="Cari Nama Petugas..." oninput="applyFilters()" inputmode="text">
+            <button class="mic-trigger" onclick="startVoice('searchInput',this)"><i data-lucide="mic" size="24"></i></button>
+        </div>
+        <div class="chips-list-row" id="wilChips"></div>
+        <button class="btn-orange-action" onclick="openForm()"><i data-lucide="scan-face" size="26"></i> MULAI PRESENSI DIGITAL</button>
+    </div>
+</section>
 
         <section id="stepForm" class="step-container" style="display:none">
             <button class="btn-back-accent" onclick="closeForm()"><i data-lucide="arrow-left" size="20"></i> KEMBALI</button>
