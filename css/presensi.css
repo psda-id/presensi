@@ -10,8 +10,7 @@ html, body { width: 100%; min-height: 100vh; background: var(--bg-dark); overflo
 body { color: #f8fafc; display: flex; position: relative; width: 100vw; }
 .fixed-bg { position: fixed; inset: 0; z-index: -1; background: radial-gradient(circle at top right,#1e40af,#0d1b3e 85%); }
 
-/* SIDEBAR */
-/* SMOOTH TRANSITION & UNIFIED SIDEBAR */
+/* SIDEBAR & SMOOTH TRANSITION */
 .main-content { animation: fadeInUp 0.4s ease-out; }
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -49,54 +48,57 @@ body { color: #f8fafc; display: flex; position: relative; width: 100vw; }
 .chip-pill { padding: 12px 22px; border-radius: 25px; background: rgba(255,255,255,.04); border: 1px solid var(--glass-border); cursor: pointer; font-size: .8rem; font-weight: 800; color: rgba(255,255,255,.4); transition: .3s; text-transform: uppercase; }
 .chip-pill.active { background: linear-gradient(135deg,var(--accent),#ea580c)!important; color: #fff!important; box-shadow: 0 8px 20px rgba(249,115,22,.4); }
 
-.btn-orange-action { width: 100%; max-width: 600px; padding: 22px; border: none; border-radius: 40px; background: linear-gradient(135deg,#f97316,#ea580c); color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 15px 35px rgba(249,115,22,.4); text-transform: uppercase; margin-top: 10px; }
+.btn-orange-action { width: 100%; max-width: 600px; padding: 22px; border: none; border-radius: 40px; background: linear-gradient(135deg,#f97316,#ea580c); color: #fff; font-weight: 800; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; box-shadow: 0 15px 35px rgba(249,115,22,.4); text-transform: uppercase; margin-top: 10px; transition: transform 0.2s; }
+.btn-orange-action:hover { transform: translateY(-2px); }
 
 /* FORM STEP */
-.form-header-premium { display: flex; align-items: flex-end; gap: 20px; width: 100%; margin-bottom: 10px; padding-left: 10px; }
+.form-header-premium { display: flex; align-items: flex-end; gap: 20px; width: 100%; margin-bottom: 10px; padding-left: 10px; animation: slideRight 0.4s ease-out; }
 .photo-pop-out { width: 110px; height: 150px; border-radius: 20px; overflow: visible; flex-shrink: 0; display: flex; align-items: flex-end; justify-content: center; }
 .photo-pop-out img { width: 140%; height: auto; max-height: 190px; object-fit: contain; filter: drop-shadow(0 15px 30px rgba(0,0,0,.8)); margin-bottom: -10px; }
 .header-info-text { padding-bottom: 20px; flex: 1; }
 .header-info-text h3 { font-size: clamp(1.3rem,4vw,1.8rem); font-weight: 800; text-transform: uppercase; line-height: 1; color: #fff; margin-bottom: 5px; }
 .header-info-text p { font-size: .85rem; opacity: .6; font-weight: 700; color: var(--sda-toska); text-transform: uppercase; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.btn-back-accent { background: rgba(255,255,255,.06); border: 1px solid var(--glass-border); border-left: 4px solid var(--sda-toska); color: #fff; padding: 12px 25px; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: .85rem; margin-bottom: 20px; align-self: flex-start; }
+.btn-back-accent { background: rgba(255,255,255,.06); border: 1px solid var(--glass-border); border-left: 4px solid var(--sda-toska); color: #fff; padding: 12px 25px; border-radius: 18px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 12px; font-size: .85rem; margin-bottom: 20px; align-self: flex-start; transition: 0.3s; }
+.btn-back-accent:hover { background: rgba(255,255,255,0.1); transform: translateX(-5px); }
 
-.form-unified-box { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px 25px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 15px; }
+/* ✅ ANIMASI MASUK FORM PREMIUM */
+.form-unified-box { background: var(--glass); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: 40px; padding: 30px 25px; width: 100%; box-shadow: 0 40px 80px rgba(0,0,0,.6); display: flex; flex-direction: column; gap: 15px; animation: formSlideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+@keyframes formSlideUp { from { opacity: 0; transform: translateY(40px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes slideRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+
 .map-view-frame { width: 100%; height: 180px; border-radius: 25px; overflow: hidden; border: 1.5px solid var(--glass-border); background: #000; }
 .presence-main-controls { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
-.btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,.4); transition: .3s; }
-/* TOMBOL HADIR DAN PULANG SOLID */
-.btn-hadir.active { 
-    background: var(--success) !important; 
-    color: #fff !important; 
-    border-color: var(--success) !important; 
-    box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); 
-}
-.btn-pulang.active { 
-    background: var(--accent) !important; 
-    color: #fff !important; 
-    border-color: var(--accent) !important; 
-    box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4); 
-}
+
+/* ✅ TOMBOL HADIR & PULANG (DENGAN EFEK RIPPLE & GLOW) */
+.btn-presence-mega { padding: 20px 10px; border-radius: 18px; background: rgba(255,255,255,.03); border: 1px solid var(--glass-border); cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; color: rgba(255,255,255,.4); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative; overflow: hidden; }
+.btn-presence-mega::after { content: ''; position: absolute; top: 50%; left: 50%; width: 0; height: 0; border-radius: 50%; background: rgba(255,255,255,0.3); transform: translate(-50%, -50%); transition: width 0.4s ease, height 0.4s ease; }
+.btn-presence-mega:active::after { width: 200px; height: 200px; }
+.btn-presence-mega:hover { transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
+.btn-hadir.active { background: var(--success) !important; color: #fff !important; border-color: var(--success) !important; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.4); animation: pulseGlow 2s infinite; }
+.btn-pulang.active { background: var(--accent) !important; color: #fff !important; border-color: var(--accent) !important; box-shadow: 0 8px 20px rgba(249, 115, 22, 0.4); animation: pulseGlow 2s infinite; }
+@keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); } 70% { box-shadow: 0 0 0 12px rgba(255,255,255,0); } 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); } }
 
 /* ✅ STYLE UNTUK TOMBOL YANG SUDAH DIPAKAI (ABU-ABU) */
-.btn-presence-mega.btn-done {
-    background: rgba(255,255,255,0.05) !important;
-    border-color: rgba(255,255,255,0.1) !important;
-    color: rgba(255,255,255,0.3) !important;
-    cursor: not-allowed;
-    pointer-events: none;
-}
-.btn-presence-mega.btn-done i {
-    color: rgba(255,255,255,0.3) !important;
-}
+.btn-presence-mega.btn-done { background: rgba(255,255,255,0.05) !important; border-color: rgba(255,255,255,0.1) !important; color: rgba(255,255,255,0.3) !important; cursor: not-allowed; pointer-events: none; animation: none; }
+.btn-presence-mega.btn-done i { color: rgba(255,255,255,0.3) !important; }
 
-.collapse-header { width: 100%; padding: 16px 20px; background: rgba(255,255,255,.02); border: 1px dashed rgba(255,255,255,.15); border-radius: 20px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: rgba(255,255,255,.6); font-weight: 700; font-size: .85rem; margin-top: 15px; transition: .3s; user-select: none; }
-.special-status-grid { display: none; grid-template-columns: repeat(2,1fr); gap: 12px; width: 100%; margin-top: 12px; }
-.special-status-grid.show { display: grid; }
-.btn-special-status { padding: 18px 12px; border-radius: 18px; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); color: rgba(255,255,255,.5); font-weight: 700; font-size: .85rem; text-transform: uppercase; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: .3s; }
-.btn-izin.active { background: rgba(168,85,247,.15)!important; border-color: rgba(168,85,247,.5)!important; color: #d8b4fe!important; }
-.btn-sakit.active { background: rgba(250,204,21,.15)!important; border-color: rgba(250,204,21,.5)!important; color: #fde047!important; }
-.btn-dinas.active { background: rgba(249,115,22,.15)!important; border-color: rgba(249,115,22,.5)!important; color: #fdba74!important; }
+/* ✅ HEADER STATUS KHUSUS (BENTUK ASIMETRIS) */
+.collapse-header { width: 100%; padding: 14px 25px; background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px 60px 30px 60px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; color: rgba(255,255,255,0.8); font-weight: 700; font-size: 0.8rem; margin-top: 15px; transition: 0.3s; user-select: none; position: relative; overflow: hidden; }
+.collapse-header::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: linear-gradient(to bottom, var(--pu-blue), var(--sda-toska)); }
+.collapse-header:hover { background: linear-gradient(135deg, rgba(255,255,255,0.12), rgba(255,255,255,0.05)); transform: translateX(5px); }
+
+.special-status-grid { display: none; grid-template-columns: repeat(2,1fr); gap: 10px; width: 100%; margin-top: 12px; }
+.special-status-grid.show { display: grid; animation: gridExpand 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+@keyframes gridExpand { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ✅ TOMBOL STATUS KHUSUS (LEBIH KECIL & GAYA BEDA) */
+.btn-special-status { padding: 14px 8px; border-radius: 14px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); font-weight: 700; font-size: 0.75rem; text-transform: uppercase; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; transition: all 0.25s ease; position: relative; overflow: hidden; }
+.btn-special-status i { width: 20px; height: 20px; }
+.btn-special-status:hover { background: rgba(255,255,255,0.05); transform: translateY(-2px); border-color: rgba(255,255,255,0.2); }
+.btn-special-status.active { box-shadow: 0 5px 15px rgba(0,0,0,0.3); transform: scale(0.98); }
+.btn-izin.active { background: rgba(168,85,247,.2)!important; border-color: rgba(168,85,247,.6)!important; color: #d8b4fe!important; }
+.btn-sakit.active { background: rgba(250,204,21,.2)!important; border-color: rgba(250,204,21,.6)!important; color: #fde047!important; }
+.btn-dinas.active { background: rgba(249,115,22,.2)!important; border-color: rgba(249,115,22,.6)!important; color: #fdba74!important; }
 .btn-qr-status { border-style: dashed; }
 .btn-qr-status.active { background: linear-gradient(135deg,rgba(236,72,153,.2),rgba(168,85,247,.2))!important; border-color: #ec4899!important; border-style: solid!important; color: #f9a8d4!important; }
 
@@ -140,8 +142,9 @@ body { color: #f8fafc; display: flex; position: relative; width: 100vw; }
 .cam-action-btn.btn-gallery { color: var(--sda-toska); border-color: rgba(45,212,191,.4); }
 .cam-action-btn.btn-gallery:hover { background: rgba(45,212,191,.2); }
 
-.btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg,var(--success),#059669)!important; color: #fff!important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16,185,129,.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; }
+.btn-submit-final { width: 100%; padding: 22px; border-radius: 35px; border: none; font-weight: 800; font-size: 1.1rem; background: linear-gradient(135deg,var(--success),#059669)!important; color: #fff!important; cursor: pointer; text-transform: uppercase; box-shadow: 0 15px 40px rgba(16,185,129,.4); display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 10px; transition: transform 0.2s; }
 .btn-submit-final:disabled { opacity: .5; cursor: not-allowed; }
+.btn-submit-final:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 20px 50px rgba(16,185,129,.5); }
 
 /* OVERLAYS */
 #sendingOverlay, #initialLoadingOverlay { position: fixed; inset: 0; z-index: 100000; background: rgba(13,27,62,.95); backdrop-filter: blur(25px); display: none; flex-direction: column; align-items: center; justify-content: center; color: #fff; pointer-events: all; }
@@ -243,70 +246,13 @@ body { color: #f8fafc; display: flex; position: relative; width: 100vw; }
 .skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: 200% 0; } }
 
-/* RESPONSIVE */
-@media (max-width: 768px) {
-    .sidebar { display: none; }
-    .main-content { margin-left: 0; padding: 10px 10px 150px; width: 100%; }
-    .photo-hero-wrap { max-width: 180px; }
-    .bottom-nav { display: flex; }
-    .scan-header { padding: 15px; }
-    .scan-header-title { font-size: .6rem; }
-    .scan-info { bottom: 150px; left: 15px; right: 15px; }
-    .scan-instruction { bottom: 240px; font-size: .75rem; }
-    .cam-slot-actions { padding: 6px; gap: 4px; }
-    .cam-action-btn { padding: 8px 4px; font-size: .65rem; gap: 4px; }
-    input[type="text"], input[type="search"], textarea, select { font-size: 16px !important; -webkit-appearance: none; }
-    .btn-presence-mega, .btn-special-status, .btn-orange-action, .btn-submit-final { transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s ease !important; }
-    .btn-presence-mega:active, .btn-special-status:active, .btn-orange-action:active, .btn-submit-final:active { transform: scale(0.96) !important; }
-}
-@media (max-width: 400px) {
-    .main-content { padding: 10px 5px 140px; }
-    .unified-card, .form-unified-box { padding: 15px 8px; border-radius: 30px; gap: 12px; }
-    .scroller-controls { grid-template-columns: 45px 1fr 45px; }
-    .btn-circle-nav { width: 45px; height: 45px; }
-    .name-scroller-box h2 { font-size: 1.25rem; }
-    .search-area-unified input { padding: 15px 55px 15px 20px; font-size: 16px !important; }
-    .chip-pill { padding: 10px 15px; font-size: .75rem; }
-    .btn-orange-action { padding: 18px; font-size: 1rem; }
-    .photo-pop-out { width: 85px; height: 120px; }
-    .header-info-text h3 { font-size: 1.1rem; }
-    .cam-action-btn { padding: 8px 2px; font-size: .6rem; }
-    .cam-action-btn .btn-text { display: none; }
-    .cam-action-btn .lucide { margin: 0; }
-    .status-info-note { padding: 12px 14px; font-size: .8rem; }
-    .status-info-note .info-title { font-size: .85rem; }
-    .status-info-note .info-body { font-size: .75rem; }
-}
-/* ✅ SKELETON LOADING PREMIUM */
-.skeleton-box {
-    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%);
-    background-size: 200% 100%;
-    animation: skeleton-shimmer 1.5s infinite;
-    border-radius: 12px;
-}
-@keyframes skeleton-shimmer {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-}
+/* SKELETON LOADING PREMIUM */
+.skeleton-box { background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%); background-size: 200% 100%; animation: skeleton-shimmer 1.5s infinite; border-radius: 12px; }
+@keyframes skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skel-photo { width: 100%; height: 100%; border-radius: 16px; }
+.skel-title { width: 60%; height: 24px; margin-bottom: 10px; }
+.skel-text { width: 90%; height: 14px; margin-bottom: 8px; }
+.skel-card { width: 100%; height: 120px; border-radius: 20px; }
 
-/* Terapkan ke elemen yang loading */
-.skel-photo {
-    width: 100%; height: 100%; border-radius: 16px;
-}
-.skel-title {
-    width: 60%; height: 24px; margin-bottom: 10px;
-}
-.skel-text {
-    width: 90%; height: 14px; margin-bottom: 8px;
-}
-.skel-card {
-    width: 100%; height: 120px; border-radius: 20px;
-}
-/* PREMIUM DYNAMIC BACKGROUND */
-.fixed-bg {
-    background: linear-gradient(rgba(13, 27, 62, 0.85), rgba(13, 27, 62, 0.95)), var(--dynamic-bg-url, radial-gradient(circle at top right, #1e40af, #0d1b3e 85%));
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed; /* Agar gambar tidak scroll */
-    transition: background 0.5s ease;
-}
+/* DYNAMIC BACKGROUND */
+.fixed-bg { background: linear-gradient(rgba(13, 27, 62, 0.85), rgba(13, 27, 62, 0.95)), var(--dynamic-bg-url, radial-gradient(circle at top right, #1e40af, #0d1b3e 85%)); background-size: cover; background-position: center; background-attachment: fixed; transition: background 0.5s ease; }
