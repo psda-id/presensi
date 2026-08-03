@@ -2,6 +2,9 @@
 const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 const API = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
 
+// SIMPAN ATURAN JAM DARI SERVER SECARA GLOBAL
+let appConfig = { jHadir: "08:00", jTelat: "08:11", jPulang: "10:00" };
+
 // INISIALISASI PWA MANIFEST
 const manifest = {
     "name": "E-PUSDA Presensi Digital",
@@ -54,7 +57,7 @@ async function ensureFaceApiLoaded() {
 }
 
 const STATUS_CONFIG = {
-    'HADIR': { placeholder: 'Tuliskan ringkasan tugas hari ini...', title: '✅ HADIR', message: '<b>Aturan Waktu:</b><br>• ≤ 07:40 = Poin 50 (Tepat Waktu)<br>• 07:41 - 08:00 = Poin 40 (Terlambat Ringan)<br>• > 08:00 = Poin 25 (Terlambat Berat)', icon: 'check-circle', color: 'var(--success)', borderColor: 'var(--success)', actions: [] },
+    'HADIR': { placeholder: 'Tuliskan ringkasan tugas hari ini...', title: '✅ HADIR', message: '<b>Aturan Waktu:</b><br>• ≤ 08:10 = Poin 50 (Tepat Waktu)<br>• 08:11 = Poin 40 (Terlambat Ringan)<br>• > 08:11 = Poin 25 (Terlambat Berat)', icon: 'check-circle', color: 'var(--success)', borderColor: 'var(--success)', actions: [] },
     'PULANG': { placeholder: 'Tuliskan ringkasan hasil kerja hari ini...', title: '🌙 PULANG', message: 'Absensi pulang tercatat. Selamat beristirahat.', icon: 'moon', color: 'var(--pu-blue)', borderColor: 'var(--pu-blue)', actions: [] },
     'IZIN': { placeholder: 'Jelaskan alasan izin (cuti, urusan keluarga, dll)...', title: '📝 IZIN', message: 'Silahkan hubungi Koordinator / Pimpinan untuk meminta izin. Pastikan alasan izin dijelaskan dengan detail.', icon: 'file-text', color: '#d8b4fe', borderColor: '#a855f7', actions: [{ label: 'Lampirkan Surat', icon: 'paperclip', action: 'uploadSurat' }] },
     'SAKIT': { placeholder: 'Jelaskan kondisi sakit dan lampirkan surat dokter...', title: '🏥 SAKIT', message: 'Lampirkan foto surat keterangan dokter dan hubungi Koordinator / Pimpinan. Semoga lekas sembuh.', icon: 'heart-pulse', color: '#fde047', borderColor: 'var(--warning)', actions: [{ label: 'Lampirkan Surat Dokter', icon: 'paperclip', action: 'uploadSurat' }] },
@@ -118,7 +121,7 @@ window.onload = () => {
 };
 
 function checkAppVersion() {
-    const currentVersion = "v2.6.2"; 
+    const currentVersion = "v2.6.3"; 
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
@@ -175,30 +178,48 @@ function updateAttendanceStatusIndicator() {
         } else { return; }
     }
     
-    // ✅ SEMBUNYIKAN BADGE WAKTU JIKA STATUS PULANG ATAU STATUS KHUSUS DIPILIH
-    if (selectedStatus && selectedStatus !== 'HADIR') {
+    // ✅ SEMBUNYIKAN BADGE JIKA BELUM ADA STATUS YANG DIPILIH
+    if (!selectedStatus || selectedStatus === '') {
         badgeContainer.innerHTML = '';
         return;
     }
 
+    // ✅ JIKA STATUS PULANG
+    if (selectedStatus === 'PULANG') {
+        badgeContainer.innerHTML = `<div class="attendance-status-badge status-ontime"><div class="badge-icon"><i data-lucide="moon" size="18"></i></div><div class="badge-text"><h4>Absen Pulang</h4><p>Terima kasih atas kerja keras Anda hari ini.</p></div></div>`;
+        lucide.createIcons();
+        return;
+    }
+
+    // ✅ JIKA STATUS KHUSUS (IZIN, SAKIT, DINAS, QR)
+    if (selectedStatus !== 'HADIR') {
+        badgeContainer.innerHTML = '';
+        return;
+    }
+
+    // ✅ JIKA STATUS HADIR (CEK WAKTU SERVER)
+    const parseTime = (timeStr) => { const parts = String(timeStr).split(':'); return (parseInt(parts[0]) || 0) * 100 + (parseInt(parts[1]) || 0); };
+    const jamHadirLimit = parseTime(appConfig.jHadir);
+    const jamTelatLimit = parseTime(appConfig.jTelat);
+
     let statusClass = '', icon = '', title = '', desc = '', btnColor = '#10b981';
-    if (timeVal <= 740) { 
+    if (timeVal <= jamHadirLimit) { 
         statusClass = 'status-ontime'; icon = 'check-circle'; title = 'Tepat Waktu'; 
-        desc = 'Anda mendapat poin penuh (50). Silakan absen sekarang.'; 
+        desc = 'Anda mendapat poin penuh (50).'; 
         btnColor = '#10b981'; // Hijau
-    } else if (timeVal <= 800) { 
+    } else if (timeVal <= jamTelatLimit) { 
         statusClass = 'status-late-light'; icon = 'clock'; title = 'Terlambat Ringan'; 
-        desc = 'Poin dikurangi menjadi 40. Segera lakukan presensi.'; 
+        desc = 'Poin dikurangi menjadi 40.'; 
         btnColor = '#facc15'; // Kuning
     } else { 
         statusClass = 'status-late-heavy'; icon = 'alert-octagon'; title = 'Terlambat Berat'; 
-        desc = 'Poin dikurangi menjadi 25. Harap perhatikan disiplin waktu.'; 
+        desc = 'Poin dikurangi menjadi 25.'; 
         btnColor = '#ef4444'; // Merah
     }
     
     badgeContainer.innerHTML = `<div class="attendance-status-badge ${statusClass}"><div class="badge-icon"><i data-lucide="${icon}" size="18"></i></div><div class="badge-text"><h4>${title}</h4><p>${desc}</p></div></div>`;
     
-    // ✅ UBAH WARNA TOMBOL HADIR SECARA DINAMIS SESUAI WAKTU SERVER
+    // ✅ UBAH WARNA TOMBOL HADIR SECARA DINAMIS
     const btnHadir = document.getElementById('btnHadirMain');
     if (btnHadir && !btnHadir.classList.contains('btn-done') && !btnHadir.classList.contains('active')) {
         btnHadir.style.backgroundColor = btnColor;
@@ -609,9 +630,13 @@ async function loadData() {
         document.getElementById('sidebarLogo').src = d1.config?.Logo || GITHUB_LOGO_URL; 
         
         const cfg = d1.config || {};
-        const jHadir = cfg.Jam_Hadir || "07:40";
-        const jTelat = cfg.Jam_Terlambat_Ringan || "08:00";
-        STATUS_CONFIG.HADIR.message = `<b>Aturan Waktu:</b><br>• ≤ ${jHadir} = Poin 50 (Tepat Waktu)<br>• ${jHadir} - ${jTelat} = Poin 40 (Terlambat Ringan)<br>• > ${jTelat} = Poin 25 (Terlambat Berat)`;
+        
+        // ✅ UPDATE ATURAN WAKTU SECARA DINAMIS (FALLBACK 08:10 & 08:11)
+        appConfig.jHadir = cfg.Jam_Hadir || "08:10";
+        appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:11";
+        appConfig.jPulang = cfg.Jam_Pulang || "10:00";
+        
+        STATUS_CONFIG.HADIR.message = `<b>Aturan Waktu:</b><br>• ≤ ${appConfig.jHadir} = Poin 50 (Tepat Waktu)<br>• ${appConfig.jTelat} = Poin 40 (Terlambat Ringan)<br>• > ${appConfig.jTelat} = Poin 25 (Terlambat Berat)`;
 
         // ✅ KONTEN DINAMIS DARI SHEET CONF
         if (cfg.Teks_Sambutan) {
@@ -674,7 +699,7 @@ function applyFilters() {
     // Cari apakah pegawai yang tadi dipilih masih ada di daftar filter baru
     if (currentPegId) {
         const newIdx = dbF.findIndex(p => (p.ID || p.id) === currentPegId);
-        uIdx = newIdx !== -1 ? newIdx : 0; // Jika ada, pertahankan posisinya. Jika tidak, kembali ke 0.
+        uIdx = newIdx !== -1 ? newIdx : 0;
     } else {
         uIdx = 0;
     }
@@ -778,6 +803,9 @@ async function openForm() {
     }
     lucide.createIcons();
 
+    // ✅ SEMBUNYIKAN BADGE WAKTU KARENA BELUM PILIH STATUS
+    updateAttendanceStatusIndicator();
+
     updateNotesCounter();
     updateWorkflow();
     setTimeout(() => { initMap(); upLoc(); loadAutoRecovery(); }, 300);
@@ -826,7 +854,7 @@ function setS(el, st) {
     document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
     el.classList.add('active'); selectedStatus = st; updateStatusInfo(st);
 
-    // ✅ PANGGIL FUNGSI INDIKATOR AGAN BADGE WAKTU HILANG SAAT PILIH STATUS LAIN
+    // ✅ MUNCULKAN BADGE WAKTU SESUAI STATUS YANG DIPILIH
     updateAttendanceStatusIndicator();
 
     updateWorkflow(); saveAutoRecovery();
