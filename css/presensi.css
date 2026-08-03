@@ -159,15 +159,19 @@ body {
     animation: fadeIn .4s ease-out; 
 }
 
+/* =========================================
+   6. HALAMAN PILIH NAMA (STEP SELECTOR)
+   Foto tetap di tengah atas card, UKURAN LEBIH BESAR
+   ========================================= */
 .photo-hero-wrap { 
     position: relative; 
     z-index: 1; 
     width: 100%; 
-    max-width: 200px; 
+    max-width: 260px; /* ✅ Diperbesar dari 200px */
     aspect-ratio: 2/3; 
     display: flex; 
     justify-content: center; 
-    margin-bottom: -15px; 
+    margin-bottom: -18px; 
 }
 
 .photo-hero-wrap img { 
@@ -183,7 +187,7 @@ body {
     backdrop-filter: blur(35px); 
     border: 1px solid var(--glass-border); 
     border-radius: 45px; 
-    padding: 45px 35px 35px; 
+    padding: 50px 35px 35px; 
     width: 100%; 
     position: relative; 
     z-index: 2; 
@@ -253,7 +257,7 @@ body {
 .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); }
 
 /* =========================================
-   6. SEARCH, CHIPS & ACTION
+   7. SEARCH, CHIPS & ACTION
    ========================================= */
 .search-area-unified { position: relative; width: 100%; max-width: 600px; }
 
@@ -340,22 +344,24 @@ body {
 .btn-orange-action:hover { transform: translateY(-2px); }
 
 /* =========================================
-   7. FORM STEP
+   8. HALAMAN PRESENSI (FORM)
+   ✅ Foto di KIRI, teks di KANAN (horizontal)
    ========================================= */
 .form-header-premium { 
     display: flex; 
-    align-items: flex-end; 
-    gap: 20px; 
+    flex-direction: row; /* ✅ Horizontal: foto kiri, teks kanan */
+    align-items: center; 
+    gap: 16px; 
     width: 100%; 
     margin-bottom: 10px; 
-    padding-left: 10px; 
+    padding-left: 5px; 
     animation: slideRight 0.4s ease-out; 
 }
 
 .photo-pop-out { 
-    width: 110px; 
-    height: 150px; 
-    border-radius: 20px; 
+    width: 100px; 
+    height: 140px; 
+    border-radius: 18px; 
     overflow: visible; 
     flex-shrink: 0; 
     display: flex; 
@@ -364,27 +370,33 @@ body {
 }
 
 .photo-pop-out img { 
-    width: 140%; 
+    width: 130%; 
     height: auto; 
-    max-height: 190px; 
+    max-height: 175px; 
     object-fit: contain; 
     filter: drop-shadow(0 15px 30px rgba(0,0,0,.8)); 
-    margin-bottom: -10px; 
+    margin-bottom: -8px; 
 }
 
-.header-info-text { padding-bottom: 20px; flex: 1; }
+.header-info-text { 
+    padding-bottom: 0; 
+    flex: 1; 
+    display: flex; 
+    flex-direction: column; 
+    align-items: flex-start; /* ✅ Teks rata kiri */
+}
 
 .header-info-text h3 { 
-    font-size: clamp(1.3rem,4vw,1.8rem); 
+    font-size: clamp(1.2rem,3.5vw,1.7rem); 
     font-weight: 800; 
     text-transform: uppercase; 
-    line-height: 1; 
+    line-height: 1.1; 
     color: #fff; 
-    margin-bottom: 5px; 
+    margin-bottom: 6px; 
 }
 
 .header-info-text p { 
-    font-size: .85rem; 
+    font-size: .82rem; 
     opacity: .6; 
     font-weight: 700; 
     color: var(--sda-toska); 
@@ -439,7 +451,7 @@ body {
 }
 
 /* =========================================
-   8. PRESENCE CONTROLS
+   9. PRESENCE CONTROLS
    ========================================= */
 .presence-main-controls { 
     display: grid; 
@@ -609,7 +621,7 @@ body {
 .btn-submit-final:not(:disabled):hover { transform: translateY(-3px); box-shadow: 0 20px 50px rgba(16,185,129,.5); }
 
 /* =========================================
-   9. NOTES & TEXTAREA
+   10. NOTES & TEXTAREA
    ========================================= */
 .textarea-wrapper { position: relative; width: 100%; }
 
@@ -756,7 +768,7 @@ body {
 .status-late-heavy .badge-text h4 { color: #ef4444; }
 
 /* =========================================
-   10. CAMERA GRID
+   11. CAMERA GRID
    ========================================= */
 .cam-grid-5050 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
 
@@ -841,7 +853,7 @@ body {
 .cam-action-btn.btn-gallery:hover { background: rgba(45,212,191,.2); }
 
 /* =========================================
-   11. OVERLAYS & LOADERS
+   12. OVERLAYS & LOADERS
    ========================================= */
 #sendingOverlay, #initialLoadingOverlay { 
     position: fixed; 
@@ -883,7 +895,7 @@ body {
 }
 
 /* =========================================
-   12. MODALS
+   13. MODALS
    ========================================= */
 #notificationModal, #suratModal { 
     display: none; 
@@ -1050,7 +1062,7 @@ body {
 .permission-btn-secondary { background: rgba(255,255,255,.05); color: rgba(255,255,255,.7); border: 1px solid var(--glass-border); }
 
 /* =========================================
-   13. CAMERA UI
+   14. CAMERA UI
    ========================================= */
 #cameraUI { 
     display: none; 
@@ -1224,7 +1236,7 @@ body {
 }
 
 /* =========================================
-   14. BOTTOM NAV
+   15. BOTTOM NAV
    ========================================= */
 .bottom-nav { 
     display: none; 
@@ -1272,7 +1284,7 @@ body {
 }
 
 /* =========================================
-   15. UTILITIES
+   16. UTILITIES
    ========================================= */
 .workflow-locked { opacity: .25; filter: grayscale(.5); pointer-events: none; transition: .4s; }
 #fallbackCameraInput, #galleryInput, #suratInput { display: none; }
@@ -1290,7 +1302,7 @@ body {
 .skel-card { width: 100%; height: 120px; border-radius: 20px; }
 
 /* =========================================
-   16. KEYFRAMES
+   17. KEYFRAMES
    ========================================= */
 @keyframes fadeInUp { 
     from { opacity: 0; transform: translateY(15px); } 
@@ -1346,36 +1358,31 @@ body {
 }
 
 /* =========================================
-   17. RESPONSIVE MOBILE - PADDING MINIM
+   18. RESPONSIVE MOBILE - PADDING MINIM
    ========================================= */
 @media (max-width: 768px) {
-    /* Sembunyikan sidebar desktop */
     .sidebar { display: none; }
     
-    /* Main content: padding kiri-kanan SANGAT MINIM */
     .main-content { 
         margin-left: 0; 
         padding: 12px 8px 110px; 
         width: 100%; 
     }
     
-    /* Tampilkan bottom nav */
     .bottom-nav { display: flex; }
     
-    /* Hero foto lebih kecil */
+    /* ✅ Halaman pilih nama: foto LEBIH BESAR di mobile */
     .photo-hero-wrap { 
-        max-width: 130px; 
-        margin-bottom: -12px; 
+        max-width: 180px; /* ✅ Lebih besar dari sebelumnya (130px) */
+        margin-bottom: -14px; 
     }
     
-    /* Card utama: padding dalam minim, border-radius lebih kecil */
     .unified-card { 
-        padding: 30px 12px 18px; 
+        padding: 35px 12px 18px; 
         border-radius: 24px; 
         gap: 14px; 
     }
     
-    /* Scroller nama */
     .scroller-controls { 
         grid-template-columns: 42px 1fr 42px; 
         gap: 6px; 
@@ -1396,7 +1403,6 @@ body {
         margin-top: -6px; 
     }
     
-    /* Search bar */
     .search-area-unified input { 
         padding: 16px 55px 16px 18px; 
         font-size: 0.95rem; 
@@ -1409,7 +1415,6 @@ body {
         right: 8px; 
     }
     
-    /* Chips wilayah */
     .chips-list-row { gap: 6px; }
     
     .chip-pill { 
@@ -1418,7 +1423,6 @@ body {
         border-radius: 20px; 
     }
     
-    /* Tombol mulai presensi */
     .btn-orange-action { 
         padding: 18px 14px; 
         font-size: 0.95rem; 
@@ -1426,7 +1430,6 @@ body {
         gap: 8px; 
     }
     
-    /* Tombol kembali */
     .btn-back-accent { 
         padding: 10px 18px; 
         font-size: .78rem; 
@@ -1434,51 +1437,53 @@ body {
         margin-bottom: 12px; 
     }
     
-    /* Header form */
+    /* ✅✅✅ HALAMAN PRESENSI MOBILE: Foto KIRI, teks KANAN ✅✅✅ */
     .form-header-premium { 
-        flex-direction: column; 
+        flex-direction: row; /* ✅ TETAP HORIZONTAL di mobile */
         align-items: center; 
-        text-align: center; 
         padding-left: 0; 
-        gap: 8px; 
-        margin-bottom: 6px; 
+        gap: 12px; 
+        margin-bottom: 8px; 
+    }
+    
+    .photo-pop-out { 
+        width: 80px; 
+        height: 110px; 
+    }
+    
+    .photo-pop-out img { 
+        width: 120%; 
+        max-height: 140px; 
     }
     
     .header-info-text { 
         padding-bottom: 0; 
         display: flex; 
         flex-direction: column; 
-        align-items: center; 
+        align-items: flex-start; /* ✅ Teks rata kiri, di samping foto */
+    }
+    
+    .header-info-text h3 { 
+        font-size: clamp(1rem, 4vw, 1.3rem); 
+        margin-bottom: 4px; 
     }
     
     .header-info-text p { 
-        justify-content: center; 
-        font-size: .75rem; 
+        justify-content: flex-start; 
+        font-size: .72rem; 
     }
     
-    .photo-pop-out { 
-        width: 90px; 
-        height: 120px; 
-    }
-    
-    .photo-pop-out img { 
-        max-height: 150px; 
-    }
-    
-    /* Form box: padding dalam SANGAT MINIM */
     .form-unified-box { 
         padding: 16px 10px; 
         border-radius: 24px; 
         gap: 12px; 
     }
     
-    /* Map */
     .map-view-frame { 
         height: 160px; 
         border-radius: 16px; 
     }
     
-    /* Tombol HADIR / PULANG */
     .presence-main-controls { gap: 8px; }
     
     .btn-presence-mega { 
@@ -1487,7 +1492,6 @@ body {
         font-size: 0.8rem; 
     }
     
-    /* Collapse header status khusus */
     .collapse-header { 
         padding: 12px 16px; 
         font-size: 0.75rem; 
@@ -1503,7 +1507,6 @@ body {
         border-radius: 12px; 
     }
     
-    /* Status badge & info */
     .status-badge { 
         padding: 6px 12px; 
         font-size: .65rem; 
@@ -1518,7 +1521,6 @@ body {
     .status-info-note .info-title { font-size: .85rem; }
     .status-info-note .info-body { font-size: .75rem; }
     
-    /* Attendance badge */
     .attendance-status-badge { 
         padding: 10px 12px; 
         border-radius: 12px; 
@@ -1529,7 +1531,6 @@ body {
     .badge-text h4 { font-size: 0.78rem; }
     .badge-text p { font-size: 0.68rem; }
     
-    /* Textarea */
     .textarea-wrapper textarea { 
         padding: 12px 14px 32px 14px; 
         border-radius: 16px; 
@@ -1550,7 +1551,6 @@ body {
         height: 26px; 
     }
     
-    /* Camera grid: 2 kolom tetap, tapi lebih compact */
     .cam-grid-5050 { gap: 8px; }
     
     .cam-slot-frame, .cam-slot-kerja { 
@@ -1569,7 +1569,6 @@ body {
         gap: 4px; 
     }
     
-    /* Tombol submit */
     .btn-submit-final { 
         padding: 18px 14px; 
         font-size: 0.95rem; 
@@ -1589,7 +1588,6 @@ body {
     }
     
     .scan-header-logo img { width: 26px; height: 26px; }
-    
     .scan-header-title { font-size: .6rem; letter-spacing: 2px; }
     .scan-header-subtitle { font-size: .65rem; }
     
@@ -1630,7 +1628,7 @@ body {
         height: 40px; 
     }
     
-    /* Modal di mobile */
+    /* Modal mobile */
     .notif-modal-content, .surat-modal-content { 
         padding: 24px 18px; 
         border-radius: 20px; 
@@ -1649,7 +1647,7 @@ body {
     }
 }
 
-/* Tablet kecil / landscape HP */
+/* Tablet kecil */
 @media (min-width: 769px) and (max-width: 1024px) {
     .sidebar { 
         width: 220px; 
@@ -1663,7 +1661,11 @@ body {
     }
     
     .unified-card { 
-        padding: 35px 25px 25px; 
+        padding: 40px 25px 25px; 
         border-radius: 35px; 
+    }
+    
+    .photo-hero-wrap { 
+        max-width: 220px; 
     }
 }
