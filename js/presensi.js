@@ -118,7 +118,7 @@ window.onload = () => {
 };
 
 function checkAppVersion() {
-    const currentVersion = "v2.6.1"; 
+    const currentVersion = "v2.6.2"; 
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
@@ -161,17 +161,51 @@ function showToast(title, message, type = "info") {
 }
 
 function updateAttendanceStatusIndicator() {
-    const now = new Date(); const timeVal = (now.getHours() * 100) + now.getMinutes();
+    const now = new Date(); 
+    const timeVal = (now.getHours() * 100) + now.getMinutes();
     let badgeContainer = document.getElementById('attendanceStatusIndicator');
+    
     if (!badgeContainer) {
         const statusBox = document.getElementById('statusBox1');
-        if (statusBox) { badgeContainer = document.createElement('div'); badgeContainer.id = 'attendanceStatusIndicator'; badgeContainer.style.width = '100%'; statusBox.parentNode.insertBefore(badgeContainer, statusBox.nextSibling); } else { return; }
+        if (statusBox) { 
+            badgeContainer = document.createElement('div'); 
+            badgeContainer.id = 'attendanceStatusIndicator'; 
+            badgeContainer.style.width = '100%'; 
+            statusBox.parentNode.insertBefore(badgeContainer, statusBox.nextSibling); 
+        } else { return; }
     }
-    let statusClass = '', icon = '', title = '', desc = '';
-    if (timeVal <= 740) { statusClass = 'status-ontime'; icon = 'check-circle'; title = 'Tepat Waktu'; desc = 'Anda mendapat poin penuh (50). Silakan absen sekarang.'; }
-    else if (timeVal <= 800) { statusClass = 'status-late-light'; icon = 'clock'; title = 'Terlambat Ringan'; desc = 'Poin dikurangi menjadi 40. Segera lakukan presensi.'; }
-    else { statusClass = 'status-late-heavy'; icon = 'alert-octagon'; title = 'Terlambat Berat'; desc = 'Poin dikurangi menjadi 25. Harap perhatikan disiplin waktu.'; }
+    
+    // ✅ SEMBUNYIKAN BADGE WAKTU JIKA STATUS PULANG ATAU STATUS KHUSUS DIPILIH
+    if (selectedStatus && selectedStatus !== 'HADIR') {
+        badgeContainer.innerHTML = '';
+        return;
+    }
+
+    let statusClass = '', icon = '', title = '', desc = '', btnColor = '#10b981';
+    if (timeVal <= 740) { 
+        statusClass = 'status-ontime'; icon = 'check-circle'; title = 'Tepat Waktu'; 
+        desc = 'Anda mendapat poin penuh (50). Silakan absen sekarang.'; 
+        btnColor = '#10b981'; // Hijau
+    } else if (timeVal <= 800) { 
+        statusClass = 'status-late-light'; icon = 'clock'; title = 'Terlambat Ringan'; 
+        desc = 'Poin dikurangi menjadi 40. Segera lakukan presensi.'; 
+        btnColor = '#facc15'; // Kuning
+    } else { 
+        statusClass = 'status-late-heavy'; icon = 'alert-octagon'; title = 'Terlambat Berat'; 
+        desc = 'Poin dikurangi menjadi 25. Harap perhatikan disiplin waktu.'; 
+        btnColor = '#ef4444'; // Merah
+    }
+    
     badgeContainer.innerHTML = `<div class="attendance-status-badge ${statusClass}"><div class="badge-icon"><i data-lucide="${icon}" size="18"></i></div><div class="badge-text"><h4>${title}</h4><p>${desc}</p></div></div>`;
+    
+    // ✅ UBAH WARNA TOMBOL HADIR SECARA DINAMIS SESUAI WAKTU SERVER
+    const btnHadir = document.getElementById('btnHadirMain');
+    if (btnHadir && !btnHadir.classList.contains('btn-done') && !btnHadir.classList.contains('active')) {
+        btnHadir.style.backgroundColor = btnColor;
+        btnHadir.style.color = '#ffffff';
+        btnHadir.style.borderColor = btnColor;
+    }
+    
     lucide.createIcons();
 }
 
@@ -438,7 +472,7 @@ function drawWorkLabel(ctx, W, H) { ctx.save(); const label = 'WORK SITE', fontS
 function drawCornerBrackets(ctx, W, H, color, glowColor) { const p = Math.min(W, H) * .08, l = Math.min(W, H) * .08; ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.lineCap = 'round'; if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = glowColor; ctx.shadowBlur = 5; } ctx.beginPath(); ctx.moveTo(p, p + l); ctx.lineTo(p, p); ctx.lineTo(p + l, p); ctx.stroke(); ctx.beginPath(); ctx.moveTo(W - p - l, p); ctx.lineTo(W - p, p); ctx.lineTo(W - p, p + l); ctx.stroke(); ctx.beginPath(); ctx.moveTo(p, H - p - l); ctx.lineTo(p, H - p); ctx.lineTo(p + l, H - p); ctx.stroke(); ctx.beginPath(); ctx.moveTo(W - p - l, H - p); ctx.lineTo(W - p, H - p); ctx.lineTo(W - p, H - p - l); ctx.stroke(); ctx.restore(); }
 function drawLaserLine(ctx, W, H, color) { laserY += laserDirection * 3; if (laserY >= H * .85) laserDirection = -1; if (laserY <= H * .15) laserDirection = 1; const g = ctx.createLinearGradient(0, laserY, W, laserY); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(.2, color); g.addColorStop(.5, color); g.addColorStop(.8, color); g.addColorStop(1, 'rgba(0,0,0,0)'); ctx.save(); if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = color; ctx.shadowBlur = 8; } ctx.strokeStyle = g; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(0, laserY); ctx.lineTo(W, laserY); ctx.stroke(); ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(255,255,255,.9)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, laserY); ctx.lineTo(W, laserY); ctx.stroke(); ctx.restore(); }
 function drawFaceWireframe(ctx, detection, W, H, color) { const pos = detection.landmarks.positions, box = detection.detection.box; const vW = detection.detection.imageWidth || document.getElementById('vStream').videoWidth, vH = detection.detection.imageHeight || document.getElementById('vStream').videoHeight; if (!vW || !vH) return; const vRatio = vW / vH, cRatio = W / H; let dW, dH, oX, oY; if (vRatio > cRatio) { dH = H; dW = H * vRatio; oX = (W - dW) / 2; oY = 0; } else { dW = W; dH = W / vRatio; oX = 0; oY = (H - dH) / 2; } const sX = dW / vW, sY = dH / vH, isMirror = cType === 'selfie'; const tx = (vx) => { let x = vx * sX + oX; return isMirror ? W - x : x; }, ty = (vy) => vy * sY + oY; let bx = tx(box.x), by = ty(box.y), bw = box.width * sX, bh = box.height * sY; if (isMirror) bx = bx - bw; ctx.save(); ctx.strokeStyle = color.replace('0.9', '0.4'); ctx.lineWidth = 1; ctx.setLineDash([5, 5]); ctx.strokeRect(bx - 10, by - 10, bw + 20, bh + 20); ctx.setLineDash([]); ctx.strokeStyle = color; ctx.lineWidth = 2; if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = color.replace('0.9', '0.5'); ctx.shadowBlur = 5; } ctx.strokeRect(bx, by, bw, bh); ctx.shadowBlur = 0; ctx.fillStyle = color; ctx.font = `bold ${Math.max(12, W * .018)}px 'JetBrains Mono'`; ctx.fillText(`FACE • ${(detection.detection.score * 100).toFixed(0)}%`, bx, by - 15); const sp = pos.map(p => ({ x: tx(p.x), y: ty(p.y) })), groups = [[0, 16, 0], [17, 21, 0], [22, 26, 0], [27, 30, 0], [31, 35, 0], [36, 41, 1], [42, 47, 1], [48, 67, 1]]; ctx.lineWidth = 1.5; ctx.strokeStyle = color.replace('0.9', '0.7'); groups.forEach(([s, e, c]) => { ctx.beginPath(); for (let i = s; i <= e; i++) { if (!sp[i]) continue; i === s ? ctx.moveTo(sp[i].x, sp[i].y) : ctx.lineTo(sp[i].x, sp[i].y); } if (c && sp[s]) ctx.lineTo(sp[s].x, sp[s].y); ctx.stroke(); }); if (DeviceProfile.tier !== 'low') { sp.forEach(p => { if (!p) return; ctx.fillStyle = color.replace('0.9', '0.4'); ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2); ctx.fill(); }); } ctx.restore(); }
-function drawFaceGuide(ctx, W, H, color, glowColor) { const cx = W / 2, cy = H / 2, rx = Math.min(W, H) * .25, ry = Math.min(W, H) * .32, t = performance.now() / 1000; ctx.save(); ctx.setLineDash([15, 10]); ctx.lineDashOffset = -t * 40; ctx.strokeStyle = color; ctx.lineWidth = 2.5; if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = glowColor; ctx.shadowBlur = 6; } ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.shadowBlur = 0; const cs = 20; ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx - cs, cy); ctx.lineTo(cx - 5, cy); ctx.moveTo(cx + 5, cy); ctx.lineTo(cx + cs, cy); ctx.moveTo(cx, cy - cs); ctx.lineTo(cx, cy - 5); ctx.moveTo(cx, cy + 5); ctx.lineTo(cx, cy + cs); ctx.stroke(); [{ x: cx, y: cy - ry }, { x: cx + rx, y: cy }, { x: cx, y: cy + ry }, { x: cx - rx, y: cy }].forEach(p => { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2); ctx.fill(); }); ctx.restore(); }
+function drawFaceGuide(ctx, W, H, color, glowColor) { const cx = W / 2, cy = H * 0.40, rx = Math.min(W, H) * .25, ry = Math.min(W, H) * .32, t = performance.now() / 1000; ctx.save(); ctx.setLineDash([15, 10]); ctx.lineDashOffset = -t * 40; ctx.strokeStyle = color; ctx.lineWidth = 2.5; if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = glowColor; ctx.shadowBlur = 6; } ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]); ctx.shadowBlur = 0; const cs = 20; ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(cx - cs, cy); ctx.lineTo(cx - 5, cy); ctx.moveTo(cx + 5, cy); ctx.lineTo(cx + cs, cy); ctx.moveTo(cx, cy - cs); ctx.lineTo(cx, cy - 5); ctx.moveTo(cx, cy + 5); ctx.lineTo(cx, cy + cs); ctx.stroke(); [{ x: cx, y: cy - ry }, { x: cx + rx, y: cy }, { x: cx, y: cy + ry }, { x: cx - rx, y: cy }].forEach(p => { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2); ctx.fill(); }); ctx.restore(); }
 
 function stopCam() { stopCurrentStream(); const st = document.getElementById('scanStatus'); if (st) st.classList.remove('detected'); const stTxt = document.getElementById('scanStatusText'); if (stTxt) stTxt.innerText = 'SCANNING'; document.getElementById('cameraUI').style.display = 'none'; }
 
@@ -622,7 +656,31 @@ async function loadData() {
 
 function renderChips() { const w = ["ALL", ...new Set(dbE.map(p => (p.Wilayah || p.wilayah || "").trim()).filter(x => x))]; document.getElementById('wilChips').innerHTML = w.map(x => `<div class="chip-pill ${x === 'ALL' ? 'active' : ''}" data-wil="${x}" onclick="setWil('${x}',this)">${x}</div>`).join(''); }
 function setWil(w, el) { document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active')); el.classList.add('active'); applyFilters(); }
-function applyFilters() { const s = document.getElementById('searchInput').value.toLowerCase().trim(), activeChip = document.querySelector('.chip-pill.active'), w = (activeChip?.getAttribute('data-wil') || 'ALL').toLowerCase(); dbF = dbE.filter(p => { const pw = (p.Wilayah || p.wilayah || "").trim().toLowerCase(), pn = (p.Nama || p.nama || "").toLowerCase(); return (w === 'all' || pw === w) && (!s || pn.includes(s)); }); uIdx = 0; upUI(w === 'all' ? 'ALL' : w); }
+
+function applyFilters() { 
+    const s = document.getElementById('searchInput').value.toLowerCase().trim();
+    const activeChip = document.querySelector('.chip-pill.active');
+    const w = (activeChip?.getAttribute('data-wil') || 'ALL').toLowerCase();
+    
+    // Simpan ID pegawai yang sedang dipilih sebelum filter ulang
+    const currentPegId = dbF.length > 0 ? (dbF[uIdx]?.ID || dbF[uIdx]?.id) : null;
+    
+    dbF = dbE.filter(p => {
+        const pw = (p.Wilayah || p.wilayah || "").trim().toLowerCase();
+        const pn = (p.Nama || p.nama || "").toLowerCase();
+        return (w === 'all' || pw === w) && (!s || pn.includes(s));
+    });
+    
+    // Cari apakah pegawai yang tadi dipilih masih ada di daftar filter baru
+    if (currentPegId) {
+        const newIdx = dbF.findIndex(p => (p.ID || p.id) === currentPegId);
+        uIdx = newIdx !== -1 ? newIdx : 0; // Jika ada, pertahankan posisinya. Jika tidak, kembali ke 0.
+    } else {
+        uIdx = 0;
+    }
+    
+    upUI(w === 'all' ? 'ALL' : w);
+}
 
 function upUI(w = "ALL") { 
     const skelHero = document.getElementById('skelHeroImg');
@@ -767,6 +825,9 @@ function setS(el, st) {
 
     document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
     el.classList.add('active'); selectedStatus = st; updateStatusInfo(st);
+
+    // ✅ PANGGIL FUNGSI INDIKATOR AGAN BADGE WAKTU HILANG SAAT PILIH STATUS LAIN
+    updateAttendanceStatusIndicator();
 
     updateWorkflow(); saveAutoRecovery();
 }
