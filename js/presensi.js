@@ -41,8 +41,12 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
 let isFaceApiLoaded = false; let isFaceApiLoading = false;
 let isInitialMapBound = false; let _lastFrameTime = 0;
 
-// ✅ FIX: Variabel untuk mencegah Race Condition saat buka form
+// ✅ FIX: Anti Race Condition saat buka form
 let isFormLoading = false;
+
+// ✅ FIX: Anti Spam Toast
+let _lastToastKey = '';
+let _lastToastTime = 0;
 
 // ============================================================
 // FACE API LOADER DENGAN TIMEOUT
@@ -192,6 +196,37 @@ function showToast(title, message, type = "info") {
     const cleanup = () => { modal.classList.remove('show'); setTimeout(() => { modal.style.display = 'none'; }, 300); };
     const autoCloseTimer = setTimeout(cleanup, 4000);
     btnOk.onclick = () => { clearTimeout(autoCloseTimer); cleanup(); };
+}
+
+// ✅ FIX: Toast anti-spam dengan interval minimum
+function showToastOnce(key, title, message, type, minInterval = 30000) {
+    const now = Date.now();
+    if (_lastToastKey === key && (now - _lastToastTime) < minInterval) return;
+    _lastToastKey = key;
+    _lastToastTime = now;
+    showToast(title, message, type);
+}
+
+// ============================================================
+// ✅ FETCH DENGAN TIMEOUT & RETRY
+// ============================================================
+function fetchWithTimeout(url, options = {}, timeout = 12000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    return fetch(url, { ...options, signal: controller.signal }).finally(() => clearTimeout(id));
+}
+
+async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
+    for (let i = 0; i <= retries; i++) {
+        try {
+            const res = await fetchWithTimeout(url, options);
+            if (res.ok) return res;
+            throw new Error(`HTTP ${res.status}`);
+        } catch (e) {
+            if (i === retries) throw e;
+            await new Promise(r => setTimeout(r, delay * (i + 1)));
+        }
+    }
 }
 
 // ============================================================
@@ -417,12 +452,12 @@ function upLoc() {
     if (!navigator.geolocation) { g.innerText = "GPS tidak didukung"; return; }
     navigator.geolocation.getCurrentPosition(p => {
         if (p.coords.accuracy > 250) { 
-            sndError.play(); showToast("Sinyal Terlalu Lemah", `Akurasi GPS ${p.coords.accuracy.toFixed(0)}m (>250m). Presensi ditolak. Pastikan Anda di luar ruangan.`, "error"); 
+            sndError.play(); showToastOnce('gps_lemah', "Sinyal Terlalu Lemah", `Akurasi GPS ${p.coords.accuracy.toFixed(0)}m (>250m). Presensi ditolak. Pastikan Anda di luar ruangan.`, "error"); 
             g.innerHTML = `<i data-lucide="x-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--danger)"></i> Sinyal Lemah`; lucide.createIcons();
             uPos = { lat: 0, lng: 0 };
             updateWorkflow(); return; 
         }
-        if (p.coords.accuracy > 150) { showToast("Peringatan Sinyal", `Akurasi GPS ${p.coords.accuracy.toFixed(0)}m. Presensi diperbolehkan tapi disarankan cari lokasi lebih terbuka.`, "warning"); }
+        if (p.coords.accuracy > 150) { showToastOnce('gps_warning', "Peringatan Sinyal", `Akurasi GPS ${p.coords.accuracy.toFixed(0)}m. Presensi diperbolehkan tapi disarankan cari lokasi lebih terbuka.`, "warning"); }
         
         uPos = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy };
         g.innerHTML = `<i data-lucide="check-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--success)"></i> GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`; lucide.createIcons();
@@ -431,7 +466,7 @@ function upLoc() {
             requestAnimationFrame(() => { requestAnimationFrame(() => { if (map) map.invalidateSize(); }); }); tampilkanGeoFence();
         }
         updateWorkflow();
-    }, e => { if (e.code === 1) showPermissionModal('gps'); else showToast("Gagal", "GPS gagal: " + e.message, "error"); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+    }, e => { if (e.code === 1) showPermissionModal('gps'); else showToastOnce('gps_error', "Gagal", "GPS gagal: " + e.message, "error"); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
 }
 
 // ============================================================
@@ -677,13 +712,17 @@ function updateWorkflow() { const gpsReady = uPos.lat !== 0, statusReady = selec
 function onNotesInput() { updateNotesCounter(); updateWorkflow(); saveAutoRecovery(); }
 
 // ============================================================
-// DATA LOADING & CACHE
+// ✅ CACHE LOADING (FIX: Semua tier boleh pakai cache)
 // ============================================================
 function loadFromCache() { 
     const c = localStorage.getItem('pusda_pegawai_v1'); 
     if (c) { 
         try {
-            dbE = JSON.parse(c); dbF = [...dbE]; renderChips(); upUI(); return true;
+            dbE = JSON.parse(c); 
+            dbF = [...dbE]; 
+            renderChips(); 
+            upUI(); 
+            return true;
         } catch(e) {
             localStorage.removeItem('pusda_pegawai_v1');
             return false;
@@ -692,65 +731,125 @@ function loadFromCache() {
     return false; 
 }
 
+// ============================================================
+// ✅✅✅ LOAD DATA UTAMA (FIX: CACHE-FIRST STRATEGY) ✅✅✅
+// ============================================================
 async function loadData() { 
-    const hasCache = DeviceProfile.tier === 'low' ? false : loadFromCache(); 
     const statusText = document.getElementById('initStatusText'); 
+    
+    // ✅ STRATEGI BARU: CACHE-FIRST untuk semua tier device
+    const hasCache = loadFromCache(); 
+    
+    if (hasCache) {
+        // ✅ Cache tersedia → langsung tampilkan, TANPA loading, TANPA toast
+        const o = document.getElementById('initialLoadingOverlay'); 
+        if (o) { o.style.opacity = '0'; o.style.pointerEvents = 'none'; setTimeout(() => o.style.display = 'none', 400); }
+        
+        // Update data dari server di BACKGROUND (silent, tanpa toast)
+        silentBackgroundUpdate();
+        return;
+    }
+    
+    // ❌ Tidak ada cache → WAJIB fetch dari server
+    if (statusText) statusText.innerText = "Menghubungkan ke Server...";
+    
     try { 
-        if (!hasCache) statusText.innerText = "Sinkronisasi..."; 
-        const [r1, r2] = await Promise.all([fetch(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }), fetch(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' })]); 
+        const [r1, r2] = await Promise.all([
+            fetchWithRetry(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 2, 2000),
+            fetchWithRetry(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 2, 2000)
+        ]); 
+        
         const [d1, d2] = await Promise.all([r1.json(), r2.json()]); 
-        dbE = d1.pegawai || []; dbF = [...dbE]; dbP = d2.data || []; 
-        if (DeviceProfile.tier !== 'low') { 
-            try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } catch (e) { console.warn('LocalStorage penuh, cache dilewati'); } 
-        } 
+        dbE = d1.pegawai || []; 
+        dbF = [...dbE]; 
+        dbP = d2.data || []; 
+        
+        // Simpan ke cache untuk penggunaan berikutnya
+        try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } 
+        catch (e) { console.warn('LocalStorage penuh'); } 
         
         document.getElementById('sidebarLogo').src = d1.config?.Logo || GITHUB_LOGO_URL; 
         
         const cfg = d1.config || {};
-        
         appConfig.jHadir = cfg.Jam_Hadir || "08:10";
         appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:11";
         appConfig.jPulang = cfg.Jam_Pulang || "10:00";
         
         STATUS_CONFIG.HADIR.message = `<b>Aturan Waktu:</b><br>• ≤ ${appConfig.jHadir} = Poin 50 (Tepat Waktu)<br>• ${appConfig.jTelat} = Poin 40 (Terlambat Ringan)<br>• > ${appConfig.jTelat} = Poin 25 (Terlambat Berat)`;
 
-        if (cfg.Teks_Sambutan) {
-            const elWelcome = document.getElementById('dynamicWelcome');
-            if (elWelcome) elWelcome.innerText = cfg.Teks_Sambutan;
+        if (cfg.Teks_Sambutan) { const el = document.getElementById('dynamicWelcome'); if (el) el.innerText = cfg.Teks_Sambutan; }
+        if (cfg.TeksDeskripsi) { const el = document.getElementById('dynamicDesc'); if (el) el.innerText = cfg.TeksDeskripsi; }
+        if (cfg.Teks_Tombol_Mulai) { 
+            const el = document.getElementById('dynamicBtnStart'); 
+            if (el) el.innerHTML = `<i data-lucide="scan-face" size="26"></i> ${cfg.Teks_Tombol_Mulai}`; 
+            lucide.createIcons(); 
         }
-        if (cfg.TeksDeskripsi) {
-            const elDesc = document.getElementById('dynamicDesc');
-            if (elDesc) elDesc.innerText = cfg.TeksDeskripsi;
-        }
-        if (cfg.Teks_Tombol_Mulai) {
-            const elBtn = document.getElementById('dynamicBtnStart');
-            if (elBtn) elBtn.innerHTML = `<i data-lucide="scan-face" size="26"></i> ${cfg.Teks_Tombol_Mulai}`;
-            lucide.createIcons();
-        }
-
-        if (cfg.URL_Background) {
-            const bgEl = document.querySelector('.fixed-bg');
-            if (bgEl) {
-                bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`);
-            }
+        if (cfg.URL_Background) { 
+            const bgEl = document.querySelector('.fixed-bg'); 
+            if (bgEl) bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`); 
         }
 
         renderChips(); applyFilters(); 
+        
     } catch (e) { 
         console.error("Load API Error:", e);
-        if (!hasCache) {
-            document.getElementById('initStatusText').innerText = "Koneksi Gagal";
-            document.getElementById('pName').innerText = "GAGAL MEMUAT";
-            document.getElementById('pName').style.color = "var(--danger)";
-            document.getElementById('pJob').innerText = "Periksa koneksi internet Anda";
-            showToast("Koneksi Gagal", "Gagal terhubung ke server. Coba buka ulang aplikasi.", "error");
-        } else {
-            showToast("Koneksi Lemah", "Sinyal kurang stabil, menampilkan data cache lokal", "warning");
-        }
+        // Hanya tampilkan error jika BENAR-BENAR tidak ada data
+        if (statusText) statusText.innerText = "Koneksi Gagal";
+        document.getElementById('pName').innerText = "GAGAL MEMUAT";
+        document.getElementById('pName').style.color = "var(--danger)";
+        document.getElementById('pJob').innerText = "Periksa koneksi internet Anda";
+        showToastOnce('load_fail', "Koneksi Gagal", "Tidak dapat terhubung ke server dan tidak ada data tersimpan. Periksa koneksi internet Anda.", "error");
     } finally { 
         const o = document.getElementById('initialLoadingOverlay'); 
         if (o) { o.style.opacity = '0'; o.style.pointerEvents = 'none'; setTimeout(() => o.style.display = 'none', 400); } 
     } 
+}
+
+// ============================================================
+// ✅ SILENT BACKGROUND UPDATE (TANPA TOAST, TANPA LOADING)
+// ============================================================
+async function silentBackgroundUpdate() {
+    try {
+        const [r1, r2] = await Promise.all([
+            fetchWithTimeout(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 15000),
+            fetchWithTimeout(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 15000)
+        ]);
+        
+        const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
+        
+        // Update data secara silent
+        dbE = d1.pegawai || []; 
+        dbF = [...dbE]; 
+        dbP = d2.data || [];
+        
+        // Simpan cache terbaru
+        try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } 
+        catch (e) { }
+        
+        // Update config
+        const cfg = d1.config || {};
+        appConfig.jHadir = cfg.Jam_Hadir || "08:10";
+        appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:11";
+        appConfig.jPulang = cfg.Jam_Pulang || "10:00";
+        
+        STATUS_CONFIG.HADIR.message = `<b>Aturan Waktu:</b><br>• ≤ ${appConfig.jHadir} = Poin 50 (Tepat Waktu)<br>• ${appConfig.jTelat} = Poin 40 (Terlambat Ringan)<br>• > ${appConfig.jTelat} = Poin 25 (Terlambat Berat)`;
+        
+        // Re-render UI tanpa toast
+        renderChips(); applyFilters();
+        
+        // Update sidebar logo jika berubah
+        if (d1.config?.Logo) document.getElementById('sidebarLogo').src = d1.config.Logo;
+        
+        // Dynamic content update
+        if (cfg.Teks_Sambutan) { const el = document.getElementById('dynamicWelcome'); if (el) el.innerText = cfg.Teks_Sambutan; }
+        if (cfg.TeksDeskripsi) { const el = document.getElementById('dynamicDesc'); if (el) el.innerText = cfg.TeksDeskripsi; }
+        if (cfg.URL_Background) { const bgEl = document.querySelector('.fixed-bg'); if (bgEl) bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`); }
+        
+    } catch (e) {
+        // ✅ SILENT FAIL: Tidak ada toast, tidak ada gangguan
+        // Data cache tetap dipakai, user tidak terganggu
+        console.warn("Background update gagal, menggunakan cache:", e.message);
+    }
 }
 
 // ============================================================
@@ -876,14 +975,13 @@ async function openForm() {
     btnPulang.style.pointerEvents = 'none'; btnPulang.style.opacity = '0.5';
 
     try {
-        const r = await fetch(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' });
+        const r = await fetchWithTimeout(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 12000);
         dbP = (await r.json()).data || [];
     } catch (e) { 
         console.error("Fetch presensi error:", e);
     }
 
     // ✅ GUARD CLAUSE: Validasi apakah user masih di pegawai yang sama
-    // Jika user keburu klik 'Kembali' atau ganti nama saat loading, HENTIKAN!
     const isFormStillOpen = document.getElementById('stepForm').style.display === 'flex';
     const currentPegawaiId = dbF[uIdx]?.ID || dbF[uIdx]?.id;
     
@@ -1004,7 +1102,7 @@ async function submitWithRetry(attempt = 1) {
     };
 
     try {
-        const r = await fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+        const r = await fetchWithTimeout(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }, 30000);
         const j = await r.json();
 
         if (j.status === 'success' || j.result === 'success') {
@@ -1047,7 +1145,7 @@ async function submitWithRetry(attempt = 1) {
     } catch (e) {
         console.error("Error submit:", e);
         if (attempt < 4) {
-            showToast("Menunggu Antrian...", "Koneksi tidak stabil, mencoba ulang otomatis...", "warning");
+            showToastOnce('submit_retry', "Menunggu Antrian...", "Koneksi tidak stabil, mencoba ulang otomatis...", "warning");
             setTimeout(() => submitWithRetry(attempt + 1), 3000);
         } else {
             sndError.play().catch(() => { });
