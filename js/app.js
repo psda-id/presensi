@@ -1,73 +1,207 @@
+// ============================================================
 // KONFIGURASI GLOBAL
+// ============================================================
 const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
-let appData = {}, slideIdx = 0;
+let appData = { pegawai: [], korlap: [], tools: [], config: {} };
+let slideIdx = 0;
 
-// INISIALISASI PWA MANIFEST
+// ============================================================
+// INISIALISASI PWA MANIFEST (FIXED: start_url valid)
+// ============================================================
 const manifest = {
     "name": "E-PUSDA UPT Management",
     "short_name": "E-PUSDA",
-    "start_url": "./",
+    "start_url": "index.html",           // ✅ FIX: URL valid
+    "scope": ".",
     "display": "standalone",
     "background_color": "#0d1b3e",
     "theme_color": "#1e40af",
+    "orientation": "any",
     "icons": [
         { "src": GITHUB_LOGO_URL, "sizes": "192x192", "type": "image/png" },
         { "src": GITHUB_LOGO_URL, "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
     ]
 };
-const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/manifest+json'});
-document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(manifestBlob));
 
+try {
+    const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+    const manifestUrl = URL.createObjectURL(manifestBlob);
+    const manifestEl = document.getElementById('pwaManifest');
+    if (manifestEl) {
+        manifestEl.setAttribute('href', manifestUrl);
+    } else {
+        // Fallback: buat element manifest dinamis
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.href = manifestUrl;
+        document.head.appendChild(link);
+    }
+} catch (e) {
+    console.warn('Manifest init failed:', e);
+}
+
+// ============================================================
+// FETCH DENGAN TIMEOUT (Anti hang)
+// ============================================================
+function fetchWithTimeout(url, options = {}, timeout = 15000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), timeout);
+    return fetch(url, { ...options, signal: controller.signal })
+        .finally(() => clearTimeout(id));
+}
+
+// ============================================================
+// FUNGSI SEMBUNYIKAN SPLASH (DIPANGGIL SELALU)
+// ============================================================
+function hideSplashScreen() {
+    const overlay = document.getElementById('loadingOverlay');
+    if (!overlay) return;
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 1000);
+}
+
+// ============================================================
 // START APP
+// ============================================================
 window.onload = () => {
     lucide.createIcons();
     fetchData();
+    
     setInterval(() => { 
         const el = document.getElementById('liveClock');
-        if(el) el.innerText = new Date().toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}); 
+        if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); 
     }, 1000);
+    
+    // ✅ SAFETY NET: Paksa splash hilang maksimal 8 detik
+    setTimeout(() => {
+        const overlay = document.getElementById('loadingOverlay');
+        if (overlay && overlay.style.display !== 'none' && overlay.style.opacity !== '0') {
+            console.warn('Safety net: Force hide splash after 8s');
+            hideSplashScreen();
+        }
+    }, 8000);
 };
 
-// FETCH DATA DARI GOOGLE APPS SCRIPT
+// ============================================================
+// ✅ FETCH DATA (FIXED: Anti stuck, validasi JSON, fallback)
+// ============================================================
 async function fetchData() {
     try {
-        const res = await fetch(SCRIPT_URL + '?action=getDashboardData', { redirect: 'follow' });
-        appData = await res.json();
+        const res = await fetchWithTimeout(SCRIPT_URL + '?action=getDashboardData', { 
+            redirect: 'follow',
+            cache: 'no-cache'
+        }, 15000);
         
+        // ✅ Validasi response HTTP
+        if (!res.ok) {
+            throw new Error(`HTTP Error ${res.status}`);
+        }
+        
+        // ✅ Baca sebagai TEXT dulu, lalu parse manual
+        // Ini mencegah SyntaxError jika GAS kembalikan HTML error
+        const responseText = await res.text();
+        
+        if (!responseText || responseText.trim().length === 0) {
+            throw new Error('Response kosong');
+        }
+        
+        // Cek apakah response adalah HTML (error page dari Google)
+        if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+            throw new Error('Server mengembalikan HTML error, bukan JSON');
+        }
+        
+        // Parse JSON dengan try-catch
+        try {
+            appData = JSON.parse(responseText);
+        } catch (parseErr) {
+            throw new Error('Gagal parse JSON: ' + parseErr.message);
+        }
+        
+        // Validasi struktur data minimal
+        if (typeof appData !== 'object' || appData === null) {
+            appData = { pegawai: [], korlap: [], tools: [], config: {} };
+        }
+        
+        // Setup logo
         const logoToUse = appData.config?.Logo || GITHUB_LOGO_URL;
-        document.getElementById('sidebarLogo').src = logoToUse;
-        document.getElementById('splashBgLogo').src = logoToUse;
+        const sidebarLogo = document.getElementById('sidebarLogo');
+        const splashBgLogo = document.getElementById('splashBgLogo');
+        if (sidebarLogo) sidebarLogo.src = logoToUse;
+        if (splashBgLogo) splashBgLogo.src = logoToUse;
         
+        // Render dashboard
         renderMainDashboard();
         populateAgendaDropdown();
         startHeroSlide();
         
-        const overlay = document.getElementById('loadingOverlay');
-        setTimeout(() => {
-            overlay.style.opacity = '0';
-            setTimeout(() => overlay.style.display = 'none', 1000);
-        }, 2000);
     } catch (err) { 
-        console.error(err); 
+        console.error('Fetch Data Error:', err.message || err);
+        
+        // ✅ FALLBACK: Gunakan data kosong, jangan stuck
+        appData = { pegawai: [], korlap: [], tools: [], config: {} };
+        
+        // Setup logo default
+        const sidebarLogo = document.getElementById('sidebarLogo');
+        const splashBgLogo = document.getElementById('splashBgLogo');
+        if (sidebarLogo) sidebarLogo.src = GITHUB_LOGO_URL;
+        if (splashBgLogo) splashBgLogo.src = GITHUB_LOGO_URL;
+        
+        // Tetap render dashboard dengan data kosong
+        renderMainDashboard();
+        populateAgendaDropdown();
+        
+        // Tampilkan notifikasi error kepada user
+        showToastError('Koneksi Terputus', 'Gagal memuat data. Menggunakan mode offline.');
+    } finally {
+        // ✅ SELALU sembunyikan splash screen
+        setTimeout(() => hideSplashScreen(), 2000);
     }
 }
 
+// ============================================================
+// TOAST ERROR (NON-BLOCKING, tidak ganggu UX)
+// ============================================================
+function showToastError(title, message) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed; bottom: 100px; left: 50%; transform: translateX(-50%);
+        background: rgba(239, 68, 68, 0.95); color: white; padding: 14px 24px;
+        border-radius: 16px; font-size: 0.85rem; font-weight: 700;
+        z-index: 99999; box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        backdrop-filter: blur(10px); max-width: 90%; text-align: center;
+        animation: slideUp 0.3s ease-out;
+    `;
+    toast.innerHTML = `<strong>${title}</strong><br><span style="opacity:0.85;font-weight:500;font-size:0.75rem;">${message}</span>`;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s';
+        setTimeout(() => toast.remove(), 500);
+    }, 5000);
+}
+
+// ============================================================
 // XSS PROTECTION
+// ============================================================
 function sanitizeHTML(str) {
     if (str === null || str === undefined) return "";
     const div = document.createElement('div');
-    div.textContent = str;
+    div.textContent = String(str);
     return div.innerHTML;
 }
 
+// ============================================================
 // HERO SLIDER
+// ============================================================
 function startHeroSlide() {
     const update = () => {
-        if(!appData.korlap || appData.korlap.length === 0) return;
+        if (!appData.korlap || appData.korlap.length === 0) return;
         const p = appData.korlap[slideIdx % appData.korlap.length];
         const img = document.getElementById('heroImage');
-        if(img) {
+        if (img) {
             const imgUrl = p.link_foto_profile || p.Link_Foto_Profile;
             img.src = (imgUrl && imgUrl.includes('googleusercontent.com')) ? imgUrl.split('=')[0] + '=s500' : GITHUB_LOGO_URL;
             img.onerror = function() { this.src = GITHUB_LOGO_URL; };
@@ -78,17 +212,21 @@ function startHeroSlide() {
     setInterval(update, 6000);
 }
 
+// ============================================================
 // RENDER DASHBOARD MENU
+// ============================================================
 function renderMainDashboard() {
     const container = document.getElementById('mainTools');
+    if (!container) return;
+    
     const fullMenu = [
-        {n:'E-Presensi', i:'fingerprint', c:'#2563eb', u:'presensi.html'},
-        {n:'E-Raport', i:'file-bar-chart', c:'#059669', u:'raport.html'},
-        {n:'Maps', i:'map', c:'#ea580c', u:'wilayah.html'},
-        {n:'E-Agenda', i:'calendar', c:'#7c3aed', m:'agendaModal'},
-        {n:'Lapor', i:'megaphone', c:'#db2777', ext:'https://www.lapor.go.id/'},
-        {n:'Smopi', i:'waves', c:'#dc2625', ext:'https://smopi.info/'},
-        {n:'LAPKIN', i:'layout-dashboard', c:'#10b981', m:'lapkinModal'}
+        { n: 'E-Presensi', i: 'fingerprint', c: '#2563eb', u: 'presensi.html' },
+        { n: 'E-Raport', i: 'file-bar-chart', c: '#059669', u: 'raport.html' },
+        { n: 'Maps', i: 'map', c: '#ea580c', u: 'wilayah.html' },
+        { n: 'E-Agenda', i: 'calendar', c: '#7c3aed', m: 'agendaModal' },
+        { n: 'Lapor', i: 'megaphone', c: '#db2777', ext: 'https://www.lapor.go.id/' },
+        { n: 'Smopi', i: 'waves', c: '#dc2625', ext: 'https://smopi.info/' },
+        { n: 'LAPKIN', i: 'layout-dashboard', c: '#10b981', m: 'lapkinModal' }
     ];
     
     container.innerHTML = fullMenu.map(item => `
@@ -102,9 +240,13 @@ function renderMainDashboard() {
     lucide.createIcons();
 }
 
+// ============================================================
 // RENDER LAPKIN MODAL
+// ============================================================
 function renderLapkinPortal() {
     const container = document.getElementById('lapkinContainer');
+    if (!container) return;
+    
     const dbTools = (appData.tools || []).filter(t => {
         const name = t.Nama || t.nama || t['Nama Tool'] || t['nama tool'];
         return name && String(name).toLowerCase().trim() !== 'nama';
@@ -115,7 +257,7 @@ function renderLapkinPortal() {
         l: t.Link_URL || t.link_url || t.URL || t.url || '#'
     }));
 
-    if(dbTools.length === 0) { 
+    if (dbTools.length === 0) { 
         container.innerHTML = `
             <div style="text-align:center; opacity:0.5; grid-column:1/-1; padding:30px;">
                 <i data-lucide="database" size="32" style="margin-bottom:10px; opacity:0.5;"></i>
@@ -135,10 +277,12 @@ function renderLapkinPortal() {
     lucide.createIcons();
 }
 
+// ============================================================
 // AGENDA FORM LOGIC
+// ============================================================
 function populateAgendaDropdown() {
     const s = document.getElementById('agnNama');
-    if(!s) return;
+    if (!s) return;
     s.innerHTML = '<option value="" disabled selected>-- Pilih Personel --</option>';
     [...(appData.pegawai || []), ...(appData.korlap || [])].forEach(p => {
         const name = sanitizeHTML(p.nama || p.Nama);
@@ -150,7 +294,7 @@ function populateAgendaDropdown() {
 function updateAgendaFields() {
     const id = document.getElementById('agnNama').value;
     const p = [...(appData.pegawai || []), ...(appData.korlap || [])].find(x => String(x.id || x.ID) === String(id));
-    if(p) document.getElementById('agnJabatan').value = sanitizeHTML(p.jabatan || p.Jabatan || "Staff Operasional");
+    if (p) document.getElementById('agnJabatan').value = sanitizeHTML(p.jabatan || p.Jabatan || "Staff Operasional");
 }
 
 async function submitAgendaAction() {
@@ -158,7 +302,7 @@ async function submitAgendaAction() {
     const id = document.getElementById('agnNama').value;
     const judul = document.getElementById('agnJudul').value;
     
-    if(!id || !judul) return alert("Harap lengkapi Nama dan Judul Agenda!");
+    if (!id || !judul) return alert("Harap lengkapi Nama dan Judul Agenda!");
 
     const p = [...(appData.pegawai || []), ...(appData.korlap || [])].find(x => String(x.id || x.ID) === String(id));
     const payload = {
@@ -194,9 +338,20 @@ async function submitAgendaAction() {
 
 async function sendAgendaRequest(payload, btn, originalBtnText) {
     try {
-        const r = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const d = await r.json();
-        if(d.status === 'success') { 
+        const r = await fetchWithTimeout(SCRIPT_URL, { 
+            method: 'POST', 
+            body: JSON.stringify(payload) 
+        }, 20000);
+        
+        const text = await r.text();
+        let d;
+        try {
+            d = JSON.parse(text);
+        } catch(e) {
+            throw new Error('Response server tidak valid');
+        }
+        
+        if (d.status === 'success') { 
             alert("Agenda berhasil terkirim!"); 
             closeModal('agendaModal'); 
             document.getElementById('agnNama').selectedIndex = 0;
@@ -208,10 +363,10 @@ async function sendAgendaRequest(payload, btn, originalBtnText) {
             document.getElementById('agnKet').value = '';
             document.getElementById('agnFoto').value = '';
         } else { 
-            alert("Gagal mengirim: " + d.message); 
+            alert("Gagal mengirim: " + (d.message || 'Unknown error')); 
         }
     } catch(e) { 
-        alert("Terjadi kesalahan jaringan."); 
+        alert("Terjadi kesalahan jaringan: " + (e.message || 'Timeout')); 
     } finally {
         btn.disabled = false; 
         btn.innerHTML = originalBtnText; 
@@ -219,20 +374,33 @@ async function sendAgendaRequest(payload, btn, originalBtnText) {
     }
 }
 
+// ============================================================
 // VOICE TO TEXT
+// ============================================================
 function startMic(tid, btn) {
     const S = window.SpeechRecognition || window.webkitSpeechRecognition; 
-    if(!S) return alert("Browser Anda tidak mendukung fitur suara.");
-    const r = new S(); r.lang = 'id-ID';
+    if (!S) return alert("Browser Anda tidak mendukung fitur suara.");
+    const r = new S(); 
+    r.lang = 'id-ID';
     r.onstart = () => btn.classList.add('active');
     r.onresult = (e) => { 
         const txt = e.results[0][0].transcript; 
         const el = document.getElementById(tid); 
-        el.value = (el.value ? el.value + ' ' : '') + txt;
+        if (el) el.value = (el.value ? el.value + ' ' : '') + txt;
     };
-    r.onend = () => btn.classList.remove('active'); r.start();
+    r.onend = () => btn.classList.remove('active'); 
+    r.onerror = () => btn.classList.remove('active');
+    r.start();
 }
 
+// ============================================================
 // MODAL CONTROLS
-function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+// ============================================================
+function openModal(id) { 
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'flex'; 
+}
+function closeModal(id) { 
+    const el = document.getElementById(id);
+    if (el) el.style.display = 'none'; 
+}
