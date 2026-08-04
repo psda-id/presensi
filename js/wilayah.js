@@ -3,7 +3,7 @@ const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusd
 const API_URL = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
 const placeholderImg = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 85'%3E%3Crect width='60' height='85' fill='%232e446e'/%3E%3Cpath d='M30 40c5.5 0 10-4.5 10-10s-4.5-10-10-10-10 4.5-10 10 4.5 10 10 10zm0 5c-8 0-20 4-20 12v5h40v-5c0-8-12-12-20-12z' fill='%23ffffff' opacity='0.2'/%3E%3C/svg%3E";
 
-// ============ PWA MANIFEST (FIXED: Data URI base64) ============
+// ============ PWA MANIFEST (Data URI base64) ============
 try {
     const mf = { name:"E-PUSDA Monitoring", short_name:"E-PUSDA", start_url:"wilayah.html", scope:"./", display:"standalone", background_color:"#0d1b3e", theme_color:"#0d1b3e", icons:[{src:GITHUB_LOGO_URL,sizes:"192x192",type:"image/png",purpose:"any maskable"},{src:GITHUB_LOGO_URL,sizes:"512x512",type:"image/png",purpose:"any maskable"}] };
     const uri = 'data:application/manifest+json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(mf))));
@@ -13,24 +13,32 @@ try {
 } catch(e) { console.warn('Manifest init failed:', e); }
 
 // ============ VARIABEL APLIKASI ============
-let dbE = [], dbP = [], dbK = [], searchTimeout = null, fetchController = null;
+let dbE = [], dbP = [], dbK = [], searchTimeout = null;
 let pegawaiById = new Map(), logsByPegawai = new Map();
 
-// ============ FETCH DENGAN TIMEOUT ============
+// ============ ✅ FETCH DENGAN TIMEOUT (FIXED: independent controller) ============
 function fetchWithTimeout(url, opts = {}, timeout = 15000) {
-    if (fetchController) fetchController.abort();
-    fetchController = new AbortController();
-    const tid = setTimeout(() => fetchController.abort(new DOMException('Timeout ' + timeout + 'ms', 'AbortError')), timeout);
-    return fetch(url, { ...opts, signal: fetchController.signal }).finally(() => clearTimeout(tid));
+    const controller = new AbortController();
+    const tid = setTimeout(() => controller.abort(new DOMException('Timeout ' + timeout + 'ms', 'AbortError')), timeout);
+    return fetch(url, { ...opts, signal: controller.signal }).finally(() => clearTimeout(tid));
 }
 
 async function safeFetchJSON(url, opts = {}, timeout = 15000) {
-    const res = await fetchWithTimeout(url, opts, timeout);
-    if (!res.ok) throw new Error('HTTP ' + res.status);
-    const txt = await res.text();
-    if (!txt || !txt.trim()) throw new Error('Response kosong');
-    if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html')) throw new Error('Server return HTML error');
-    try { return JSON.parse(txt); } catch(e) { throw new Error('Parse JSON gagal: ' + e.message); }
+    try {
+        const res = await fetchWithTimeout(url, opts, timeout);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const txt = await res.text();
+        if (!txt || !txt.trim()) throw new Error('Response kosong');
+        if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html')) throw new Error('Server return HTML error');
+        try { return JSON.parse(txt); } catch(e) { throw new Error('Parse JSON gagal: ' + e.message); }
+    } catch(e) {
+        if (e.name === 'AbortError' || (e.message && e.message.includes('Timeout'))) {
+            const err = new Error('Timeout koneksi (>' + timeout + 'ms)');
+            err.name = 'TimeoutError';
+            throw err;
+        }
+        throw e;
+    }
 }
 
 // ============ TOAST (NON-BLOCKING) ============
@@ -57,7 +65,7 @@ function getLocalDateString(val) {
 }
 function handleImgError(img) { img.onerror = null; img.src = placeholderImg; }
 
-// ============ INDEXING (FIXED: O(1) lookup) ============
+// ============ INDEXING (O(1) lookup) ============
 function indexData() {
     pegawaiById.clear(); logsByPegawai.clear();
     dbE.forEach(p => pegawaiById.set(String(p.ID), p));
@@ -82,7 +90,7 @@ window.onload = () => {
     setInterval(() => { if (!document.hidden) init(true); }, 60000);
 };
 
-// ============ ✅ PARALLEL FETCH (FIXED: 50% lebih cepat) ============
+// ============ ✅ PARALLEL FETCH (FIXED: no global controller) ============
 async function init(isRefresh = false) {
     const syncToast = document.getElementById('syncToast');
     if (!isRefresh && syncToast) syncToast.style.display = 'block';
@@ -95,7 +103,7 @@ async function init(isRefresh = false) {
     try {
         const selectedDate = document.getElementById('fDate').value;
         
-        // ✅ PARALLEL FETCH: Kedua request jalan bersamaan
+        // ✅ PARALLEL FETCH: Kedua request jalan bersamaan dengan controller masing-masing
         const [d, dp] = await Promise.all([
             safeFetchJSON(API_URL + "?action=getDashboardData", {}, 15000),
             safeFetchJSON(API_URL + `?action=getPresensiByDate&date=${selectedDate}`, {}, 15000)
@@ -119,18 +127,32 @@ async function init(isRefresh = false) {
         updateKorlapStats();
         filterData();
     } catch(e) {
-        const isAbort = e.name === 'AbortError' || (e.message && e.message.includes('Timeout'));
+        const isTimeout = e.name === 'TimeoutError' || (e.message && e.message.includes('Timeout'));
+        const isNetwork = e.message && (e.message.includes('Failed to fetch') || e.message.includes('NetworkError'));
+        
         console.error("❌ Gagal memuat data:", e.message);
-        if (isAbort) showToast('Koneksi timeout. Periksa jaringan Anda.', 'error');
+        
+        if (isTimeout) showToast('Server lambat merespon. Coba lagi dalam beberapa saat.', 'warning');
+        else if (isNetwork) showToast('Koneksi internet terputus. Periksa jaringan Anda.', 'error');
         else showToast('Gagal memuat data: ' + e.message, 'error');
+        
         const grid = document.getElementById('gridView');
-        if (grid) grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:var(--danger);padding:50px">Gagal memuat data. Periksa koneksi internet.</p>';
+        if (grid && !isRefresh) {
+            grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:var(--danger);padding:50px">
+                <i data-lucide="wifi-off" size="32" style="margin-bottom:10px;opacity:0.5"></i><br>
+                ${isTimeout ? 'Server lambat merespon' : 'Gagal memuat data'}<br>
+                <button onclick="init(true)" style="margin-top:15px;padding:8px 16px;border-radius:10px;background:var(--pu-blue);color:white;border:none;cursor:pointer;font-weight:700">
+                    <i data-lucide="refresh-cw" size="14" style="vertical-align:middle"></i> Coba Lagi
+                </button>
+            </p>`;
+            lucide.createIcons();
+        }
     } finally {
         if (syncToast) syncToast.style.display = 'none';
     }
 }
 
-// ============ ✅ OPTIMIZED FILTERING (FIXED: pakai index) ============
+// ============ FILTERING (pakai index) ============
 function filterData() {
     const wil = document.getElementById('fWil').value;
     const search = document.getElementById('fSearch').value.toLowerCase();
@@ -143,7 +165,6 @@ function filterData() {
         }
     });
 
-    // ✅ Pakai index yang sudah di-precompute
     Object.keys(monitoringMap).forEach(pID => {
         const logs = logsByPegawai.get(pID) || [];
         logs.sort((a,b) => new Date(a.Timestamp||a.timestamp) - new Date(b.Timestamp||b.timestamp));
@@ -166,8 +187,6 @@ function filterData() {
     });
 
     const dataArr = Object.values(monitoringMap);
-    
-    // ✅ RENDER HANYA VIEW YANG AKTIF (FIXED: hemat resources)
     const gridVisible = document.getElementById('gridView')?.style.display !== 'none';
     const tableVisible = document.getElementById('tableWrapper')?.style.display !== 'none';
     if (gridVisible) renderGridView(dataArr);
@@ -175,7 +194,7 @@ function filterData() {
     lucide.createIcons();
 }
 
-// ============ ✅ EVENT DELEGATION (FIXED: tidak pakai inline onclick) ============
+// ============ EVENT DELEGATION ============
 function attachPreviewListeners(container) {
     container.querySelectorAll('[data-preview]').forEach(el => {
         el.addEventListener('click', () => {
@@ -269,7 +288,7 @@ function renderTableView(data) {
     attachPreviewListeners(body);
 }
 
-// ============ ✅ OPTIMIZED KORLAP STATS (FIXED: pre-indexed) ============
+// ============ KORLAP STATS (pre-indexed) ============
 function updateKorlapStats() {
     const container = document.getElementById('korlapGrid');
     if (!container) return;
@@ -352,7 +371,7 @@ async function compressImage(base64, options = {}) {
     });
 }
 
-// ============ ✅ SUBMIT AGENDA (FIXED: Toast + Timeout) ============
+// ============ SUBMIT AGENDA ============
 async function submitAgenda() {
     const btn = document.getElementById('btnSubmitAgenda');
     const orig = btn.innerHTML;
@@ -401,7 +420,6 @@ async function submitAgenda() {
 
 // ============ UI INTERACTIONS ============
 function onDateChange() {
-    // ✅ DEBOUNCE date change
     clearTimeout(searchTimeout);
     searchTimeout = setTimeout(() => init(true), 300);
 }
