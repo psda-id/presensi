@@ -13,7 +13,7 @@ try {
 } catch(e) { console.warn('Manifest init failed:', e); }
 
 // ============ FETCH DENGAN TIMEOUT ============
-function fetchWithTimeout(url, opts = {}, timeout = 10000) {
+function fetchWithTimeout(url, opts = {}, timeout = 15000) {
     const ctrl = new AbortController();
     const tid = setTimeout(() => ctrl.abort(new DOMException('Timeout after ' + timeout + 'ms', 'AbortError')), timeout);
     return fetch(url, { ...opts, signal: ctrl.signal }).finally(() => clearTimeout(tid));
@@ -38,35 +38,83 @@ function showToastError(title, msg) {
 
 // ============ START APP ============
 window.onload = () => {
-    lucide.createIcons(); fetchData();
+    lucide.createIcons(); 
+    fetchData();
     setInterval(() => { const el = document.getElementById('liveClock'); if(el) el.innerText = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }, 1000);
-    setTimeout(() => { const ov = document.getElementById('loadingOverlay'); if(ov && ov.style.display !== 'none' && ov.style.opacity !== '0') { console.warn('Safety net: Force hide splash'); hideSplashScreen(); } }, 10000);
+    setTimeout(() => { const ov = document.getElementById('loadingOverlay'); if(ov && ov.style.display !== 'none' && ov.style.opacity !== '0') { console.warn('Safety net: Force hide splash'); hideSplashScreen(); } }, 12000);
 };
 
-// ============ FETCH DATA ============
-async function fetchData() {
+// ============ ✅ FETCH DATA (FIXED: Retry + Longer Timeout) ============
+async function fetchData(attempt = 1) {
+    const maxRetries = 2;
+    const timeout = attempt === 1 ? 15000 : 20000;
+    
     try {
-        const res = await fetchWithTimeout(SCRIPT_URL + '?action=getDashboardData', { redirect:'follow', cache:'no-cache' }, 7000);
+        const res = await fetchWithTimeout(SCRIPT_URL + '?action=getDashboardData', { 
+            redirect: 'follow', cache: 'no-cache' 
+        }, timeout);
+        
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        
         const txt = await res.text();
         if (!txt || !txt.trim()) throw new Error('Response kosong');
-        if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html')) throw new Error('Server return HTML error');
-        try { appData = JSON.parse(txt); } catch(e) { throw new Error('Parse JSON gagal: ' + e.message); }
-        if (typeof appData !== 'object' || !appData) appData = { pegawai:[], korlap:[], tools:[], config:{} };
+        if (txt.trim().startsWith('<!DOCTYPE') || txt.trim().startsWith('<html')) {
+            throw new Error('Server return HTML error');
+        }
+        
+        try { appData = JSON.parse(txt); } 
+        catch(e) { throw new Error('Parse JSON gagal: ' + e.message); }
+        
+        if (typeof appData !== 'object' || !appData) {
+            appData = { pegawai: [], korlap: [], tools: [], config: {} };
+        }
+        
         const logo = appData.config?.Logo || GITHUB_LOGO_URL;
         const sl = document.getElementById('sidebarLogo'), spl = document.getElementById('splashBgLogo');
-        if(sl) sl.src = logo; if(spl) spl.src = logo;
-        renderMainDashboard(); populateAgendaDropdown(); startHeroSlide();
+        if (sl) sl.src = logo; 
+        if (spl) spl.src = logo;
+        
+        renderMainDashboard(); 
+        populateAgendaDropdown(); 
+        startHeroSlide();
+        
+        if (attempt > 1) {
+            console.log(`✅ Fetch berhasil setelah ${attempt} percobaan`);
+        }
+        
     } catch(err) {
-        const isAbort = err && (err.name === 'AbortError' || (err.message && (err.message.includes('aborted') || err.message.includes('timeout') || err.message.includes('Timeout'))));
-        if (isAbort) console.warn('Fetch timeout - mode offline');
-        else console.error('Fetch Error:', err.message || err);
-        appData = { pegawai:[], korlap:[], tools:[], config:{} };
+        const isAbort = err && (err.name === 'AbortError' || 
+                               (err.message && (err.message.includes('aborted') || 
+                                                err.message.includes('timeout') || 
+                                                err.message.includes('Timeout'))));
+        
+        if (isAbort && attempt < maxRetries) {
+            console.warn(`⏱️ Fetch timeout, retry ${attempt}/${maxRetries}...`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            return fetchData(attempt + 1);
+        }
+        
+        if (isAbort) {
+            console.warn('⚠️ Fetch timeout setelah semua retry - mode offline');
+        } else {
+            console.error('❌ Fetch Error:', err.message || err);
+        }
+        
+        appData = { pegawai: [], korlap: [], tools: [], config: {} };
+        
         const sl = document.getElementById('sidebarLogo'), spl = document.getElementById('splashBgLogo');
-        if(sl) sl.src = GITHUB_LOGO_URL; if(spl) spl.src = GITHUB_LOGO_URL;
-        renderMainDashboard(); populateAgendaDropdown();
-        if (!isAbort) showToastError('Koneksi Terputus', 'Gagal memuat data. Mode offline aktif.');
-    } finally { setTimeout(() => hideSplashScreen(), 2000); }
+        if (sl) sl.src = GITHUB_LOGO_URL; 
+        if (spl) spl.src = GITHUB_LOGO_URL;
+        
+        renderMainDashboard(); 
+        populateAgendaDropdown();
+        
+        if (!isAbort) {
+            showToastError('Koneksi Terputus', 'Gagal memuat data. Mode offline aktif.');
+        }
+    } finally { 
+        setTimeout(() => hideSplashScreen(), 2000); 
+    }
 }
 
 // ============ SANITIZE ============
@@ -86,7 +134,8 @@ function startHeroSlide() {
 
 // ============ RENDER DASHBOARD ============
 function renderMainDashboard() {
-    const c = document.getElementById('mainTools'); if (!c) return;
+    const c = document.getElementById('mainTools'); 
+    if (!c) return;
     const menu = [
         {n:'E-Presensi',i:'fingerprint',c:'#2563eb',u:'presensi.html'},
         {n:'E-Raport',i:'file-bar-chart',c:'#059669',u:'raport.html'},
@@ -97,12 +146,14 @@ function renderMainDashboard() {
         {n:'LAPKIN',i:'layout-dashboard',c:'#10b981',m:'lapkinModal'}
     ];
     c.innerHTML = menu.map(i => `<div class="tool-card" onclick="${i.u?`location.href='${i.u}'`:i.ext?`window.open('${i.ext}','_blank')`:`openModal('${i.m}')`}"><div class="tool-icon-box" style="background:${i.c}"><i data-lucide="${i.i}"></i></div><div class="tool-name">${sanitizeHTML(i.n)}</div></div>`).join('');
-    renderLapkinPortal(); lucide.createIcons();
+    renderLapkinPortal(); 
+    lucide.createIcons();
 }
 
 // ============ LAPKIN PORTAL ============
 function renderLapkinPortal() {
-    const c = document.getElementById('lapkinContainer'); if (!c) return;
+    const c = document.getElementById('lapkinContainer'); 
+    if (!c) return;
     const tools = (appData.tools || []).filter(t => { const n = t.Nama||t.nama||t['Nama Tool']||t['nama tool']; return n && String(n).toLowerCase().trim() !== 'nama'; }).map(t => ({ n: t.Nama||t.nama||t['Nama Tool']||'Tanpa Nama', i: t.Icon||t.icon||'external-link', c: t.Warna||t.warna||'#333', l: t.Link_URL||t.link_url||'#' }));
     if (!tools.length) { c.innerHTML = `<div style="text-align:center;opacity:0.5;grid-column:1/-1;padding:30px;"><i data-lucide="database" size="32" style="margin-bottom:10px;opacity:0.5;"></i><p>Belum ada data di sheet <b>TOOLS</b>.<br>Header: <b>Icon, Nama, Warna, Link_URL</b></p></div>`; lucide.createIcons(); return; }
     c.innerHTML = tools.map(i => `<div class="lapkin-card" onclick="window.open('${i.l}','_blank')"><div class="icon-box" style="background:${i.c}"><i data-lucide="${i.i}"></i></div><span>${sanitizeHTML(i.n)}</span></div>`).join('');
@@ -111,7 +162,8 @@ function renderLapkinPortal() {
 
 // ============ AGENDA LOGIC ============
 function populateAgendaDropdown() {
-    const s = document.getElementById('agnNama'); if (!s) return;
+    const s = document.getElementById('agnNama'); 
+    if (!s) return;
     s.innerHTML = '<option value="" disabled selected>-- Pilih Personel --</option>';
     [...(appData.pegawai||[]),...(appData.korlap||[])].forEach(p => { s.insertAdjacentHTML('beforeend', `<option value="${p.id||p.ID}">${sanitizeHTML(p.nama||p.Nama)}</option>`); });
 }
