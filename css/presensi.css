@@ -1888,14 +1888,14 @@ body {
     }
 }
 /* =========================================
-   24. SKELETON LOADING PREMIUM (GLASSMORPHISM)
+   24. SKELETON LOADING PREMIUM (SILUET MANUSIA)
    ========================================= */
 #pWrap.loading {
     position: relative;
     overflow: hidden;
     border-radius: 20px;
     background: linear-gradient(145deg, #111d36, #0a1424);
-    box-shadow: inset 0 0 30px rgba(0,0,0,0.5); /* Bayangan dalam agar kedalaman */
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
 }
 
 /* Sembunyikan gambar asli saat masih loading */
@@ -1903,18 +1903,21 @@ body {
     opacity: 0;
 }
 
-/* Bentuk Kepala dan Bahu dengan cahaya redup */
+/* Siluet Setengah Badan (Kepala, Leher, Bahu) menggunakan SVG */
 #pWrap.loading::after {
     content: '';
     position: absolute;
     top: 0; left: 0; right: 0; bottom: 0;
-    background-image: 
-        radial-gradient(circle at 50% 35%, rgba(45, 212, 191, 0.15) 55px, transparent 56px), 
-        radial-gradient(ellipse 120px 100px at 50% 95%, rgba(59, 130, 246, 0.15) 40%, transparent 41%);
+    /* SVG berbentuk path avatar manusia, diberi sedikit blur agar elegan */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Cpath fill='rgba(45, 212, 191, 0.15)' d='M150 35c-22 0-40 18-40 40s18 40 40 40 40-18 40-40-18-40-40-40zm0 95c-44 0-85 22-85 65v25h170v-25c0-43-41-65-85-65z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center 75%; /* Fokus ke tengah-bawah */
+    background-size: 50% auto; /* Ukuran siluet */
+    filter: blur(1.5px); /* Sedikit blur agar like a shadow */
     z-index: 0;
 }
 
-/* Efek Kilau (Shimmer) yang lebih halus dan lebar */
+/* Efek Kilau (Shimmer) berjalan */
 #pWrap.loading::before {
     content: '';
     position: absolute;
