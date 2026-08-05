@@ -160,7 +160,7 @@ body {
 }
 
 /* =========================================
-   6. HERO SECTION WRAPPER (Horizontal Layout)
+   6 & 8. HERO SECTION & TIPOGRAFI (MERGED)
    ========================================= */
 .hero-section {
     position: relative;
@@ -168,21 +168,94 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: 0px; /* Hilangkan gap agar bisa saling menindih */
     margin-bottom: 0;
 }
 
-/* =========================================
-   7. HALAMAN PILIH NAMA (STEP SELECTOR)
-   ========================================= */
+.horizontal-header-deco {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start; /* Rata kiri (tepi) */
+    justify-content: flex-start;
+    gap: 5px;
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 0px;
+    padding-left: 25px; /* Jarak dari tepi kiri */
+    text-align: left;
+    animation: fadeInDown 0.6s ease-out;
+    z-index: 1; /* Letakkan di belakang foto */
+}
+
+.typo-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Rata kiri */
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.typo-outline-h {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1.2px rgba(45, 212, 191, 0.7);
+    text-shadow: 0 0 25px rgba(45, 212, 191, 0.2);
+    animation: typoBreath 4s ease-in-out infinite;
+}
+
+.typo-solid-h {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 900;
+    font-size: clamp(1.8rem, 4.5vw, 2.8rem);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: rgba(59, 130, 246, 0.9);
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    animation: typoBreath 4s ease-in-out infinite 0.5s;
+}
+
+.vclock-time-h {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: var(--sda-toska);
+    letter-spacing: 2px;
+    text-shadow: 0 0 15px rgba(45, 212, 191, 0.5);
+    animation: clockGlow 3s ease-in-out infinite;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.vclock-time-h::before {
+    content: '';
+    width: 30px;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--sda-toska));
+}
+.vclock-time-h::after {
+    content: '';
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(to right, var(--sda-toska), transparent);
+}
+
+/* Foto Pegawai: Naik ke atas untuk menutupi teks */
 .photo-hero-wrap { 
     position: relative; 
-    z-index: 2; 
+    z-index: 2; /* Foto di depan */
     width: 100%; 
     max-width: 260px; 
     aspect-ratio: 2/3; 
     display: flex; 
     justify-content: center; 
+    margin-top: -30px; /* INI YANG BIKIN FOTO NINDIH TEKS */
     margin-bottom: -18px; 
 }
 
@@ -192,8 +265,13 @@ body {
     object-fit: contain; 
     filter: drop-shadow(0 20px 40px rgba(0,0,0,.9)); 
     transition: opacity .3s; 
+    position: relative;
+    z-index: 2;
 }
 
+/* =========================================
+   7. HALAMAN PILIH NAMA (STEP SELECTOR)
+   ========================================= */
 .unified-card { 
     background: var(--glass); 
     backdrop-filter: blur(35px); 
@@ -268,113 +346,6 @@ body {
 
 .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); }
 
-/* =========================================
-   8. TIPOGRAFI HORIZONTAL HEADER (JUDUL ATAS)
-   ========================================= */
-.hero-section {
-    position: relative;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0px; /* Hilangkan gap agar bisa saling menindih */
-    margin-bottom: 0;
-}
-
-.horizontal-header-deco {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start; /* Rata kiri (tepi) */
-    justify-content: flex-start;
-    gap: 5px;
-    width: 100%;
-    max-width: 600px;
-    margin-bottom: 0px;
-    padding-left: 25px; /* Jarak dari tepi kiri */
-    text-align: left;
-    animation: fadeInDown 0.6s ease-out;
-    z-index: 1; /* Letakkan di belakang foto */
-}
-
-.typo-row {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start; /* Rata kiri */
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-/* Teks Outline Besar (Diperkecil) */
-.typo-outline-h {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 900;
-    font-size: clamp(1.8rem, 4.5vw, 2.8rem); /* ✅ Ukuran lebih kecil */
-    text-transform: uppercase;
-    letter-spacing: 3px;
-    line-height: 1;
-    color: transparent;
-    -webkit-text-stroke: 1.2px rgba(45, 212, 191, 0.7);
-    text-shadow: 0 0 25px rgba(45, 212, 191, 0.2);
-    animation: typoBreath 4s ease-in-out infinite;
-}
-
-/* Teks Solid Besar (Diperkecil) */
-.typo-solid-h {
-    font-family: 'Plus Jakarta Sans', sans-serif;
-    font-weight: 900;
-    font-size: clamp(1.8rem, 4.5vw, 2.8rem); /* ✅ Ukuran lebih kecil */
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    line-height: 1;
-    color: rgba(59, 130, 246, 0.9);
-    text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-    animation: typoBreath 4s ease-in-out infinite 0.5s;
-}
-
-/* Jam di bawah judul (Diperkecil) */
-.vclock-time-h {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.9rem; /* ✅ Ukuran lebih kecil */
-    font-weight: 800;
-    color: var(--sda-toska);
-    letter-spacing: 2px;
-    text-shadow: 0 0 15px rgba(45, 212, 191, 0.5);
-    animation: clockGlow 3s ease-in-out infinite;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.vclock-time-h::before {
-    content: '';
-    width: 30px;
-    height: 2px;
-    background: linear-gradient(to right, transparent, var(--sda-toska));
-}
-.vclock-time-h::after {
-    content: '';
-    width: 80px;
-    height: 2px;
-    background: linear-gradient(to right, var(--sda-toska), transparent);
-}
-
-/* Foto Pegawai: Naik ke atas untuk menutupi teks */
-.photo-hero-wrap { 
-    position: relative; 
-    z-index: 2; /* Foto di depan */
-    width: 100%; 
-    max-width: 260px; 
-    aspect-ratio: 2/3; 
-    display: flex; 
-    justify-content: center; 
-    margin-top: -30px; /* ✅ INI YANG BIKIN FOTO NINDIH TEKS */
-    margin-bottom: -18px; 
-}
-
-@keyframes fadeInDown { 
-    from { opacity: 0; transform: translateY(-20px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
 /* =========================================
    9. SEARCH, CHIPS & ACTION
    ========================================= */
@@ -559,23 +530,19 @@ body {
     animation: formSlideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
 }
 
-/* =========================================
-   10. HALAMAN PRESENSI (FORM) - PREMIUM MAP LOADING
-   ========================================= */
 .map-view-frame { 
     width: 100%; 
     height: 200px; 
     border-radius: 25px; 
     overflow: hidden; 
     border: 1.5px solid var(--glass-border); 
-    background: linear-gradient(135deg, #0d1b3e, #102a5c); /* Background gelap elegan */
+    background: linear-gradient(135deg, #0d1b3e, #102a5c); 
     position: relative;
     display: flex; 
     align-items: center; 
     justify-content: center;
 }
 
-/* Teks "MENGUNCI SINYAL GPS" bergaya kaca buram */
 .map-view-frame.loading::before {
     content: "MENGUNCI SINYAL GPS";
     position: absolute;
@@ -592,7 +559,6 @@ body {
     box-shadow: 0 0 15px rgba(34, 211, 238, 0.2);
 }
 
-/* Lingkaran Radar yang membesar */
 .map-view-frame.loading::after {
     content: '';
     position: absolute;
@@ -1010,7 +976,6 @@ body {
 .cam-action-btn.btn-gallery { color: var(--sda-toska); border-color: rgba(45,212,191,.4); }
 .cam-action-btn.btn-gallery:hover { background: rgba(45,212,191,.2); }
 
-/* Validasi border merah kedip jika foto wajib belum diisi (Global) */
 .cam-slot-frame.cam-required, .cam-slot-kerja.cam-required {
     border-color: var(--danger) !important;
     animation: pulseGlow 1.5s infinite; 
@@ -1455,475 +1420,139 @@ body {
 #fallbackCameraInput, #galleryInput, #suratInput { display: none; }
 
 /* =========================================
-   19. SKELETON LOADING
+   19. SKELETON LOADING MINIMALIS (ANTI BUG)
    ========================================= */
-.skeleton, .skeleton-box { 
-    background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.15) 50%, rgba(255,255,255,0.05) 75%); 
-    background-size: 200% 100%; 
-    animation: shimmer 1.5s infinite; 
-    border-radius: 12px; 
+#pWrap.loading {
+    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 20px;
+    overflow: hidden;
 }
 
-.skel-photo { width: 100%; height: 100%; border-radius: 16px; }
-.skel-title { width: 60%; height: 24px; margin-bottom: 10px; }
-.skel-text { width: 90%; height: 14px; margin-bottom: 8px; }
-.skel-card { width: 100%; height: 120px; border-radius: 20px; }
+/* Sembunyikan gambar saat loading */
+#pWrap.loading img {
+    opacity: 0;
+}
+
+/* Efek kilau (shimmer) yang minimalis */
+#pWrap.loading::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0) 100%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    z-index: 1;
+}
+
+/* Pastikan gambar langsung tampil saat class loading dihapus */
+#pWrap img {
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
 
 /* =========================================
    20. KEYFRAMES & ANIMATIONS
    ========================================= */
-@keyframes fadeInUp { 
-    from { opacity: 0; transform: translateY(15px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
-@keyframes fadeInDown { 
-    from { opacity: 0; transform: translateY(-20px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
-@keyframes fadeIn { 
-    from { opacity: 0; transform: translateY(10px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
-@keyframes formSlideUp { 
-    from { opacity: 0; transform: translateY(40px) scale(0.98); } 
-    to { opacity: 1; transform: translateY(0) scale(1); } 
-}
-
-@keyframes slideRight { 
-    from { opacity: 0; transform: translateX(-20px); } 
-    to { opacity: 1; transform: translateX(0); } 
-}
-
-@keyframes gridExpand { 
-    from { opacity: 0; transform: translateY(-10px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
-@keyframes slideIn { 
-    from { opacity: 0; transform: translateY(-5px); } 
-    to { opacity: 1; transform: translateY(0); } 
-}
-
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes formSlideUp { from { opacity: 0; transform: translateY(40px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes slideRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes gridExpand { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes spin { to { transform: rotate(360deg); } }
-
-@keyframes pulse-logo-loader { 
-    0%,100% { transform: scale(.8); opacity: .1; } 
-    50% { transform: scale(1.1); opacity: .3; } 
-}
-
-@keyframes blink { 
-    0%,100% { opacity: 1; } 
-    50% { opacity: .3; } 
-}
-
-@keyframes pulseGlow { 
-    0% { box-shadow: 0 0 0 0 currentColor; } 
-    70% { box-shadow: 0 0 0 12px transparent; } 
-    100% { box-shadow: 0 0 0 0 transparent; } 
-}
-
-@keyframes shimmer { 
-    0% { background-position: 200% 0; } 
-    100% { background-position: -200% 0; } 
-}
-
-@keyframes typoBreath {
-    0%, 100% { opacity: 0.6; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.02); }
-}
-
-@keyframes clockGlow {
-    0%, 100% { text-shadow: 0 0 10px rgba(45, 212, 191, 0.3); }
-    50% { text-shadow: 0 0 25px rgba(45, 212, 191, 0.7), 0 0 50px rgba(45, 212, 191, 0.2); }
-}
+@keyframes pulse-logo-loader { 0%,100% { transform: scale(.8); opacity: .1; } 50% { transform: scale(1.1); opacity: .3; } }
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+@keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 currentColor; } 70% { box-shadow: 0 0 0 12px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+@keyframes typoBreath { 0%, 100% { opacity: 0.6; transform: scale(1); } 50% { opacity: 1; transform: scale(1.02); } }
+@keyframes clockGlow { 0%, 100% { text-shadow: 0 0 10px rgba(45, 212, 191, 0.3); } 50% { text-shadow: 0 0 25px rgba(45, 212, 191, 0.7), 0 0 50px rgba(45, 212, 191, 0.2); } }
 
 /* =========================================
    21. RESPONSIVE MOBILE
    ========================================= */
 @media (max-width: 768px) {
     .sidebar { display: none; }
-    
-    .main-content { 
-        margin-left: 0; 
-        padding: 12px 8px 110px; 
-        width: 100%; 
-    }
-    
+    .main-content { margin-left: 0; padding: 12px 8px 110px; width: 100%; }
     .bottom-nav { display: flex; }
+    .hero-section { padding-right: 0; }
     
-    /* Hero Section Mobile */
-    .hero-section {
-        padding-right: 0;
-    }
-    
-        /* Horizontal Header Mobile */
-    .horizontal-header-deco {
-        gap: 4px;
-        padding-left: 15px; /* Sesuaikan padding mobile */
-    }
+    .horizontal-header-deco { gap: 4px; padding-left: 15px; }
     .typo-row { gap: 8px; }
-    .typo-outline-h {
-        font-size: 1.4rem; /* Ukuran mobile lebih kecil */
-        letter-spacing: 2px;
-        -webkit-text-stroke: 1px rgba(45, 212, 191, 0.6);
-    }
-    .typo-solid-h {
-        font-size: 1.4rem; /* Ukuran mobile lebih kecil */
-        letter-spacing: 1px;
-    }
-    .vclock-time-h {
-        font-size: 0.75rem;
-        letter-spacing: 1px;
-    }
+    .typo-outline-h { font-size: 1.4rem; letter-spacing: 2px; -webkit-text-stroke: 1px rgba(45, 212, 191, 0.6); }
+    .typo-solid-h { font-size: 1.4rem; letter-spacing: 1px; }
+    .vclock-time-h { font-size: 0.75rem; letter-spacing: 1px; }
     .vclock-time-h::before { width: 20px; }
     .vclock-time-h::after { width: 60px; }
     
-    .photo-hero-wrap { 
-        max-width: 180px; 
-        margin-top: -20px; /* Menindih teks di mobile */
-        margin-bottom: -14px; 
-    }
-    
-    /* Halaman pilih nama mobile */
-    .photo-hero-wrap { 
-        max-width: 180px; 
-        margin-bottom: -14px; 
-    }
-    
-    .unified-card { 
-        padding: 35px 12px 18px; 
-        border-radius: 24px; 
-        gap: 14px; 
-    }
-    
-    .scroller-controls { 
-        grid-template-columns: 42px 1fr 42px; 
-        gap: 6px; 
-    }
-    
-    .btn-circle-nav { 
-        width: 42px; 
-        height: 42px; 
-    }
-    
-    .name-scroller-box h2 { 
-        font-size: clamp(1.1rem, 4.5vw, 1.6rem); 
-    }
-    
-    .name-scroller-box p { 
-        font-size: 0.65rem; 
-        letter-spacing: 1px; 
-        margin-top: -6px; 
-    }
-    
-    .search-area-unified input { 
-        padding: 16px 55px 16px 18px; 
-        font-size: 0.95rem; 
-        border-radius: 30px; 
-    }
-    
-    .mic-trigger { 
-        width: 40px; 
-        height: 40px; 
-        right: 8px; 
-    }
-    
+    .photo-hero-wrap { max-width: 180px; margin-top: -20px; margin-bottom: -14px; }
+    .unified-card { padding: 35px 12px 18px; border-radius: 24px; gap: 14px; }
+    .scroller-controls { grid-template-columns: 42px 1fr 42px; gap: 6px; }
+    .btn-circle-nav { width: 42px; height: 42px; }
+    .name-scroller-box h2 { font-size: clamp(1.1rem, 4.5vw, 1.6rem); }
+    .name-scroller-box p { font-size: 0.65rem; letter-spacing: 1px; margin-top: -6px; }
+    .search-area-unified input { padding: 16px 55px 16px 18px; font-size: 0.95rem; border-radius: 30px; }
+    .mic-trigger { width: 40px; height: 40px; right: 8px; }
     .chips-list-row { gap: 6px; }
+    .chip-pill { padding: 9px 14px; font-size: .7rem; border-radius: 20px; }
+    .btn-orange-action { padding: 18px 14px; font-size: 0.95rem; border-radius: 30px; gap: 8px; }
+    .btn-back-accent { padding: 10px 18px; font-size: .78rem; border-radius: 14px; margin-bottom: 12px; }
     
-    .chip-pill { 
-        padding: 9px 14px; 
-        font-size: .7rem; 
-        border-radius: 20px; 
-    }
-    
-    .btn-orange-action { 
-        padding: 18px 14px; 
-        font-size: 0.95rem; 
-        border-radius: 30px; 
-        gap: 8px; 
-    }
-    
-    .btn-back-accent { 
-        padding: 10px 18px; 
-        font-size: .78rem; 
-        border-radius: 14px; 
-        margin-bottom: 12px; 
-    }
-    
-    /* Halaman presensi mobile */
-    .form-header-premium { 
-        flex-direction: row;
-        align-items: center; 
-        padding-left: 0; 
-        gap: 12px; 
-        margin-bottom: 8px; 
-    }
-    
-    .photo-pop-out { 
-        width: 80px; 
-        height: 110px; 
-    }
-    
-    .photo-pop-out img { 
-        width: 120%; 
-        max-height: 140px; 
-    }
-    
-    .header-info-text { 
-        padding-bottom: 0; 
-        display: flex; 
-        flex-direction: column; 
-        align-items: flex-start;
-    }
-    
-    .header-info-text h3 { 
-        font-size: clamp(1rem, 4vw, 1.3rem); 
-        margin-bottom: 4px; 
-    }
-    
-    .header-info-text p { 
-        justify-content: flex-start; 
-        font-size: .72rem; 
-    }
-    
-    .form-unified-box { 
-        padding: 16px 10px; 
-        border-radius: 24px; 
-        gap: 12px; 
-    }
-    
-    .map-view-frame { 
-        height: 160px; 
-        border-radius: 16px; 
-    }
-    
+    .form-header-premium { flex-direction: row; align-items: center; padding-left: 0; gap: 12px; margin-bottom: 8px; }
+    .photo-pop-out { width: 80px; height: 110px; }
+    .photo-pop-out img { width: 120%; max-height: 140px; }
+    .header-info-text { padding-bottom: 0; display: flex; flex-direction: column; align-items: flex-start; }
+    .header-info-text h3 { font-size: clamp(1rem, 4vw, 1.3rem); margin-bottom: 4px; }
+    .header-info-text p { justify-content: flex-start; font-size: .72rem; }
+    .form-unified-box { padding: 16px 10px; border-radius: 24px; gap: 12px; }
+    .map-view-frame { height: 160px; border-radius: 16px; }
     .presence-main-controls { gap: 8px; }
-    
-    .btn-presence-mega { 
-        padding: 16px 8px; 
-        border-radius: 14px; 
-        font-size: 0.8rem; 
-    }
-    
-    .collapse-header { 
-        padding: 12px 16px; 
-        font-size: 0.75rem; 
-        margin-top: 8px; 
-        border-radius: 10px 30px 20px 30px; 
-    }
-    
+    .btn-presence-mega { padding: 16px 8px; border-radius: 14px; font-size: 0.8rem; }
+    .collapse-header { padding: 12px 16px; font-size: 0.75rem; margin-top: 8px; border-radius: 10px 30px 20px 30px; }
     .special-status-grid { gap: 8px; margin-top: 8px; }
-    
-    .btn-special-status { 
-        padding: 12px 6px; 
-        font-size: 0.65rem; 
-        border-radius: 12px; 
-    }
-    
-    .status-badge { 
-        padding: 6px 12px; 
-        font-size: .65rem; 
-    }
-    
-    .status-info-note { 
-        padding: 12px 14px; 
-        border-radius: 16px; 
-        font-size: .8rem; 
-    }
-    
+    .btn-special-status { padding: 12px 6px; font-size: 0.65rem; border-radius: 12px; }
+    .status-badge { padding: 6px 12px; font-size: .65rem; }
+    .status-info-note { padding: 12px 14px; border-radius: 16px; font-size: .8rem; }
     .status-info-note .info-title { font-size: .85rem; }
     .status-info-note .info-body { font-size: .75rem; }
-    
-    .attendance-status-badge { 
-        padding: 10px 12px; 
-        border-radius: 12px; 
-        gap: 8px; 
-    }
-    
+    .attendance-status-badge { padding: 10px 12px; border-radius: 12px; gap: 8px; }
     .badge-icon { width: 28px; height: 28px; }
     .badge-text h4 { font-size: 0.78rem; }
     .badge-text p { font-size: 0.68rem; }
-    
-    .textarea-wrapper textarea { 
-        padding: 12px 14px 32px 14px; 
-        border-radius: 16px; 
-        font-size: .88rem; 
-        min-height: 85px; 
-    }
-    
-    .textarea-counter { 
-        bottom: 8px; 
-        right: 12px; 
-        font-size: .62rem; 
-    }
-    
-    .textarea-clear { 
-        top: 8px; 
-        right: 8px; 
-        width: 26px; 
-        height: 26px; 
-    }
-    
+    .textarea-wrapper textarea { padding: 12px 14px 32px 14px; border-radius: 16px; font-size: .88rem; min-height: 85px; }
+    .textarea-counter { bottom: 8px; right: 12px; font-size: .62rem; }
+    .textarea-clear { top: 8px; right: 8px; width: 26px; height: 26px; }
     .cam-grid-5050 { gap: 8px; }
+    .cam-slot-frame, .cam-slot-kerja { border-radius: 16px; }
+    .cam-slot-actions { padding: 6px; gap: 4px; }
+    .cam-action-btn { padding: 8px 4px; font-size: .62rem; border-radius: 10px; gap: 4px; }
+    .btn-submit-final { padding: 18px 14px; font-size: 0.95rem; border-radius: 28px; margin-top: 6px; }
     
-    .cam-slot-frame, .cam-slot-kerja { 
-        border-radius: 16px; 
-    }
-    
-    .cam-slot-actions { 
-        padding: 6px; 
-        gap: 4px; 
-    }
-    
-    .cam-action-btn { 
-        padding: 8px 4px; 
-        font-size: .62rem; 
-        border-radius: 10px; 
-        gap: 4px; 
-    }
-   
-    .btn-submit-final { 
-        padding: 18px 14px; 
-        font-size: 0.95rem; 
-        border-radius: 28px; 
-        margin-top: 6px; 
-    }
-    
-    /* Camera UI mobile */
-    .scan-header { 
-        padding: 14px 14px 18px; 
-        gap: 10px; 
-    }
-    
-    .scan-header-logo { 
-        width: 40px; 
-        height: 40px; 
-    }
-    
+    .scan-header { padding: 14px 14px 18px; gap: 10px; }
+    .scan-header-logo { width: 40px; height: 40px; }
     .scan-header-logo img { width: 26px; height: 26px; }
     .scan-header-title { font-size: .6rem; letter-spacing: 2px; }
     .scan-header-subtitle { font-size: .65rem; }
-    
-    .scan-header-status { 
-        padding: 5px 10px; 
-        font-size: .6rem; 
-    }
-    
-    .scan-info { 
-        bottom: 150px; 
-        left: 10px; 
-        right: 10px; 
-        padding: 10px 14px; 
-        border-radius: 12px; 
-    }
-    
+    .scan-header-status { padding: 5px 10px; font-size: .6rem; }
+    .scan-info { bottom: 150px; left: 10px; right: 10px; padding: 10px 14px; border-radius: 12px; }
     .scan-info-label { font-size: .52rem; }
     .scan-info-value { font-size: .72rem; }
+    .scan-instruction { bottom: 230px; font-size: .75rem; padding: 10px 16px; max-width: 92%; }
+    .shutter { width: 72px; height: 72px; bottom: 40px; border-width: 5px; }
+    .btn-close-cam { top: 16px; right: 14px; width: 40px; height: 40px; }
     
-    .scan-instruction { 
-        bottom: 230px; 
-        font-size: .75rem; 
-        padding: 10px 16px; 
-        max-width: 92%; 
-    }
-    
-    .shutter { 
-        width: 72px; 
-        height: 72px; 
-        bottom: 40px; 
-        border-width: 5px; 
-    }
-    
-    .btn-close-cam { 
-        top: 16px; 
-        right: 14px; 
-        width: 40px; 
-        height: 40px; 
-    }
-    
-    /* Modal mobile */
-    .notif-modal-content, .surat-modal-content { 
-        padding: 24px 18px; 
-        border-radius: 20px; 
-        max-width: 92vw; 
-    }
-    
-    .permission-modal-content { 
-        padding: 24px 18px; 
-        border-radius: 20px; 
-        max-width: 92vw; 
-    }
-    
-    .permission-btn { 
-        padding: 13px; 
-        font-size: .85rem; 
-    }
+    .notif-modal-content, .surat-modal-content { padding: 24px 18px; border-radius: 20px; max-width: 92vw; }
+    .permission-modal-content { padding: 24px 18px; border-radius: 20px; max-width: 92vw; }
+    .permission-btn { padding: 13px; font-size: .85rem; }
 }
 
 /* =========================================
    22. RESPONSIVE TABLET
    ========================================= */
 @media (min-width: 769px) and (max-width: 1024px) {
-    .sidebar { 
-        width: 220px; 
-        padding: 18px; 
-    }
-    
-    .main-content { 
-        margin-left: 220px; 
-        width: calc(100% - 220px); 
-        padding: 24px 24px 100px; 
-    }
-    
-    .unified-card { 
-        padding: 40px 25px 25px; 
-        border-radius: 35px; 
-    }
-    
-    .photo-hero-wrap { 
-        max-width: 220px; 
-    }
-}
-/* =========================================
-   24. SKELETON LOADING PREMIUM (SILUET MANUSIA)
-   ========================================= */
-#pWrap.loading {
-    position: relative;
-    overflow: hidden;
-    border-radius: 20px;
-    background: linear-gradient(145deg, #111d36, #0a1424);
-    box-shadow: inset 0 0 30px rgba(0,0,0,0.5);
-}
-
-/* Sembunyikan gambar asli saat masih loading */
-#pWrap.loading img {
-    opacity: 0;
-}
-
-/* Siluet Setengah Badan (Kepala, Leher, Bahu) menggunakan SVG */
-#pWrap.loading::after {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    /* SVG berbentuk path avatar manusia, diberi sedikit blur agar elegan */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 300'%3E%3Cpath fill='rgba(45, 212, 191, 0.15)' d='M150 35c-22 0-40 18-40 40s18 40 40 40 40-18 40-40-18-40-40-40zm0 95c-44 0-85 22-85 65v25h170v-25c0-43-41-65-85-65z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: center 75%; /* Fokus ke tengah-bawah */
-    background-size: 50% auto; /* Ukuran siluet */
-    filter: blur(1.5px); /* Sedikit blur agar like a shadow */
-    z-index: 0;
-}
-
-/* Efek Kilau (Shimmer) berjalan */
-#pWrap.loading::before {
-    content: '';
-    position: absolute;
-    top: -50%; left: -50%;
-    width: 200%; height: 200%;
-    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.06) 50%, transparent 60%);
-    animation: shimmer 2s infinite linear;
-    z-index: 1;
+    .sidebar { width: 220px; padding: 18px; }
+    .main-content { margin-left: 220px; width: calc(100% - 220px); padding: 24px 24px 100px; }
+    .unified-card { padding: 40px 25px 25px; border-radius: 35px; }
+    .photo-hero-wrap { max-width: 220px; }
 }
