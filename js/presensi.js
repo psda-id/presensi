@@ -715,24 +715,38 @@ function upUI(w = "ALL") {
     const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
     let finalSrc = placeholderImg;
     if (rawUrl) {
-        let baseUrl = rawUrl.split('=')[0] + '=s500'; 
-        const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        finalSrc = baseUrl + '&v=' + todayStr; 
+        // ✅ PARSER GOOGLE DRIVE & GOOGLEUSERCONTENT
+        if (rawUrl.includes('drive.google.com') || rawUrl.includes('googleusercontent.com')) {
+            let fileId = "";
+            
+            // Cek format /d/FILE_ID (Berlaku untuk lh3.googleusercontent.com/d/ID dan drive.google.com/file/d/ID)
+            let match = rawUrl.match(/\/d\/([^\/\?]+)/);
+            if (match && match[1]) fileId = match[1];
+            
+            // Cek format ?id=FILE_ID atau &id=FILE_ID
+            if (!fileId) {
+                match = rawUrl.match(/[?&]id=([^&]+)/);
+                if (match && match[1]) fileId = match[1];
+            }
+            
+            // Jika berhasil menangkap File ID, gunakan format Thumbnail resmi Google Drive
+            if (fileId) {
+                finalSrc = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
+            } else {
+                finalSrc = rawUrl; // Fallback jika pola tidak dikenali
+            }
+        } else {
+            // Jika bukan link Google (misal direct link github dll)
+            finalSrc = rawUrl;
+        }
     }
 
     const img = document.getElementById('pImg'); 
     
-    // ✅ SOLUSI: Hapus class loading, pakai opacity langsung (Fade-In sederhana)
-    img.style.opacity = 0; // Sembunyikan dulu
-    
-    img.onload = () => { 
-        img.style.opacity = 1; // Munculkan foto saat sudah selesai di-download
-    };  
-    
+    // ✅ Hapus class loading jika ada, biarkan browser load natural
     img.onerror = () => { 
         img.onerror = null; 
         img.src = placeholderImg; 
-        img.style.opacity = 1; // Munculkan placeholder jika gagal
     };
     
     img.src = finalSrc;  
@@ -748,13 +762,6 @@ function navU(d) {
     uIdx = (uIdx + d + dbF.length) % dbF.length; 
     upUI(); 
 }
-
-function navU(d) { 
-    if (!dbF.length) return; 
-    uIdx = (uIdx + d + dbF.length) % dbF.length; 
-    upUI(); 
-}
-
 function initMap() { 
     if (map) return; 
     map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-8.13, 113.22], 15); 
