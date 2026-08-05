@@ -3,9 +3,9 @@ const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusd
 const API_URL = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
 const FALLBACK_IMAGE = GITHUB_LOGO_URL;
 const logsMap = new Map();
-let fetchController = null, fetchDebounceTimer = null;
+let fetchDebounceTimer = null;
 
-// ============ PWA MANIFEST (FIXED: Data URI base64) ============
+// ============ PWA MANIFEST ============
 try {
     const mf = { name:"E-PUSDA UPT Management", short_name:"E-PUSDA", start_url:"raport.html", scope:"./", display:"standalone", background_color:"#0d1b3e", theme_color:"#1e40af", icons:[{src:GITHUB_LOGO_URL,sizes:"192x192",type:"image/png"},{src:GITHUB_LOGO_URL,sizes:"512x512",type:"image/png",purpose:"any maskable"}] };
     const uri = 'data:application/manifest+json;base64,' + btoa(unescape(encodeURIComponent(JSON.stringify(mf))));
@@ -19,12 +19,12 @@ const imageObserver = new IntersectionObserver((entries, obs) => {
     entries.forEach(en => { if (en.isIntersecting) { const img = en.target; if (img.dataset.src) img.src = img.dataset.src; img.classList.remove('lazy-img'); obs.unobserve(img); } });
 }, { rootMargin: '200px' });
 
-// ============ FETCH DENGAN TIMEOUT ============
+// ============ FETCH DENGAN TIMEOUT (FIXED RACE CONDITION) ============
 function fetchWithTimeout(url, opts = {}, timeout = 15000) {
-    if (fetchController) fetchController.abort();
-    fetchController = new AbortController();
-    const tid = setTimeout(() => fetchController.abort(new DOMException('Timeout ' + timeout + 'ms', 'AbortError')), timeout);
-    return fetch(url, { ...opts, signal: fetchController.signal }).finally(() => clearTimeout(tid));
+    // ✅ Buat controller lokal agar tidak saling membatalkan antar request
+    const localController = new AbortController();
+    const tid = setTimeout(() => localController.abort(new DOMException('Timeout ' + timeout + 'ms', 'AbortError')), timeout);
+    return fetch(url, { ...opts, signal: localController.signal }).finally(() => clearTimeout(tid));
 }
 
 async function safeFetchJSON(url, opts = {}, timeout = 15000) {
@@ -41,7 +41,7 @@ function getLocalDateString(d) { return d.getFullYear()+'-'+String(d.getMonth()+
 function getSmartUrl(url) { if (!url) return FALLBACK_IMAGE; if (url.includes("googleusercontent")) return url.split("=")[0]+"=s500"; if (url.includes("drive.google.com")) return url.replace("/view","/preview"); return url; }
 function initFilters() { const now = new Date(), firstDay = new Date(now.getFullYear(), now.getMonth(), 1); document.getElementById('startD').value = getLocalDateString(firstDay); document.getElementById('endD').value = getLocalDateString(now); }
 
-// ============ TOAST (NON-BLOCKING) ============
+// ============ TOAST ============
 function showToast(msg, type = 'info') {
     let c = document.getElementById('toastContainer');
     if (!c) { c = document.createElement('div'); c.id = 'toastContainer'; c.style.cssText = 'position:fixed;top:20px;right:20px;z-index:100000;display:flex;flex-direction:column;gap:10px;pointer-events:none;'; document.body.appendChild(c); }
@@ -78,7 +78,6 @@ async function initApp() {
     if (printDate) printDate.innerText = new Date().toLocaleDateString('id-ID', { day:'numeric', month:'long', year:'numeric' });
     setInterval(() => { const el = document.getElementById('liveClock'); if(el) el.innerText = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }, 1000);
     
-    // CSS untuk toast animation
     if (!document.getElementById('raport-toast-style')) {
         const style = document.createElement('style'); style.id = 'raport-toast-style';
         style.innerHTML = '@keyframes slideInRight{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}';
@@ -89,7 +88,6 @@ async function initApp() {
     triggerReportFetch();
     fetchDashboardDataInBackground();
     
-    // ✅ SAFETY NET: Force hide skeleton setelah 12 detik
     setTimeout(() => {
         const grid = document.getElementById('raportGrid');
         if (grid && grid.querySelector('.skeleton-card')) {
@@ -100,16 +98,12 @@ async function initApp() {
     }, 12000);
 }
 
-// ============ ✅ FETCH DENGAN RETRY (FIXED: Anti stuck) ============
+// ============ FETCH REPORT ============
 async function fetchReportDataInBackground(attempt = 1) {
     try {
         const result = await safeFetchJSON(buildReportUrl(), {}, 15000);
         if (result.status === 'success' || Array.isArray(result.data)) {
             renderCards(result.data || []);
-            toggleLoading(false);
-        } else if (result.status === 'error') {
-            showToast('Server Error: ' + (result.message || 'Tidak diketahui'), 'error');
-            renderCards([]);
             toggleLoading(false);
         } else {
             renderCards([]);
@@ -118,12 +112,10 @@ async function fetchReportDataInBackground(attempt = 1) {
     } catch(e) {
         const isAbort = e.name === 'AbortError' || (e.message && e.message.includes('Timeout'));
         if (isAbort && attempt < 3) {
-            console.warn(`Fetch timeout, retry ${attempt}/3...`);
             showToast(`Koneksi lambat, mencoba ulang (${attempt}/3)...`, 'warning');
             setTimeout(() => fetchReportDataInBackground(attempt + 1), 1500);
             return;
         }
-        console.error('Gagal memuat laporan:', e.message);
         if (!isAbort) showToast('Gagal memuat laporan: ' + e.message, 'error');
         else showToast('Koneksi timeout. Periksa jaringan Anda.', 'error');
         renderCards([]);
@@ -149,7 +141,7 @@ async function fetchDashboardDataInBackground() {
     } catch(e) { console.warn('Dashboard fetch gagal:', e.message); }
 }
 
-// ============ ✅ DEBOUNCE TRIGGER (FIXED: Anti spam klik) ============
+// ============ DEBOUNCE TRIGGER ============
 function triggerReportFetch() {
     clearTimeout(fetchDebounceTimer);
     fetchDebounceTimer = setTimeout(() => {
