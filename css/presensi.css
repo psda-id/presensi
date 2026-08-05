@@ -160,7 +160,7 @@ body {
 }
 
 /* =========================================
-   6. HERO SECTION WRAPPER (FIX: Tipografi Vertikal)
+   6. HERO SECTION WRAPPER (Horizontal Layout)
    ========================================= */
 .hero-section {
     position: relative;
@@ -168,7 +168,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-right: 50px;
+    gap: 15px;
     margin-bottom: 0;
 }
 
@@ -269,71 +269,54 @@ body {
 .btn-circle-nav:hover { background: var(--accent); transform: scale(1.1); }
 
 /* =========================================
-   8. TIPOGRAFI VERTIKAL DEKORATIF
+   8. TIPOGRAFI HORIZONTAL HEADER (JUDUL ATAS)
    ========================================= */
-.vertical-deco-wrap {
-    position: absolute;
-    top: 8%;
-    right: -15px;
+.horizontal-header-deco {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 20px;
-    z-index: 0;
-    pointer-events: none;
-    opacity: 0.9;
-    max-height: 85%;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    margin-bottom: 10px;
+    text-align: center;
+    animation: fadeInDown 0.6s ease-out;
 }
 
-.vertical-typo-group {
+.typo-row {
     display: flex;
-    flex-direction: column;
     align-items: center;
-    gap: 4px;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
 }
 
-.typo-outline,
-.typo-solid {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    font-weight: 900;
-    letter-spacing: 6px;
-    text-transform: uppercase;
-    line-height: 1;
+.typo-outline-h {
     font-family: 'Plus Jakarta Sans', sans-serif;
-}
-
-.typo-outline {
-    font-size: clamp(2rem, 4.5vw, 3.5rem);
+    font-weight: 900;
+    font-size: clamp(2.2rem, 6vw, 4.5rem);
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    line-height: 1;
     color: transparent;
-    -webkit-text-stroke: 1.5px rgba(45, 212, 191, 0.4);
+    -webkit-text-stroke: 1.5px rgba(45, 212, 191, 0.7);
+    text-shadow: 0 0 25px rgba(45, 212, 191, 0.2);
     animation: typoBreath 4s ease-in-out infinite;
 }
 
-.typo-solid {
-    font-size: clamp(0.8rem, 1.5vw, 1.1rem);
-    color: rgba(59, 130, 246, 0.3);
-    letter-spacing: 8px;
-    animation: typoBreath 4s ease-in-out infinite 1s;
+.typo-solid-h {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.2rem, 6vw, 4.5rem);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    line-height: 1;
+    color: rgba(59, 130, 246, 0.9);
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+    animation: typoBreath 4s ease-in-out infinite 0.5s;
 }
 
-.vertical-clock-group {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 10px;
-}
-
-.vclock-line {
-    width: 2px;
-    height: 30px;
-    background: linear-gradient(to bottom, transparent, var(--sda-toska), transparent);
-    animation: linePulse 2s ease-in-out infinite;
-}
-
-.vclock-time {
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
+.vclock-time-h {
     font-family: 'JetBrains Mono', monospace;
     font-size: 1rem;
     font-weight: 800;
@@ -341,31 +324,17 @@ body {
     letter-spacing: 3px;
     text-shadow: 0 0 15px rgba(45, 212, 191, 0.5);
     animation: clockGlow 3s ease-in-out infinite;
-}
-
-.vertical-dots {
     display: flex;
-    flex-direction: column;
-    gap: 8px;
     align-items: center;
+    gap: 15px;
 }
 
-.vertical-dots span {
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: rgba(249, 115, 22, 0.5);
-    animation: dotFloat 3s ease-in-out infinite;
-}
-
-.vertical-dots span:nth-child(2) {
-    animation-delay: 0.5s;
-    background: rgba(59, 130, 246, 0.5);
-}
-
-.vertical-dots span:nth-child(3) {
-    animation-delay: 1s;
-    background: rgba(45, 212, 191, 0.5);
+.vclock-time-h::before,
+.vclock-time-h::after {
+    content: '';
+    width: 50px;
+    height: 2px;
+    background: linear-gradient(to right, transparent, var(--sda-toska), transparent);
 }
 
 /* =========================================
@@ -558,10 +527,9 @@ body {
     border-radius: 25px; 
     overflow: hidden; 
     border: 1.5px solid var(--glass-border); 
-    background: #000 url('https://i.gifer.com/ZZ5H.gif') center/80px no-repeat; /* Gif loading radar */
+    background: #000 url('https://i.gifer.com/ZZ5H.gif') center/80px no-repeat; 
     position: relative;
 }
-/* Tambahkan overlay teks agar jelas */
 .map-view-frame::before {
     content: "MENGUNCI SINYAL GPS...";
     position: absolute;
@@ -635,9 +603,9 @@ body {
 }
 
 .btn-presence-mega.btn-done { 
-    background: rgba(16, 185, 129, 0.15) !important; /* Hijau lembut */
+    background: rgba(16, 185, 129, 0.15) !important; 
     border-color: rgba(16, 185, 129, 0.4) !important;
-    color: rgba(16, 185, 129, 0.8) !important; /* Teks hijau */
+    color: rgba(16, 185, 129, 0.8) !important; 
     cursor: not-allowed; 
     animation: none; 
 }
@@ -975,6 +943,13 @@ body {
 .cam-action-btn.btn-cam:hover { background: rgba(59,130,246,.2); }
 .cam-action-btn.btn-gallery { color: var(--sda-toska); border-color: rgba(45,212,191,.4); }
 .cam-action-btn.btn-gallery:hover { background: rgba(45,212,191,.2); }
+
+/* Validasi border merah kedip jika foto wajib belum diisi (Global) */
+.cam-slot-frame.cam-required, .cam-slot-kerja.cam-required {
+    border-color: var(--danger) !important;
+    animation: pulseGlow 1.5s infinite; 
+    background: rgba(239, 68, 68, 0.05);
+}
 
 /* =========================================
    14. OVERLAYS & LOADERS
@@ -1436,6 +1411,11 @@ body {
     to { opacity: 1; transform: translateY(0); } 
 }
 
+@keyframes fadeInDown { 
+    from { opacity: 0; transform: translateY(-20px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
 @keyframes fadeIn { 
     from { opacity: 0; transform: translateY(10px); } 
     to { opacity: 1; transform: translateY(0); } 
@@ -1494,18 +1474,8 @@ body {
     50% { text-shadow: 0 0 25px rgba(45, 212, 191, 0.7), 0 0 50px rgba(45, 212, 191, 0.2); }
 }
 
-@keyframes linePulse {
-    0%, 100% { opacity: 0.4; height: 30px; }
-    50% { opacity: 1; height: 40px; }
-}
-
-@keyframes dotFloat {
-    0%, 100% { transform: translateY(0) scale(1); opacity: 0.5; }
-    50% { transform: translateY(-6px) scale(1.3); opacity: 1; }
-}
-
 /* =========================================
-   21. RESPONSIVE MOBILE - PADDING MINIM
+   21. RESPONSIVE MOBILE
    ========================================= */
 @media (max-width: 768px) {
     .sidebar { display: none; }
@@ -1520,39 +1490,30 @@ body {
     
     /* Hero Section Mobile */
     .hero-section {
-        padding-right: 30px;
+        padding-right: 0;
     }
     
-    .vertical-deco-wrap {
-        top: 5%;
-        right: -5px;
-        gap: 12px;
-        opacity: 0.55;
+    /* Horizontal Header Mobile */
+    .horizontal-header-deco {
+        gap: 6px;
+        margin-bottom: 5px;
     }
-    
-    .typo-outline {
-        font-size: 1.5rem;
-        -webkit-text-stroke: 1px rgba(45, 212, 191, 0.3);
-        letter-spacing: 4px;
+    .typo-row { gap: 10px; }
+    .typo-outline-h {
+        font-size: 1.8rem;
+        letter-spacing: 2px;
+        -webkit-text-stroke: 1.2px rgba(45, 212, 191, 0.6);
     }
-    
-    .typo-solid {
-        font-size: 0.65rem;
-        letter-spacing: 5px;
+    .typo-solid-h {
+        font-size: 1.8rem;
+        letter-spacing: 1px;
     }
-    
-    .vclock-time {
-        font-size: 0.75rem;
+    .vclock-time-h {
+        font-size: 0.85rem;
+        letter-spacing: 2px;
     }
-    
-    .vclock-line {
-        height: 18px;
-        width: 1.5px;
-    }
-    
-    .vertical-dots span {
-        width: 4px;
-        height: 4px;
+    .vclock-time-h::before, .vclock-time-h::after {
+        width: 30px;
     }
     
     /* Halaman pilih nama mobile */
@@ -1752,12 +1713,6 @@ body {
         border-radius: 10px; 
         gap: 4px; 
     }
-
-   .cam-slot-frame.cam-required, .cam-slot-kerja.cam-required {
-    border-color: var(--danger) !important;
-    animation: pulseGlow 1.5s infinite; /* Pakai animasi pulse agar kedip merah */
-    background: rgba(239, 68, 68, 0.05);
-}
    
     .btn-submit-final { 
         padding: 18px 14px; 
@@ -1852,15 +1807,6 @@ body {
         padding: 24px 24px 100px; 
     }
     
-    .hero-section {
-        padding-right: 45px;
-    }
-    
-    .vertical-deco-wrap {
-        right: -10px;
-        opacity: 0.7;
-    }
-    
     .unified-card { 
         padding: 40px 25px 25px; 
         border-radius: 35px; 
@@ -1868,96 +1814,5 @@ body {
     
     .photo-hero-wrap { 
         max-width: 220px; 
-    }
-}
-
-/* Desktop besar */
-@media (min-width: 1101px) {
-    .hero-section {
-        padding-right: 70px;
-    }
-    
-    .vertical-deco-wrap {
-        right: -25px;
-    }
-}
-/* =========================================
-   23. PATCH: TIPOGRAFI VERTIKAL PROPORSIONAL
-   (Letakkan di paling bawah file CSS)
-   ========================================= */
-
-/* Hilangkan padding kanan agar foto & card benar-benar di tengah */
-.hero-section {
-    padding-right: 0;
-}
-
-/* ✅ Posisi menempel di kanan FOTO (bukan tepi layar),
-   tinggi proporsional dengan foto (260px × 1.5 = 390px) */
-.vertical-deco-wrap {
-    top: 0;
-    right: auto;                      /* ✅ Tidak keluar layar lagi */
-    left: calc(50% + 150px);          /* ✅ setengah lebar foto (130) + gap 20 */
-    height: 390px;                    /* ✅ sama dengan tinggi foto */
-    max-height: none;
-    overflow: hidden;                 /* ✅ tidak menjulur ke bawah */
-    gap: 12px;
-    padding-top: 6px;
-    justify-content: flex-start;
-}
-
-/* ✅ Ukuran teks lebih kecil & rapi */
-.typo-outline {
-    font-size: 1.6rem;
-    letter-spacing: 3px;
-    -webkit-text-stroke: 1.2px rgba(45, 212, 191, 0.4);
-}
-
-.typo-solid {
-    font-size: 0.65rem;
-    letter-spacing: 4px;
-}
-
-.vclock-time {
-    font-size: 0.8rem;
-    letter-spacing: 2px;
-}
-
-.vclock-line {
-    height: 18px;
-}
-
-/* ---------- MOBILE ---------- */
-@media (max-width: 768px) {
-    .vertical-deco-wrap {
-        right: auto;
-        left: calc(50% + 100px);      /* foto mobile 180px → 90 + gap 10 */
-        height: 270px;                /* 180 × 1.5 = 270 */
-        gap: 8px;
-        opacity: 0.55;
-    }
-    .typo-outline {
-        font-size: 1.05rem;
-        letter-spacing: 2px;
-        -webkit-text-stroke: 1px rgba(45, 212, 191, 0.3);
-    }
-    .typo-solid { font-size: 0.5rem; letter-spacing: 3px; }
-    .vclock-time { font-size: 0.65rem; }
-    .vclock-line { height: 12px; width: 1.5px; }
-}
-
-/* ---------- TABLET ---------- */
-@media (min-width: 769px) and (max-width: 1024px) {
-    .vertical-deco-wrap {
-        right: auto;
-        left: calc(50% + 125px);      /* foto tablet 220px → 110 + gap 15 */
-        height: 330px;
-    }
-}
-
-/* ---------- DESKTOP BESAR ---------- */
-@media (min-width: 1101px) {
-    .vertical-deco-wrap {
-        right: auto;
-        left: calc(50% + 150px);
     }
 }
