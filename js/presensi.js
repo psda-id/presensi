@@ -473,9 +473,14 @@ function upLoc() {
         uPos = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy };
         g.innerHTML = `<i data-lucide="check-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--success)"></i> GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`; lucide.createIcons();
         if (map) {
-            map.setView([uPos.lat, uPos.lng], 16); marker.setLatLng([uPos.lat, uPos.lng]);
-            requestAnimationFrame(() => { requestAnimationFrame(() => { if (map) map.invalidateSize(); }); }); tampilkanGeoFence();
-        }
+        map.setView([uPos.lat, uPos.lng], 16); marker.setLatLng([uPos.lat, uPos.lng]);
+        
+        // ✅ TAMBAHKAN KODE INI DI SINI:
+        const mapFrame = document.querySelector('.map-view-frame');
+        if (mapFrame) mapFrame.classList.remove('loading');
+        
+        requestAnimationFrame(() => { requestAnimationFrame(() => { if (map) map.invalidateSize(); }); }); tampilkanGeoFence();
+    }
         updateWorkflow();
     }, e => { if (e.code === 1) showPermissionModal('gps'); else showToastOnce('gps_error', "Gagal", "GPS gagal: " + e.message, "error"); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
 }
