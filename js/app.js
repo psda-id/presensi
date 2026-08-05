@@ -142,14 +142,11 @@ async function fetchBackgroundData() {
 // ============ SANITIZE ============
 function sanitizeHTML(s) { if (s == null) return ""; const d = document.createElement('div'); d.textContent = String(s); return d.innerHTML; }
 
-// ============ HERO SLIDER (PRELOAD + FADE) ============
+// ============ HERO SLIDER (SLIDE FROM RIGHT) ============
 function startHeroSlide() {
     if (!appData.korlap || !appData.korlap.length) return;
     const img = document.getElementById('heroImage');
     if (!img) return;
-
-    // Siapkan transisi CSS
-    img.style.transition = 'opacity 0.4s ease';
 
     const loadNext = () => {
         const p = appData.korlap[slideIdx % appData.korlap.length];
@@ -159,18 +156,21 @@ function startHeroSlide() {
         // ✅ Preload gambar sebelum ditampilkan
         const tempImg = new Image();
         tempImg.onload = () => {
-            img.style.opacity = '0';
-            setTimeout(() => {
-                img.src = nextSrc;
-                img.style.opacity = '1';
-            }, 400);
+            // Hapus class animasi lama (jika ada) agar bisa dipicu ulang
+            img.classList.remove('slide-in-right');
+            
+            // Trigger reflow (paksa browser mengenali perubahan class)
+            void img.offsetWidth; 
+            
+            // Ganti gambar dan picu animasi slide dari kanan
+            img.src = nextSrc;
+            img.classList.add('slide-in-right');
         };
         tempImg.onerror = () => {
-            img.style.opacity = '0';
-            setTimeout(() => {
-                img.src = GITHUB_LOGO_URL;
-                img.style.opacity = '1';
-            }, 400);
+            img.classList.remove('slide-in-right');
+            void img.offsetWidth;
+            img.src = GITHUB_LOGO_URL;
+            img.classList.add('slide-in-right');
         };
         tempImg.src = nextSrc;
         
@@ -178,7 +178,7 @@ function startHeroSlide() {
     };
 
     loadNext(); 
-    setInterval(loadNext, 6000);
+    setInterval(loadNext, 5000); // Ganti setiap 5 detik
 }
 
 // ============ RENDER DASHBOARD (BATCH DOM) ============
