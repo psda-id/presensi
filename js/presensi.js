@@ -123,7 +123,7 @@ window.onload = () => {
 };
 
 function checkAppVersion() {
-    const currentVersion = "v2.6.8"; 
+    const currentVersion = "v2.6.9"; 
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
@@ -940,7 +940,7 @@ function setS(el, st) {
         if (timeVal < 1000) { 
             if (checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR / QR HADIR hari ini.", "error"); return; }
         } else { 
-            if (checkAtt(pid, 'PULANG']) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG / QR PULANG hari ini.", "error"); return; }
+            if (checkAtt(pid, 'PULANG')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG / QR PULANG hari ini.", "error"); return; }
             if (!checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Belum Absen Masuk", "Anda belum absen HADIR / QR HADIR hari ini. Tidak bisa melakukan QR Pulang.", "error"); return; }
         }
     }
