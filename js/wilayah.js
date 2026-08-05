@@ -94,7 +94,7 @@ window.onload = () => {
             dbE = d.pegawai || [];
             dbK = d.korlap || [];
             populateUIFromData(d); // Render cache instan tanpa skeleton
-            init(true, true);      // Fetch data baru di background (silent)
+            init(true, false);     // ✅ UBAH: isAuto=false agar timeout jadi 30s, bukan 12s
         } catch(e) {
             init(false, false);    // Cache rusak, load awal dengan skeleton
         }
@@ -103,7 +103,7 @@ window.onload = () => {
     }
 
     setInterval(() => { const c = document.getElementById('liveClock'); if(c) c.innerText = new Date().toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'}); }, 1000);
-    // Auto refresh tiap 60 detik (Silent mode)
+    // Auto refresh tiap 60 detik (Silent mode, 12s timeout)
     setInterval(() => { if (!document.hidden) init(true, true); }, 60000);
 };
 
@@ -127,8 +127,8 @@ function populateUIFromData(d) {
     filterData();
 }
 
-// ============ ✅ PARALLEL FETCH (ANTI FLICKER & ELEGANT ERROR) ============
-async function init(isRefresh = false, isAuto = false) {
+// ============ ✅ PARALLEL FETCH (ANTI FLICKER, AUTO-RETRY COLD START) ============
+async function init(isRefresh = false, isAuto = false, attempt = 1) {
     const syncToast = document.getElementById('syncToast');
     const grid = document.getElementById('gridView');
     
@@ -142,7 +142,7 @@ async function init(isRefresh = false, isAuto = false) {
 
     try {
         const selectedDate = document.getElementById('fDate').value;
-        const tOut = isAuto ? 12000 : 30000; 
+        const tOut = isAuto ? 12000 : 30000; // 30s untuk awal buka, 12s untuk auto background
         
         const [d, dp] = await Promise.all([
             safeFetchJSON(API_URL + "?action=getDashboardData", {}, tOut),
@@ -163,15 +163,22 @@ async function init(isRefresh = false, isAuto = false) {
         const isNetwork = e.message && (e.message.includes('Failed to fetch') || e.message.includes('NetworkError'));
         const is404 = e.message && e.message.includes('HTTP 404');
         
-        console.error("❌ Gagal memuat data:", e.message);
+        console.error(`❌ Gagal memuat data (Percobaan ${attempt}):`, e.message);
         
+        // ✅ AUTO-RETRY UNTUK COLD START: Jika gagal di awal buka (bukan auto), coba 2x dengan jeda 3 detik
+        if (!isAuto && attempt < 3) {
+            if (syncToast) syncToast.style.display = 'none'; // Sembunyikan toast sebentar
+            setTimeout(() => init(isRefresh, isAuto, attempt + 1), 3000);
+            return;
+        }
+
         // ✅ Jika ini auto-refresh atau ganti tanggal, biarkan data lama tetap tampil. Jangan rusak UI.
         if (isAuto || (dbE.length > 0 && isRefresh)) {
-            if (!isAuto && is404) showToast('Server sibuk, menampilkan data sebelumnya.', 'warning');
+            if (!isAuto && (is404 || isTimeout)) showToast('Server sibuk, menampilkan data sebelumnya.', 'warning');
             return; 
         }
 
-        // Jika baru pertama kali buka dan gagal total, tampilkan error
+        // Jika baru pertama kali buka dan gagal total setelah 3x coba, tampilkan error
         if (isTimeout) showToast('Server lambat merespon. Coba lagi dalam beberapa saat.', 'warning');
         else if (isNetwork) showToast('Koneksi internet terputus. Periksa jaringan Anda.', 'error');
         else showToast('Gagal memuat data: ' + e.message, 'error');
