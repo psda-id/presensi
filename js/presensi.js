@@ -123,7 +123,7 @@ window.onload = () => {
 };
 
 function checkAppVersion() {
-    const currentVersion = "v2.6.5"; 
+    const currentVersion = "v2.6.6"; 
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
