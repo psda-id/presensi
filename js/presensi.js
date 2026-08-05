@@ -720,24 +720,33 @@ function upUI(w = "ALL") {
         finalSrc = baseUrl + '&v=' + todayStr; 
     }
 
-    document.getElementById('pWrap').classList.add('loading'); 
     const img = document.getElementById('pImg'); 
     
-    // ✅ PASANG ONLOAD & ONERROR DULU SEBELUM IMG.SRC!
-    img.onload = () => document.getElementById('pWrap').classList.remove('loading');  
+    // ✅ SOLUSI: Hapus class loading, pakai opacity langsung (Fade-In sederhana)
+    img.style.opacity = 0; // Sembunyikan dulu
+    
+    img.onload = () => { 
+        img.style.opacity = 1; // Munculkan foto saat sudah selesai di-download
+    };  
+    
     img.onerror = () => { 
-        img.onerror = null; // Cegah loop
-        img.src = placeholderImg; // Kembali ke avatar default jika gagal load
-        document.getElementById('pWrap').classList.remove('loading'); 
+        img.onerror = null; 
+        img.src = placeholderImg; 
+        img.style.opacity = 1; // Munculkan placeholder jika gagal
     };
     
-    // BARU SET SRC-NYA
     img.src = finalSrc;  
     
     document.getElementById('pName').innerText = p.Nama || p.nama; 
     document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF"; 
     document.getElementById('pWil').innerHTML = `<i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`; 
     lucide.createIcons(); 
+}
+
+function navU(d) { 
+    if (!dbF.length) return; 
+    uIdx = (uIdx + d + dbF.length) % dbF.length; 
+    upUI(); 
 }
 
 function navU(d) { 
