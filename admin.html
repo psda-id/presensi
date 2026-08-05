@@ -233,10 +233,23 @@
         </div>
     </main>
 
-    <!-- MODALS -->
+    <!-- MODAL: DATA PERSONEL (PREMIUM HEADER) -->
     <div id="pModal" class="modal">
         <div class="modal-content">
-            <div class="modal-title-wrap"><h2 id="pModalTitle">Informasi Personel</h2></div>
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <div class="modal-title-icon">
+                        <i data-lucide="users" style="color: white;"></i>
+                    </div>
+                    <div>
+                        <h2 id="pModalTitle">Data Personel</h2>
+                        <p>Tambah atau ubah data pegawai/korlap</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeModal('pModal')">
+                    <i data-lucide="x" size="20"></i>
+                </button>
+            </div>
             <div class="modal-body-p">
                 <div style="text-align:center">
                     <div class="p-preview-frame" onclick="document.getElementById('p-file').click()">
@@ -282,13 +295,26 @@
                 </div>
             </div>
             <button class="btn-premium" style="margin-top:20px" onclick="savePAction()">SIMPAN DATA</button>
-            <button style="width:100%;background:none;border:none;color:white;opacity:.4;margin-top:15px;cursor:pointer;font-weight:800;font-size:.7rem" onclick="closeModal('pModal')">BATAL</button>
         </div>
     </div>
 
+    <!-- MODAL: LAYANAN DIGITAL (PREMIUM HEADER) -->
     <div id="toolModal" class="modal">
         <div class="modal-content" style="max-width:800px">
-            <div class="modal-title-wrap"><h2>Atur Layanan Digital</h2></div>
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <div class="modal-title-icon">
+                        <i data-lucide="layout-dashboard" style="color: white;"></i>
+                    </div>
+                    <div>
+                        <h2>Atur Layanan Digital</h2>
+                        <p>Kelola tautan dan aplikasi eksternal</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeModal('toolModal')">
+                    <i data-lucide="x" size="20"></i>
+                </button>
+            </div>
             <div style="display:grid;grid-template-columns:1fr 300px;gap:25px">
                 <div style="display:grid;gap:15px">
                     <input type="hidden" id="t-old-name">
@@ -320,14 +346,28 @@
             </div>
             <div style="display:flex;gap:12px;margin-top:30px">
                 <button class="btn-premium" style="flex:1" onclick="saveTool()">SIMPAN</button>
-                <button style="flex:.4;background:none;border:1px solid var(--glass-border);border-radius:14px;color:white;opacity:.7;cursor:pointer;font-weight:700;font-size:.85rem" onclick="closeModal('toolModal')">BATAL</button>
+                <button class="modal-close-btn" style="width:50px; height: 50px;" onclick="closeModal('toolModal')"><i data-lucide="x" size="20"></i></button>
             </div>
         </div>
     </div>
 
+    <!-- MODAL: LOG (PREMIUM HEADER) -->
     <div id="logEditModal" class="modal">
         <div class="modal-content" style="max-width:450px">
-            <div class="modal-title-wrap"><h2>Sinkronisasi Log</h2></div>
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <div class="modal-title-icon">
+                        <i data-lucide="history" style="color: white;"></i>
+                    </div>
+                    <div>
+                        <h2>Sinkronisasi Log</h2>
+                        <p>Catat atau ubah riwayat presensi</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeModal('logEditModal')">
+                    <i data-lucide="x" size="20"></i>
+                </button>
+            </div>
             <div style="display:grid;gap:15px">
                 <div class="form-group"><label>Nama Personel</label><select id="manualLogPegawai"></select></div>
                 <input type="hidden" id="editLogOriginalTs"><input type="hidden" id="editLogIdPeg">
@@ -347,13 +387,26 @@
                 </div>
             </div>
             <button class="btn-premium" style="margin-top:25px;background:linear-gradient(135deg,var(--warning),var(--accent))" onclick="saveLogAction()">TERAPKAN LOG</button>
-            <button style="width:100%;background:none;border:none;color:white;opacity:.4;margin-top:15px;cursor:pointer;font-weight:800;font-size:.7rem" onclick="closeModal('logEditModal')">BATAL</button>
         </div>
     </div>
 
+    <!-- MODAL: DETAIL (PREMIUM HEADER) -->
     <div id="detailModal" class="modal">
         <div class="modal-content" style="max-width:550px">
-            <div class="modal-title-wrap"><h2>Detail Personel</h2></div>
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <div class="modal-title-icon">
+                        <i data-lucide="info" style="color: white;"></i>
+                    </div>
+                    <div>
+                        <h2>Detail Personel</h2>
+                        <p>Informasi lengkap pegawai</p>
+                    </div>
+                </div>
+                <button class="modal-close-btn" onclick="closeModal('detailModal')">
+                    <i data-lucide="x" size="20"></i>
+                </button>
+            </div>
             <div class="detail-hero">
                 <div class="detail-hero-img"><img id="detailImg" src="" alt="Foto"></div>
                 <div>
