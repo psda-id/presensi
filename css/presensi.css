@@ -1419,37 +1419,6 @@ body {
 .workflow-locked { opacity: .25; filter: grayscale(.5); pointer-events: none; transition: .4s; }
 #fallbackCameraInput, #galleryInput, #suratInput { display: none; }
 
-/* =========================================
-   19. SKELETON LOADING MINIMALIS (ANTI BUG)
-   ========================================= */
-#pWrap.loading {
-    position: relative;
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: 20px;
-    overflow: hidden;
-}
-
-/* Sembunyikan gambar saat loading */
-#pWrap.loading img {
-    opacity: 0;
-}
-
-/* Efek kilau (shimmer) yang minimalis */
-#pWrap.loading::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: linear-gradient(90deg, rgba(255,255,255,0) 0, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0) 100%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
-    z-index: 1;
-}
-
-/* Pastikan gambar langsung tampil saat class loading dihapus */
-#pWrap img {
-    opacity: 1;
-    transition: opacity 0.3s ease;
-}
 
 /* =========================================
    20. KEYFRAMES & ANIMATIONS
