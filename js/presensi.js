@@ -1,5 +1,5 @@
 // ============================================================
-// KONFIGURASI GLOBALconst API = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
+// KONFIGURASI GLOBAL
 // ============================================================
 const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 const API = "https://script.google.com/macros/s/AKfycbxbQqM8rEC3Y60-T9bJlYcydL5y0XTc9yOml62z9YBrP833Pr0svT9b1d1M0MgADnIt/exec";
@@ -162,7 +162,7 @@ window.onload = () => {
 // VERSION CHECK
 // ============================================================
 function checkAppVersion() {
-    const currentVersion = "v2.6.4"; // ✅ Naikkan versi untuk trigger update cache pegawai
+    const currentVersion = "v2.6.4"; 
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
@@ -472,7 +472,6 @@ function upLoc() {
         if (map) {
             map.setView([uPos.lat, uPos.lng], 16); marker.setLatLng([uPos.lat, uPos.lng]);
             
-            // ✅ MATIKAN LOADING MAP SAAT GPS DITEMUKAN
             const mapFrame = document.querySelector('.map-view-frame');
             if (mapFrame) mapFrame.classList.remove('loading');
             
@@ -511,7 +510,6 @@ async function triggerCam(type) {
     cType = type; stopCurrentStream();
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { triggerFallbackCamera(type); return; }
     
-    // ✅ Gunakan activePegawai agar tidak tertukar
     const peg = activePegawai || dbF[uIdx];
     document.getElementById('scanPegawai').innerText = (peg.Nama || peg.nama || "STAFF").toUpperCase(); document.getElementById('scanLogo').src = GITHUB_LOGO_URL;
     if (type === 'selfie') {
@@ -682,7 +680,6 @@ function addWatermark(c) {
     } 
     const textStart = logoX + logoSize + baseSize * 0.02, textAreaWidth = W - textStart - margin; 
     
-    // ✅ FIX: Gunakan activePegawai agar watermark tidak tertukar
     const p = activePegawai || dbF[uIdx]; 
     const nama = (p.Nama || p.nama || "STAFF").toUpperCase(), jabatan = (p.Jabatan || "PPA").toUpperCase(); 
     
@@ -699,13 +696,11 @@ function drawCalendarIcon(ctx, x, y, size, color) { ctx.save(); ctx.strokeStyle 
 // ============================================================
 function hitungJarak(a, b, c, d) { if (!a || !b || !c || !d) return 999999; const R = 6371000, dL = (c - a) * Math.PI / 180, dG = (d - b) * Math.PI / 180, x = Math.sin(dL / 2) ** 2 + Math.cos(a * Math.PI / 180) * Math.cos(c * Math.PI / 180) * Math.sin(dG / 2) ** 2; return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x)); }
 function validasiGeoFencing() { 
-    // ✅ Gunakan activePegawai
     const p = activePegawai || dbF[uIdx]; 
     let pts = []; if (p.Koordinat_Tugas) try { pts = JSON.parse(p.Koordinat_Tugas); } catch (e) { } else if (p.Lat_Kantor) pts = [{ nama: "Lokasi Utama", lat: p.Lat_Kantor, lng: p.Lng_Kantor, radius: p.Radius_Meter }]; if (!pts.length) return { valid: true, status: 'NO_FENCE', jarak: 0, radius: 0, nama: 'Tanpa Batas' }; let best = null; for (const pt of pts) { const j = hitungJarak(uPos.lat, uPos.lng, pt.lat, pt.lng); if (j <= (pt.radius + 20)) return { valid: true, status: 'IN_ZONE', jarak: Math.round(j), radius: pt.radius, nama: pt.nama || 'Lokasi' }; if (!best || j < best.jarak) best = { jarak: Math.round(j), radius: pt.radius, nama: pt.nama || 'Lokasi' }; } return { valid: false, status: 'OUT_ZONE', jarak: best.jarak, radius: best.radius, nama: best.nama }; 
 }
 function tampilkanGeoFence() { 
     if (!map) return; 
-    // ✅ Gunakan activePegawai
     const p = activePegawai || dbF[uIdx]; 
     let pts = []; if (p.Koordinat_Tugas) try { pts = JSON.parse(p.Koordinat_Tugas); } catch (e) { } else if (p.Lat_Kantor) pts = [{ lat: p.Lat_Kantor, lng: p.Lng_Kantor, radius: p.Radius_Meter }]; if (window.fenceCircles) window.fenceCircles.forEach(c => map.removeLayer(c)); window.fenceCircles = []; pts.forEach(pt => { if (pt.lat && pt.lng && pt.radius) { const c = L.circle([pt.lat, pt.lng], { color: '#2dd4bf', fillColor: '#2dd4bf', fillOpacity: .15, radius: pt.radius, weight: 2 }).addTo(map); window.fenceCircles.push(c); } }); if (window.fenceCircles.length && !isInitialMapBound) { map.fitBounds(new L.featureGroup(window.fenceCircles).getBounds().pad(.2)); isInitialMapBound = true; } 
 }
@@ -923,7 +918,6 @@ function upUI(w = "ALL") {
         return; 
     } 
     
-    // ✅ FIX: Cache-Buster untuk Foto Profil
     const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
     let finalSrc = placeholderImg;
     if (rawUrl) {
@@ -935,7 +929,6 @@ function upUI(w = "ALL") {
     document.getElementById('pWrap').classList.add('loading'); 
     const img = document.getElementById('pImg'); 
     
-    // ✅ FIX: Cegah icon gambar rusak
     img.onerror = () => { 
         img.onerror = null; 
         img.src = placeholderImg; 
@@ -985,7 +978,6 @@ async function openForm() {
     if (!dbF.length || isFormLoading) return;
     isFormLoading = true;
     
-    // ✅ KUNCI PEGAWAI: Simpan objek pegawai secara permanen saat form dibuka
     activePegawai = dbF[uIdx];
     
     const targetIdx = uIdx;
@@ -1001,7 +993,6 @@ async function openForm() {
     document.getElementById('specialStatusGrid').classList.remove('show');
     lucide.createIcons();
 
-    // ✅ Cache-Buster untuk Foto di Form Presensi
     const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
     let finalSrc = placeholderImg;
     if (rawUrl) {
@@ -1068,7 +1059,7 @@ function closeForm() {
     document.getElementById('stepSelector').style.display = 'flex'; 
     document.getElementById('stepForm').style.display = 'none'; 
     isFormLoading = false; 
-    activePegawai = null; // ✅ Reset lock pegawai
+    activePegawai = null; 
 }
 
 // ============================================================
@@ -1121,7 +1112,7 @@ function setS(el, st) {
 // ============================================================
 // SUBMIT PRESENSI (IDEMPOTENCY & ANTI INFINITE LOADING)
 // ============================================================
-async function submitWithRetry(attempt = 1) {
+async function submitWithRetry(attempt = 1, trxId = null) {
     const btn = document.getElementById('btnSubmitPresensi'), n = document.getElementById('notes').value.trim();
     if (!selectedStatus) return showToast("Peringatan", "Pilih status presensi!", "warning");
     if (!n || n.length < 5) return showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning");
@@ -1138,26 +1129,25 @@ async function submitWithRetry(attempt = 1) {
     btn.disabled = true;
     setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
     
-    // ✅ Gunakan activePegawai
     const p = activePegawai; 
     
-    // ✅ Buat ID Transaksi Unik (Idempotency Key)
-    const trxId = `${p.ID}_${new Date().toISOString().slice(0,19).replace(/[-:T]/g, '')}`;
+    // ✅ Buat ID Transaksi Unik (Idempotency Key) hanya jika belum ada (percobaan pertama)
+    if (!trxId) {
+        trxId = `${p.ID}_${Date.now()}`;
+    }
     
     const payload = {
         action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus,
         selfie: sB64, workPhoto: kB64, surat: suratB64 || '-', keterangan: n,
         gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-",
-        trxId: trxId // ✅ Kirim ke server
+        trxId: trxId // ✅ Kirim trxId yang sama saat retry
     };
 
     try {
-        // ✅ Turunkan timeout ke 15 detik
         const r = await fetchWithTimeout(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }, 15000);
         const j = await r.json();
 
         if (j.status === 'success' || j.result === 'success') {
-            // ✅ MATIKAN LOADING & BUKA KUNCI TOMBOL SEBELUM TOAST
             setLoading(false); 
             btn.disabled = false; 
 
@@ -1209,7 +1199,7 @@ async function submitWithRetry(attempt = 1) {
         console.error("Error submit:", e);
         if (attempt < 4) {
             showToastOnce('submit_retry', "Menunggu Antrian...", "Koneksi tidak stabil, mencoba ulang otomatis...", "warning");
-            setTimeout(() => submitWithRetry(attempt + 1), 3000);
+            setTimeout(() => submitWithRetry(attempt + 1, trxId), 3000); // ✅ Pass trxId yang sama
         } else {
             sndError.play().catch(() => { });
             showToast("Gagal Mengirim", "Koneksi internet terputus atau server sangat sibuk. Coba lagi nanti.", "error");
