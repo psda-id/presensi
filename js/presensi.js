@@ -1,8 +1,8 @@
 // ============================================================
-// KONFIGURASI GLOBAL
+// KONFIGURASI GLOBALconst API = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
 // ============================================================
 const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
-const API = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
+const API = "https://script.google.com/macros/s/AKfycbxbQqM8rEC3Y60-T9bJlYcydL5y0XTc9yOml62z9YBrP833Pr0svT9b1d1M0MgADnIt/exec";
 
 // SIMPAN ATURAN JAM DARI SERVER SECARA GLOBAL
 let appConfig = { jHadir: "08:00", jTelat: "08:11", jPulang: "10:00" };
