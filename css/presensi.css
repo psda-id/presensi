@@ -559,26 +559,54 @@ body {
     animation: formSlideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
 }
 
+/* =========================================
+   10. HALAMAN PRESENSI (FORM) - PREMIUM MAP LOADING
+   ========================================= */
 .map-view-frame { 
     width: 100%; 
     height: 200px; 
     border-radius: 25px; 
     overflow: hidden; 
     border: 1.5px solid var(--glass-border); 
-    background: #000 url('https://i.gifer.com/ZZ5H.gif') center/80px no-repeat; 
+    background: linear-gradient(135deg, #0d1b3e, #102a5c); /* Background gelap elegan */
     position: relative;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
 }
-.map-view-frame::before {
-    content: "MENGUNCI SINYAL GPS...";
+
+/* Teks "MENGUNCI SINYAL GPS" bergaya kaca buram */
+.map-view-frame.loading::before {
+    content: "MENGUNCI SINYAL GPS";
     position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
+    z-index: 5;
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.7rem;
     color: var(--scan-cyan);
-    z-index: 1;
     letter-spacing: 2px;
+    background: rgba(13, 27, 62, 0.85);
+    backdrop-filter: blur(8px);
+    padding: 8px 16px;
+    border-radius: 20px;
+    border: 1px solid rgba(34, 211, 238, 0.3);
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.2);
+}
+
+/* Lingkaran Radar yang membesar */
+.map-view-frame.loading::after {
+    content: '';
+    position: absolute;
+    z-index: 4;
+    width: 40px; 
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid rgba(34, 211, 238, 0.4);
+    animation: radarPulse 2s infinite ease-out;
+}
+
+@keyframes radarPulse {
+    0% { width: 20px; height: 20px; opacity: 1; border-width: 2px; }
+    100% { width: 180px; height: 180px; opacity: 0; border-width: 1px; }
 }
 
 /* =========================================
@@ -1860,13 +1888,14 @@ body {
     }
 }
 /* =========================================
-   24. SKELETON LOADING (BENTUK SETENGAH BADAN)
+   24. SKELETON LOADING PREMIUM (GLASSMORPHISM)
    ========================================= */
 #pWrap.loading {
     position: relative;
     overflow: hidden;
     border-radius: 20px;
-    background: #1a2438; /* Warna dasar gelap */
+    background: linear-gradient(145deg, #111d36, #0a1424);
+    box-shadow: inset 0 0 30px rgba(0,0,0,0.5); /* Bayangan dalam agar kedalaman */
 }
 
 /* Sembunyikan gambar asli saat masih loading */
@@ -1874,30 +1903,24 @@ body {
     opacity: 0;
 }
 
-/* Bentuk Kepala dan Bahu (Silhouette) */
+/* Bentuk Kepala dan Bahu dengan cahaya redup */
 #pWrap.loading::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 0; left: 0; right: 0; bottom: 0;
     background-image: 
-        radial-gradient(circle at 50% 35%, #2d3a52 50px, transparent 51px),  /* Lingkaran Kepala */
-        radial-gradient(ellipse 110px 90px at 50% 90%, #2d3a52 45%, transparent 46%); /* Ellips Bahu/Badan */
+        radial-gradient(circle at 50% 35%, rgba(45, 212, 191, 0.15) 55px, transparent 56px), 
+        radial-gradient(ellipse 120px 100px at 50% 95%, rgba(59, 130, 246, 0.15) 40%, transparent 41%);
     z-index: 0;
 }
 
-/* Efek Kilau Berjalan (Shimmer) di atas silhouette */
+/* Efek Kilau (Shimmer) yang lebih halus dan lebar */
 #pWrap.loading::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.06) 50%, transparent 60%);
+    animation: shimmer 2s infinite linear;
     z-index: 1;
 }
