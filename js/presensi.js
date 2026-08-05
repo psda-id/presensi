@@ -68,9 +68,10 @@ const DeviceProfile = (() => {
     let tier = 'low';
     if (ram >= 4 && cores >= 6 && !isSlowNetwork) tier = 'high'; else if (ram >= 3 && cores >= 4) tier = 'mid';
     const configs = {
-        high: { enableFaceAPI: true, enableLandmarks: true, enableShadowBlur: true, canvasFPS: 60, detectInterval: 200, selfieResolution: [800, 600], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 1280, height: 960 } },
-        mid: { enableFaceAPI: true, enableLandmarks: true, enableShadowBlur: false, canvasFPS: 30, detectInterval: 350, selfieResolution: [800, 600], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 960, height: 720 } },
-        low: { enableFaceAPI: false, enableLandmarks: false, enableShadowBlur: false, canvasFPS: 30, detectInterval: 0, selfieResolution: [800, 600], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 640, height: 480 } }
+        // ✅ UBAH SELFIE RESOLUTION MENJADI [600, 800] AGAR PORTRAIT
+        high: { enableFaceAPI: true, enableLandmarks: true, enableShadowBlur: true, canvasFPS: 60, detectInterval: 200, selfieResolution: [600, 800], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 1280, height: 960 } },
+        mid: { enableFaceAPI: true, enableLandmarks: true, enableShadowBlur: false, canvasFPS: 30, detectInterval: 350, selfieResolution: [600, 800], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 960, height: 720 } },
+        low: { enableFaceAPI: false, enableLandmarks: false, enableShadowBlur: false, canvasFPS: 30, detectInterval: 0, selfieResolution: [600, 800], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 640, height: 480 } }
     };
     return { tier, config: configs[tier], cores, ram };
 })();
