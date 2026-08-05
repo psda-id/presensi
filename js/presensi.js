@@ -10,7 +10,6 @@ let activePegawai = null;
 const manifest = {
     "name": "E-PUSDA Presensi Digital",
     "short_name": "E-Presensi",
-    "start_url": ".",
     "display": "standalone",
     "background_color": "#0d1b3e",
     "theme_color": "#1e40af",
@@ -715,38 +714,38 @@ function upUI(w = "ALL") {
     const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
     let finalSrc = placeholderImg;
     if (rawUrl) {
-        // ✅ PARSER GOOGLE DRIVE & GOOGLEUSERCONTENT
         if (rawUrl.includes('drive.google.com') || rawUrl.includes('googleusercontent.com')) {
             let fileId = "";
-            
-            // Cek format /d/FILE_ID (Berlaku untuk lh3.googleusercontent.com/d/ID dan drive.google.com/file/d/ID)
             let match = rawUrl.match(/\/d\/([^\/\?]+)/);
             if (match && match[1]) fileId = match[1];
-            
-            // Cek format ?id=FILE_ID atau &id=FILE_ID
             if (!fileId) {
                 match = rawUrl.match(/[?&]id=([^&]+)/);
                 if (match && match[1]) fileId = match[1];
             }
-            
-            // Jika berhasil menangkap File ID, gunakan format Thumbnail resmi Google Drive
             if (fileId) {
                 finalSrc = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
             } else {
-                finalSrc = rawUrl; // Fallback jika pola tidak dikenali
+                finalSrc = rawUrl;
             }
         } else {
-            // Jika bukan link Google (misal direct link github dll)
             finalSrc = rawUrl;
         }
     }
 
     const img = document.getElementById('pImg'); 
     
-    // ✅ Hapus class loading jika ada, biarkan browser load natural
+    // Efek Fade-In (Memudar) saat ganti pegawai agar tidak terasa lambat
+    img.style.transition = 'opacity 0.2s ease'; 
+    img.style.opacity = 0; 
+    
+    img.onload = () => { 
+        img.style.opacity = 1; 
+    };  
+    
     img.onerror = () => { 
         img.onerror = null; 
         img.src = placeholderImg; 
+        img.style.opacity = 1; 
     };
     
     img.src = finalSrc;  
@@ -762,6 +761,7 @@ function navU(d) {
     uIdx = (uIdx + d + dbF.length) % dbF.length; 
     upUI(); 
 }
+
 function initMap() { 
     if (map) return; 
     map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-8.13, 113.22], 15); 
