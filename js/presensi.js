@@ -68,9 +68,10 @@ const DeviceProfile = (() => {
     let tier = 'low';
     if (ram >= 4 && cores >= 6 && !isSlowNetwork) tier = 'high'; else if (ram >= 3 && cores >= 4) tier = 'mid';
     const configs = {
-        high: { enableFaceAPI: true, enableLandmarks: true, enableShadowBlur: true, canvasFPS: 60, detectInterval: 200, selfieResolution: [800, 600], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 1280, height: 960 } },
-        mid: { enableFaceAPI: true, enableLandmarks: true, enableShadowBlur: false, canvasFPS: 30, detectInterval: 350, selfieResolution: [800, 600], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 960, height: 720 } },
-        low: { enableFaceAPI: false, enableLandmarks: false, enableShadowBlur: false, canvasFPS: 30, detectInterval: 0, selfieResolution: [800, 600], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 640, height: 480 } }
+        // ✅ UBAH SELFIE RESOLUTION MENJADI [600, 800] AGAR PORTRAIT
+        high: { enableFaceAPI: true, enableLandmarks: true, enableShadowBlur: true, canvasFPS: 60, detectInterval: 200, selfieResolution: [600, 800], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 1280, height: 960 } },
+        mid: { enableFaceAPI: true, enableLandmarks: true, enableShadowBlur: false, canvasFPS: 30, detectInterval: 350, selfieResolution: [600, 800], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 960, height: 720 } },
+        low: { enableFaceAPI: false, enableLandmarks: false, enableShadowBlur: false, canvasFPS: 30, detectInterval: 0, selfieResolution: [600, 800], kerjaResolution: [800, 600], jpegQuality: 0.5, videoConstraints: { width: 640, height: 480 } }
     };
     return { tier, config: configs[tier], cores, ram };
 })();
@@ -122,7 +123,7 @@ window.onload = () => {
 };
 
 function checkAppVersion() {
-    const currentVersion = "v2.6.6"; 
+    const currentVersion = "v2.6.8"; 
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
@@ -414,23 +415,51 @@ async function triggerCam(type) {
         document.getElementById('scanInstrText').innerText = "Arahkan kamera ke lokasi kerja"; document.getElementById('scanStatus').style.display = 'none';
     }
     lucide.createIcons(); const video = document.getElementById('vStream');
+    video.setAttribute('playsinline', 'true'); // Penting untuk iOS
     if (type === 'selfie') video.classList.add('mirror'); else video.classList.remove('mirror');
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const { width: idealW, height: idealH } = DeviceProfile.config.videoConstraints;
-    const constraints = type === 'selfie' ? { facingMode: { exact: "user" }, width: { ideal: idealW }, height: { ideal: idealH } } : isIOS ? { facingMode: "environment", width: { ideal: idealW }, height: { ideal: idealH } } : { facingMode: { exact: "environment" }, width: { ideal: idealW }, height: { ideal: idealH } };
+    
+    // ✅ FIX: Buat constraints lebih fleksibel agar tidak NotSupportedError di HP tertentu
+    const constraints = type === 'selfie' ? 
+        { facingMode: "user", width: { ideal: idealW }, height: { ideal: idealH } } : 
+        { facingMode: "environment", width: { ideal: idealW }, height: { ideal: idealH } };
+        
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: constraints, audio: false });
         currentStream = stream; video.srcObject = stream; document.getElementById('cameraUI').style.display = 'flex';
-        video.onloadedmetadata = () => { video.play().then(() => { setTimeout(() => { if (type === 'selfie' && isLandmarkReady) startSelfieOverlay(); else startWorkOverlay(); }, 400); }).catch(() => { }); };
+        video.onloadedmetadata = () => { 
+            video.play().then(() => { 
+                setTimeout(() => { if (type === 'selfie' && isLandmarkReady) startSelfieOverlay(); else startWorkOverlay(); }, 400); 
+            }).catch(e => { 
+                console.error("Video play error:", e);
+                showToast("Error Kamera", "Gagal memutar video kamera. Coba ulangi.", "error");
+                stopCam();
+            }); 
+        };
     } catch (err) {
-        if (err.name === 'OverconstrainedError') {
+        console.error("Camera Access Error:", err);
+        if (err.name === 'OverconstrainedError' || err.name === 'NotSupportedError' || err.name === 'NotFoundError') {
+            // Fallback: Jika kamera spesifik tidak didukung, pakai kamera apapun yang ada
             try {
-                const s2 = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment" }, audio: false });
+                const s2 = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 currentStream = s2; video.srcObject = s2; document.getElementById('cameraUI').style.display = 'flex';
-                video.onloadedmetadata = () => { video.play().then(() => { setTimeout(() => { if (type === 'selfie' && isLandmarkReady) startSelfieOverlay(); else startWorkOverlay(); }, 400); }).catch(() => { }); }; return;
-            } catch (e2) { }
+                video.onloadedmetadata = () => { 
+                    video.play().then(() => { 
+                        setTimeout(() => { if (type === 'selfie' && isLandmarkReady) startSelfieOverlay(); else startWorkOverlay(); }, 400); 
+                    }).catch(e => { 
+                        console.error("Video play error (fallback):", e);
+                        triggerFallbackCamera(type);
+                    }); 
+                }; 
+                return;
+            } catch (e2) { 
+                console.error("Fallback camera failed:", e2);
+                triggerFallbackCamera(type);
+            }
         }
-        if (err.name === 'NotAllowedError') { pendingCamType = type; showPermissionModal('camera'); } else triggerFallbackCamera(type);
+        if (err.name === 'NotAllowedError') { pendingCamType = type; showPermissionModal('camera'); } 
+        else { triggerFallbackCamera(type); }
     }
 }
 
@@ -465,8 +494,20 @@ function startSelfieOverlay() {
 
 function updateStatusUI(detected) {
     const st = document.getElementById('scanStatus'), stTxt = document.getElementById('scanStatusText'), instr = document.getElementById('scanInstrText');
-    if (detected) { st.classList.add('detected'); stTxt.innerText = 'FACE LOCKED'; instr.innerText = 'Wajah terdeteksi! Tekan shutter'; }
-    else { st.classList.remove('detected'); stTxt.innerText = 'SCANNING'; instr.innerText = 'Posisikan wajah di dalam frame'; }
+    if (detected) { 
+        st.classList.add('detected'); 
+        stTxt.innerText = 'FACE LOCKED'; 
+        instr.innerText = 'Wajah terdeteksi! Tekan shutter'; 
+        // ✅ Ubah teks menjadi hijau saat wajah terdeteksi
+        if (instr) instr.style.color = '#10b981'; 
+    }
+    else { 
+        st.classList.remove('detected'); 
+        stTxt.innerText = 'SCANNING'; 
+        instr.innerText = 'Posisikan wajah di dalam frame'; 
+        // ✅ Kembalikan teks ke warna putih saat wajah tidak terdeteksi
+        if (instr) instr.style.color = '#ffffff'; 
+    }
 }
 
 function startWorkOverlay() {
@@ -734,12 +775,12 @@ function upUI(w = "ALL") {
 
     const img = document.getElementById('pImg'); 
     
-    // Efek Fade-In (Memudar) saat ganti pegawai agar tidak terasa lambat
+    // ✅ FIX LAMBAT: Efek Fade-Out saat ganti, Fade-In saat selesai load
     img.style.transition = 'opacity 0.2s ease'; 
-    img.style.opacity = 0; 
+    img.style.opacity = 0; // Langsung pudar saat ganti pegawai
     
     img.onload = () => { 
-        img.style.opacity = 1; 
+        img.style.opacity = 1; // Muncul kembali halus saat foto siap
     };  
     
     img.onerror = () => { 
@@ -799,12 +840,26 @@ async function openForm() {
     document.getElementById('specialStatusGrid').classList.remove('show');
     lucide.createIcons();
 
+    // ✅ FIX: Gunakan parser Google Drive yang robust di halaman presensi juga!
     const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
     let finalSrc = placeholderImg;
     if (rawUrl) {
-        let baseUrl = rawUrl.split('=')[0] + '=s500'; 
-        const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        finalSrc = baseUrl + '&v=' + todayStr; 
+        if (rawUrl.includes('drive.google.com') || rawUrl.includes('googleusercontent.com')) {
+            let fileId = "";
+            let match = rawUrl.match(/\/d\/([^\/\?]+)/);
+            if (match && match[1]) fileId = match[1];
+            if (!fileId) {
+                match = rawUrl.match(/[?&]id=([^&]+)/);
+                if (match && match[1]) fileId = match[1];
+            }
+            if (fileId) {
+                finalSrc = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
+            } else {
+                finalSrc = rawUrl;
+            }
+        } else {
+            finalSrc = rawUrl;
+        }
     }
     document.getElementById('formHeroImg').src = finalSrc;
     
@@ -885,7 +940,7 @@ function setS(el, st) {
         if (timeVal < 1000) { 
             if (checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR / QR HADIR hari ini.", "error"); return; }
         } else { 
-            if (checkAtt(pid, 'PULANG')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG / QR PULANG hari ini.", "error"); return; }
+            if (checkAtt(pid, 'PULANG']) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG / QR PULANG hari ini.", "error"); return; }
             if (!checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Belum Absen Masuk", "Anda belum absen HADIR / QR HADIR hari ini. Tidak bisa melakukan QR Pulang.", "error"); return; }
         }
     }
