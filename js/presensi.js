@@ -912,11 +912,19 @@ function upUI(w = "ALL") {
         document.getElementById('pJob').innerText = "Pencarian Nihil"; 
         return; 
     } 
-    const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500'; 
+        const url = (p.Link_Foto_Profile || p.link_foto_profile || "").split('=')[0] + '=s500'; 
     document.getElementById('pWrap').classList.add('loading'); 
     const img = document.getElementById('pImg'); 
+    
+    // ✅ Tambahan: Cegah icon gambar rusak jika URL error
+    img.onerror = () => { 
+        img.onerror = null; // Cegah loop
+        img.src = placeholderImg; // Kembali ke avatar default jika gagal load
+        document.getElementById('pWrap').classList.remove('loading'); 
+    };
+    
     img.src = (p.Link_Foto_Profile || p.link_foto_profile) ? url : placeholderImg; 
-    img.onload = () => document.getElementById('pWrap').classList.remove('loading'); 
+    img.onload = () => document.getElementById('pWrap').classList.remove('loading');  
     document.getElementById('pName').innerText = p.Nama || p.nama; 
     document.getElementById('pJob').innerText = p.Jabatan || p.jabatan || "STAFF"; 
     document.getElementById('pWil').innerHTML = `<i data-lucide="map-pin" size="14" style="vertical-align:middle"></i> WILAYAH: ${(p.Wilayah || p.wilayah || "UPT").trim()}`; 
