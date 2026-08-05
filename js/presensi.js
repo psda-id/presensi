@@ -4,19 +4,12 @@
 const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
 const API = "https://script.google.com/macros/s/AKfycbxbQqM8rEC3Y60-T9bJlYcydL5y0XTc9yOml62z9YBrP833Pr0svT9b1d1M0MgADnIt/exec";
 
-// SIMPAN ATURAN JAM DARI SERVER SECARA GLOBAL
 let appConfig = { jHadir: "08:00", jTelat: "08:11", jPulang: "10:00" };
-
-// ✅ FIX: Variabel pengaman Anti Race Condition (Pegawai tertukar)
 let activePegawai = null;
 
-// ============================================================
-// INISIALISASI PWA MANIFEST
-// ============================================================
 const manifest = {
     "name": "E-PUSDA Presensi Digital",
     "short_name": "E-Presensi",
-    "start_url": "presensi.html",
     "display": "standalone",
     "background_color": "#0d1b3e",
     "theme_color": "#1e40af",
@@ -27,9 +20,6 @@ const manifest = {
 };
 document.getElementById('pwaManifest').setAttribute('href', URL.createObjectURL(new Blob([JSON.stringify(manifest)], { type: 'application/json' })));
 
-// ============================================================
-// POLYFILL
-// ============================================================
 if (!CanvasRenderingContext2D.prototype.roundRect) {
     CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
         if (w < 2 * r) r = w / 2; if (h < 2 * r) r = h / 2;
@@ -38,19 +28,11 @@ if (!CanvasRenderingContext2D.prototype.roundRect) {
     };
 }
 
-// ============================================================
-// VARIABEL GLOBAL
-// ============================================================
 let isFaceApiLoaded = false; let isFaceApiLoading = false;
 let isInitialMapBound = false; let _lastFrameTime = 0;
-
 let isFormLoading = false;
-let _lastToastKey = '';
-let _lastToastTime = 0;
+let _lastToastKey = ''; let _lastToastTime = 0;
 
-// ============================================================
-// FACE API LOADER DENGAN TIMEOUT
-// ============================================================
 async function ensureFaceApiLoaded() {
     if (isFaceApiLoaded) return true;
     if (isFaceApiLoading) { while (isFaceApiLoading) { await new Promise(r => setTimeout(r, 100)); } return isFaceApiLoaded; }
@@ -60,10 +42,8 @@ async function ensureFaceApiLoaded() {
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/dist/face-api.js';
         document.head.appendChild(script);
-        
         const loadPromise = new Promise((resolve, reject) => { script.onload = resolve; script.onerror = reject; });
         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 10000));
-        
         await Promise.race([loadPromise, timeoutPromise]);
         await faceapi.nets.tinyFaceDetector.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/');
         isFaceApiLoaded = true; isFaceApiLoading = false; return true;
@@ -73,9 +53,6 @@ async function ensureFaceApiLoaded() {
     }
 }
 
-// ============================================================
-// KONFIGURASI STATUS
-// ============================================================
 const STATUS_CONFIG = {
     'HADIR': { placeholder: 'Tuliskan ringkasan tugas hari ini...', title: '✅ HADIR', message: '<b>Aturan Waktu:</b><br>• ≤ 08:10 = Poin 50 (Tepat Waktu)<br>• 08:11 = Poin 40 (Terlambat Ringan)<br>• > 08:11 = Poin 25 (Terlambat Berat)', icon: 'check-circle', color: 'var(--success)', borderColor: 'var(--success)', actions: [] },
     'PULANG': { placeholder: 'Tuliskan ringkasan hasil kerja hari ini...', title: '🌙 PULANG', message: 'Absensi pulang tercatat. Selamat beristirahat.', icon: 'moon', color: 'var(--pu-blue)', borderColor: 'var(--pu-blue)', actions: [] },
@@ -85,9 +62,6 @@ const STATUS_CONFIG = {
     'QUICK RESPONSE': { placeholder: 'Tuliskan ringkasan tugas darurat dengan detail...', title: '⚡ QUICK RESPONSE', message: 'Tuliskan ringkasan tugas hari ini dengan detail. Pastikan lokasi dan kegiatan dijelaskan.', icon: 'zap', color: '#f9a8d4', borderColor: '#ec4899', actions: [] }
 };
 
-// ============================================================
-// DEVICE PROFILE (TIER DETECTION)
-// ============================================================
 const DeviceProfile = (() => {
     const cores = navigator.hardwareConcurrency || 2, ram = navigator.deviceMemory || 2;
     const isSlowNetwork = navigator.connection ? ['slow-2g', '2g', '3g'].includes(navigator.connection.effectiveType) : false;
@@ -101,9 +75,6 @@ const DeviceProfile = (() => {
     return { tier, config: configs[tier], cores, ram };
 })();
 
-// ============================================================
-// CANVAS & RENDER LOOP
-// ============================================================
 let _canvasW = 0, _canvasH = 0;
 function setupCanvas() {
     const canvas = document.getElementById('faceOverlay'); if (!canvas) return;
@@ -139,30 +110,19 @@ const sndSuccess = new Audio('https://assets.mixkit.co/active_storage/sfx/1435/1
 const sndError = new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3');
 const logoCache = new Image(); logoCache.crossOrigin = "anonymous"; logoCache.src = GITHUB_LOGO_URL;
 
-// ============================================================
-// INISIALISASI SAAT HALAMAN DIMUAT
-// ============================================================
 window.onload = () => {
     lucide.createIcons(); loadData();
     updateAttendanceStatusIndicator(); setInterval(updateAttendanceStatusIndicator, 60000);
-    
     setInterval(() => { 
         const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
-        const c = document.getElementById('liveClock'); 
-        if (c) c.innerText = timeStr;
-        
-        const vc = document.getElementById('verticalClock');
-        if (vc) vc.innerText = timeStr;
+        const c = document.getElementById('liveClock'); if (c) c.innerText = timeStr;
+        const vc = document.getElementById('verticalClock'); if (vc) vc.innerText = timeStr;
     }, 1000);
-    
     checkAppVersion();
 };
 
-// ============================================================
-// VERSION CHECK
-// ============================================================
 function checkAppVersion() {
-    const currentVersion = "v2.6.4"; 
+    const currentVersion = "v2.6.7"; 
     const savedVersion = localStorage.getItem('app_version');
     if (savedVersion && savedVersion !== currentVersion) showUpdateModal();
     localStorage.setItem('app_version', currentVersion);
@@ -183,9 +143,6 @@ function showUpdateModal() {
     lucide.createIcons();
 }
 
-// ============================================================
-// TOAST / NOTIFICATION MODAL
-// ============================================================
 function showToast(title, message, type = "info") {
     const modal = document.getElementById('notificationModal');
     const content = document.getElementById('notifModalContent');
@@ -210,14 +167,10 @@ function showToast(title, message, type = "info") {
 function showToastOnce(key, title, message, type, minInterval = 30000) {
     const now = Date.now();
     if (_lastToastKey === key && (now - _lastToastTime) < minInterval) return;
-    _lastToastKey = key;
-    _lastToastTime = now;
+    _lastToastKey = key; _lastToastTime = now;
     showToast(title, message, type);
 }
 
-// ============================================================
-// FETCH DENGAN TIMEOUT & RETRY
-// ============================================================
 function fetchWithTimeout(url, options = {}, timeout = 12000) {
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
@@ -237,14 +190,10 @@ async function fetchWithRetry(url, options = {}, retries = 2, delay = 1500) {
     }
 }
 
-// ============================================================
-// INDICATOR STATUS KEHADIRAN DINAMIS
-// ============================================================
 function updateAttendanceStatusIndicator() {
     const now = new Date(); 
     const timeVal = (now.getHours() * 100) + now.getMinutes();
     let badgeContainer = document.getElementById('attendanceStatusIndicator');
-    
     if (!badgeContainer) {
         const statusBox = document.getElementById('statusBox1');
         if (statusBox) { 
@@ -254,57 +203,27 @@ function updateAttendanceStatusIndicator() {
             statusBox.parentNode.insertBefore(badgeContainer, statusBox.nextSibling); 
         } else { return; }
     }
-    
-    if (!selectedStatus || selectedStatus === '') {
-        badgeContainer.innerHTML = '';
-        return;
-    }
-
+    if (!selectedStatus || selectedStatus === '') { badgeContainer.innerHTML = ''; return; }
     if (selectedStatus === 'PULANG') {
         badgeContainer.innerHTML = `<div class="attendance-status-badge status-ontime"><div class="badge-icon"><i data-lucide="moon" size="18"></i></div><div class="badge-text"><h4>Absen Pulang</h4><p>Terima kasih atas kerja keras Anda hari ini.</p></div></div>`;
-        lucide.createIcons();
-        return;
+        lucide.createIcons(); return;
     }
-
-    if (selectedStatus !== 'HADIR') {
-        badgeContainer.innerHTML = '';
-        return;
-    }
-
+    if (selectedStatus !== 'HADIR') { badgeContainer.innerHTML = ''; return; }
     const parseTime = (timeStr) => { const parts = String(timeStr).split(':'); return (parseInt(parts[0]) || 0) * 100 + (parseInt(parts[1]) || 0); };
     const jamHadirLimit = parseTime(appConfig.jHadir);
     const jamTelatLimit = parseTime(appConfig.jTelat);
-
     let statusClass = '', icon = '', title = '', desc = '', btnColor = '#10b981';
-    if (timeVal <= jamHadirLimit) { 
-        statusClass = 'status-ontime'; icon = 'check-circle'; title = 'Tepat Waktu'; 
-        desc = 'Anda mendapat poin penuh (50).'; 
-        btnColor = '#10b981';
-    } else if (timeVal <= jamTelatLimit) { 
-        statusClass = 'status-late-light'; icon = 'clock'; title = 'Terlambat Ringan'; 
-        desc = 'Poin dikurangi menjadi 40.'; 
-        btnColor = '#facc15';
-    } else { 
-        statusClass = 'status-late-heavy'; icon = 'alert-octagon'; title = 'Terlambat Berat'; 
-        desc = 'Poin dikurangi menjadi 25.'; 
-        btnColor = '#ef4444';
-    }
-    
+    if (timeVal <= jamHadirLimit) { statusClass = 'status-ontime'; icon = 'check-circle'; title = 'Tepat Waktu'; desc = 'Anda mendapat poin penuh (50).'; btnColor = '#10b981'; } 
+    else if (timeVal <= jamTelatLimit) { statusClass = 'status-late-light'; icon = 'clock'; title = 'Terlambat Ringan'; desc = 'Poin dikurangi menjadi 40.'; btnColor = '#facc15'; } 
+    else { statusClass = 'status-late-heavy'; icon = 'alert-octagon'; title = 'Terlambat Berat'; desc = 'Poin dikurangi menjadi 25.'; btnColor = '#ef4444'; }
     badgeContainer.innerHTML = `<div class="attendance-status-badge ${statusClass}"><div class="badge-icon"><i data-lucide="${icon}" size="18"></i></div><div class="badge-text"><h4>${title}</h4><p>${desc}</p></div></div>`;
-    
     const btnHadir = document.getElementById('btnHadirMain');
     if (btnHadir && !btnHadir.classList.contains('btn-done') && !btnHadir.classList.contains('active')) {
-        btnHadir.style.backgroundColor = btnColor;
-        btnHadir.style.color = '#ffffff';
-        btnHadir.style.borderColor = btnColor;
+        btnHadir.style.backgroundColor = btnColor; btnHadir.style.color = '#ffffff'; btnHadir.style.borderColor = btnColor;
     }
-    
     lucide.createIcons();
 }
 
-// ============================================================
-// SURAT MODAL
-// ============================================================
 function showSuratModal() {
     return new Promise((resolve) => {
         const modal = document.getElementById('suratModal');
@@ -319,9 +238,6 @@ function showSuratModal() {
     });
 }
 
-// ============================================================
-// NOTES / TEXTAREA
-// ============================================================
 function updateNotesCounter() {
     const notes = document.getElementById('notes'), counter = document.getElementById('notesCounter'), clearBtn = document.getElementById('notesClear'), len = notes.value.length;
     counter.textContent = `${len}/500`; counter.classList.remove('warning', 'valid');
@@ -342,9 +258,6 @@ function updateStatusInfo(status) {
     textarea.placeholder = config.placeholder; lucide.createIcons();
 }
 
-// ============================================================
-// IMAGE COMPRESSION
-// ============================================================
 async function compressImage(base64, options = {}) {
     const { maxWidth = 1024, maxHeight = 1024, quality = 0.5, outputWidth = null, outputHeight = null } = options;
     return new Promise((resolve, reject) => {
@@ -369,9 +282,6 @@ async function compressImage(base64, options = {}) {
     });
 }
 
-// ============================================================
-// UPLOAD SURAT
-// ============================================================
 async function uploadSurat() {
     const inp = document.getElementById('suratInput'); inp.value = '';
     const handler = async (e) => {
@@ -395,9 +305,6 @@ async function uploadSurat() {
     inp.addEventListener('change', handler); inp.click();
 }
 
-// ============================================================
-// GALERI FOTO
-// ============================================================
 function triggerGallery() {
     if (!selectedStatus) return showToast("Peringatan", "Silakan pilih status presensi terlebih dahulu!", "warning");
     if (document.getElementById('notes').value.trim().length < 5) return showToast("Peringatan", "Isi keterangan minimal 5 karakter!", "warning");
@@ -433,9 +340,6 @@ async function processGalleryImage(url) {
     img.src = url;
 }
 
-// ============================================================
-// FACE API MODELS
-// ============================================================
 async function loadFaceModels() {
     if (!DeviceProfile.config.enableFaceAPI) return;
     try { await faceapi.nets.faceLandmark68Net.loadFromUri('https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model/'); isLandmarkReady = true; } catch (e) { isLandmarkReady = false; }
@@ -451,9 +355,6 @@ function stopCurrentStream() {
     lastGoodDetection = null; faceDetected = false; detectionStableCount = 0; laserY = 0; laserDirection = 1; _canvasW = 0; _canvasH = 0;
 }
 
-// ============================================================
-// GPS / GEOLOCATION
-// ============================================================
 function upLoc() {
     const g = document.getElementById('gpsTxt');
     g.innerHTML = '<i data-lucide="refresh-cw" size="14" style="vertical-align:middle;margin-right:5px;animation:spin 1s linear infinite"></i> Mengunci Sinyal...'; lucide.createIcons();
@@ -466,24 +367,18 @@ function upLoc() {
             updateWorkflow(); return; 
         }
         if (p.coords.accuracy > 150) { showToastOnce('gps_warning', "Peringatan Sinyal", `Akurasi GPS ${p.coords.accuracy.toFixed(0)}m. Presensi diperbolehkan tapi disarankan cari lokasi lebih terbuka.`, "warning"); }
-        
         uPos = { lat: p.coords.latitude, lng: p.coords.longitude, accuracy: p.coords.accuracy };
         g.innerHTML = `<i data-lucide="check-circle" size="14" style="vertical-align:middle;margin-right:5px;color:var(--success)"></i> GPS: ${uPos.lat.toFixed(5)}, ${uPos.lng.toFixed(5)}`; lucide.createIcons();
         if (map) {
             map.setView([uPos.lat, uPos.lng], 16); marker.setLatLng([uPos.lat, uPos.lng]);
-            
             const mapFrame = document.querySelector('.map-view-frame');
             if (mapFrame) mapFrame.classList.remove('loading');
-            
             requestAnimationFrame(() => { requestAnimationFrame(() => { if (map) map.invalidateSize(); }); }); tampilkanGeoFence();
         }
         updateWorkflow();
     }, e => { if (e.code === 1) showPermissionModal('gps'); else showToastOnce('gps_error', "Gagal", "GPS gagal: " + e.message, "error"); }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
 }
 
-// ============================================================
-// PERMISSION MODAL
-// ============================================================
 function showPermissionModal(type) {
     const m = document.getElementById('permissionModal'), t = document.getElementById('permTitle'), d = document.getElementById('permDesc'), s = document.getElementById('permSteps'), b = document.getElementById('permRetryBtn');
     if (type === 'camera') {
@@ -499,9 +394,6 @@ function showPermissionModal(type) {
 }
 function closePermissionModal() { document.getElementById('permissionModal').classList.remove('show'); }
 
-// ============================================================
-// CAMERA TRIGGER
-// ============================================================
 async function triggerCam(type) {
     const aiReady = await ensureFaceApiLoaded(); if (aiReady && !isLandmarkReady) await loadFaceModels();
     const notes = document.getElementById('notes').value.trim();
@@ -509,7 +401,6 @@ async function triggerCam(type) {
     if (notes.length < 5) return showToast("Peringatan", "Isi keterangan minimal 5 karakter!", "warning");
     cType = type; stopCurrentStream();
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { triggerFallbackCamera(type); return; }
-    
     const peg = activePegawai || dbF[uIdx];
     document.getElementById('scanPegawai').innerText = (peg.Nama || peg.nama || "STAFF").toUpperCase(); document.getElementById('scanLogo').src = GITHUB_LOGO_URL;
     if (type === 'selfie') {
@@ -523,31 +414,56 @@ async function triggerCam(type) {
         document.getElementById('scanInstrText').innerText = "Arahkan kamera ke lokasi kerja"; document.getElementById('scanStatus').style.display = 'none';
     }
     lucide.createIcons(); const video = document.getElementById('vStream');
+    video.setAttribute('playsinline', 'true'); // Penting untuk iOS
     if (type === 'selfie') video.classList.add('mirror'); else video.classList.remove('mirror');
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     const { width: idealW, height: idealH } = DeviceProfile.config.videoConstraints;
-    const constraints = type === 'selfie' ? { facingMode: { exact: "user" }, width: { ideal: idealW }, height: { ideal: idealH } } : isIOS ? { facingMode: "environment", width: { ideal: idealW }, height: { ideal: idealH } } : { facingMode: { exact: "environment" }, width: { ideal: idealW }, height: { ideal: idealH } };
+    
+    // ✅ FIX: Buat constraints lebih fleksibel agar tidak NotSupportedError di HP tertentu
+    const constraints = type === 'selfie' ? 
+        { facingMode: "user", width: { ideal: idealW }, height: { ideal: idealH } } : 
+        { facingMode: "environment", width: { ideal: idealW }, height: { ideal: idealH } };
+        
     try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: constraints, audio: false });
         currentStream = stream; video.srcObject = stream; document.getElementById('cameraUI').style.display = 'flex';
-        video.onloadedmetadata = () => { video.play().then(() => { setTimeout(() => { if (type === 'selfie' && isLandmarkReady) startSelfieOverlay(); else startWorkOverlay(); }, 400); }).catch(() => { }); };
+        video.onloadedmetadata = () => { 
+            video.play().then(() => { 
+                setTimeout(() => { if (type === 'selfie' && isLandmarkReady) startSelfieOverlay(); else startWorkOverlay(); }, 400); 
+            }).catch(e => { 
+                console.error("Video play error:", e);
+                showToast("Error Kamera", "Gagal memutar video kamera. Coba ulangi.", "error");
+                stopCam();
+            }); 
+        };
     } catch (err) {
-        if (err.name === 'OverconstrainedError') {
+        console.error("Camera Access Error:", err);
+        if (err.name === 'OverconstrainedError' || err.name === 'NotSupportedError' || err.name === 'NotFoundError') {
+            // Fallback: Jika kamera spesifik tidak didukung, pakai kamera apapun yang ada
             try {
-                const s2 = await navigator.mediaDevices.getUserMedia({ video: { facingMode: type === 'selfie' ? "user" : "environment" }, audio: false });
+                const s2 = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
                 currentStream = s2; video.srcObject = s2; document.getElementById('cameraUI').style.display = 'flex';
-                video.onloadedmetadata = () => { video.play().then(() => { setTimeout(() => { if (type === 'selfie' && isLandmarkReady) startSelfieOverlay(); else startWorkOverlay(); }, 400); }).catch(() => { }); }; return;
-            } catch (e2) { }
+                video.onloadedmetadata = () => { 
+                    video.play().then(() => { 
+                        setTimeout(() => { if (type === 'selfie' && isLandmarkReady) startSelfieOverlay(); else startWorkOverlay(); }, 400); 
+                    }).catch(e => { 
+                        console.error("Video play error (fallback):", e);
+                        triggerFallbackCamera(type);
+                    }); 
+                }; 
+                return;
+            } catch (e2) { 
+                console.error("Fallback camera failed:", e2);
+                triggerFallbackCamera(type);
+            }
         }
-        if (err.name === 'NotAllowedError') { pendingCamType = type; showPermissionModal('camera'); } else triggerFallbackCamera(type);
+        if (err.name === 'NotAllowedError') { pendingCamType = type; showPermissionModal('camera'); } 
+        else { triggerFallbackCamera(type); }
     }
 }
 
 function registerResizeHandler() { if (_activeResizeHandler) window.removeEventListener('resize', _activeResizeHandler); _activeResizeHandler = () => setupCanvas(); window.addEventListener('resize', _activeResizeHandler); }
 
-// ============================================================
-// OVERLAY DETEKSI WAJAH
-// ============================================================
 function startSelfieOverlay() {
     const canvas = document.getElementById('faceOverlay'), video = document.getElementById('vStream'), ctx = canvas.getContext('2d');
     lastGoodDetection = null; faceDetected = false; detectionStableCount = 0; laserY = 0; laserDirection = 1; _canvasW = 0; _canvasH = 0;
@@ -594,9 +510,6 @@ function startWorkOverlay() {
     startRenderLoop(renderFrame);
 }
 
-// ============================================================
-// FUNGSI MENGGAMBAR DI CANVAS
-// ============================================================
 function drawRuleOfThirds(ctx, W, H) { ctx.save(); ctx.strokeStyle = 'rgba(34,211,238,0.25)'; ctx.lineWidth = 1; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.moveTo(W / 3, 0); ctx.lineTo(W / 3, H); ctx.moveTo(2 * W / 3, 0); ctx.lineTo(2 * W / 3, H); ctx.moveTo(0, H / 3); ctx.lineTo(W, H / 3); ctx.moveTo(0, 2 * H / 3); ctx.lineTo(W, 2 * H / 3); ctx.stroke(); ctx.setLineDash([]); ctx.restore(); }
 function drawCrosshair(ctx, W, H, color) { const cx = W / 2, cy = H / 2, outer = 25, gap = 4; ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.lineCap = 'round'; if (DeviceProfile.config.enableShadowBlur) { ctx.shadowColor = color; ctx.shadowBlur = 8; } ctx.beginPath(); ctx.moveTo(cx - outer, cy); ctx.lineTo(cx - gap, cy); ctx.moveTo(cx + gap, cy); ctx.lineTo(cx + outer, cy); ctx.moveTo(cx, cy - outer); ctx.lineTo(cx, cy - gap); ctx.moveTo(cx, cy + gap); ctx.lineTo(cx, cy + outer); ctx.stroke(); ctx.shadowBlur = 0; ctx.fillStyle = color; ctx.beginPath(); ctx.arc(cx, cy, 2, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
 function drawWorkLabel(ctx, W, H) { ctx.save(); const label = 'WORK SITE', fontSize = Math.max(11, Math.round(W * 0.022)); ctx.font = `800 ${fontSize}px 'JetBrains Mono',monospace`; const textW = ctx.measureText(label).width, padX = 12, padY = 6, x = 20, y = H * 0.12, bw = textW + padX * 2, bh = fontSize + padY * 2; ctx.fillStyle = 'rgba(34,211,238,0.15)'; ctx.strokeStyle = 'rgba(34,211,238,0.6)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x, y, bw, bh, 8); ctx.fill(); ctx.stroke(); ctx.fillStyle = 'rgba(34,211,238,0.95)'; ctx.textBaseline = 'middle'; ctx.fillText(label, x + padX, y + bh / 2); ctx.restore(); }
@@ -618,21 +531,15 @@ function checkImageQuality(canvas) {
     const w = canvas.width, h = canvas.height;
     const data = ctx.getImageData(0, 0, w, h).data;
     let sumBrightness = 0, sumBrightnessSq = 0, count = 0;
-    
     for (let i = 0; i < data.length; i += 40) {
         const brightness = (data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114);
-        sumBrightness += brightness;
-        sumBrightnessSq += brightness * brightness;
-        count++;
+        sumBrightness += brightness; sumBrightnessSq += brightness * brightness; count++;
     }
-    
     const avgBrightness = sumBrightness / count;
     const variance = (sumBrightnessSq / count) - (avgBrightness * avgBrightness);
-    
     if (avgBrightness < 30) return { valid: false, msg: "Foto terlalu gelap. Arahkan ke tempat terang." };
     if (avgBrightness > 235) return { valid: false, msg: "Foto terlalu silau/terang." };
     if (variance < 10) return { valid: false, msg: "Foto terdeteksi blur/kabur. Pegang kamera dengan stabil." };
-    
     return { valid: true };
 }
 
@@ -654,7 +561,6 @@ async function capturePhoto() {
         try { 
             const d = await faceapi.detectSingleFace(c, new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: .3 })); 
             if (!d) { setLoading(false); sndError.play(); showToast("Gagal Deteksi", "Wajah tidak terdeteksi!", "error"); return; }
-            
             const quality = checkImageQuality(c);
             if (!quality.valid) {
                 setLoading(false); sndError.play(); 
@@ -670,19 +576,14 @@ async function capturePhoto() {
     saveAutoRecovery(); stopCam(); 
 }
 
-// ============================================================
-// WATERMARK
-// ============================================================
 function addWatermark(c) { 
     const ctx = c.getContext('2d'); const W = c.width, H = c.height; const baseSize = Math.min(W, H); const margin = baseSize * 0.04; const nameFontSize = Math.round(baseSize * 0.032), jobFontSize = Math.round(baseSize * 0.022), infoFontSize = Math.round(baseSize * 0.020), footerFontSize = Math.round(baseSize * 0.018), iconSize = Math.round(baseSize * 0.025), logoSize = Math.round(baseSize * 0.09); const logoX = margin, logoY = H - margin - logoSize; 
     if (logoCache.complete && logoCache.naturalWidth > 0) { 
         ctx.save(); ctx.fillStyle = 'rgba(0,0,0,0.4)'; ctx.strokeStyle = 'rgba(45,212,191,0.5)'; ctx.lineWidth = 2; ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3; ctx.beginPath(); ctx.roundRect(logoX, logoY, logoSize, logoSize, logoSize * 0.18); ctx.fill(); ctx.shadowBlur = 0; ctx.stroke(); ctx.restore(); const logoInnerPad = logoSize * 0.12; ctx.drawImage(logoCache, logoX + logoInnerPad, logoY + logoInnerPad, logoSize - logoInnerPad * 2, logoSize - logoInnerPad * 2); 
     } 
     const textStart = logoX + logoSize + baseSize * 0.02, textAreaWidth = W - textStart - margin; 
-    
     const p = activePegawai || dbF[uIdx]; 
     const nama = (p.Nama || p.nama || "STAFF").toUpperCase(), jabatan = (p.Jabatan || "PPA").toUpperCase(); 
-    
     const shadowConfig = { shadowColor: 'rgba(0,0,0,0.85)', shadowBlur: 8, shadowOffsetX: 2, shadowOffsetY: 2 }, line1Y = logoY + logoSize * 0.28; 
     ctx.save(); ctx.textBaseline = 'middle'; ctx.shadowColor = shadowConfig.shadowColor; ctx.shadowBlur = shadowConfig.shadowBlur; ctx.shadowOffsetX = shadowConfig.shadowOffsetX; ctx.shadowOffsetY = shadowConfig.shadowOffsetY; ctx.fillStyle = '#ffffff'; ctx.font = `800 ${nameFontSize}px 'Plus Jakarta Sans'`; let displayName = nama, metrics = ctx.measureText(displayName + ' • ' + jabatan); if (metrics.width > textAreaWidth) { const ratio = textAreaWidth / metrics.width; displayName = nama.substring(0, Math.floor(nama.length * ratio * 0.9)) + '...'; } ctx.fillText(displayName, textStart, line1Y); const nameWidth = ctx.measureText(displayName).width; ctx.fillStyle = '#2dd4bf'; ctx.font = `600 ${jobFontSize}px 'Plus Jakarta Sans'`; ctx.fillText(' • ' + jabatan, textStart + nameWidth + 6, line1Y); ctx.restore(); const line2Y = logoY + logoSize * 0.58, iconColor = '#2dd4bf', textColor = '#ffffff'; ctx.save(); ctx.textBaseline = 'middle'; ctx.shadowColor = shadowConfig.shadowColor; ctx.shadowBlur = shadowConfig.shadowBlur; ctx.shadowOffsetX = shadowConfig.shadowOffsetX; ctx.shadowOffsetY = shadowConfig.shadowOffsetY; drawMapPinIcon(ctx, textStart, line2Y - iconSize / 2, iconSize, iconColor); const gpsStr = `${uPos.lat.toFixed(4)}, ${uPos.lng.toFixed(4)}`; ctx.fillStyle = textColor; ctx.font = `500 ${infoFontSize}px 'JetBrains Mono'`; ctx.fillText(gpsStr, textStart + iconSize + 8, line2Y); const timeX = textStart + iconSize + 8 + ctx.measureText(gpsStr).width + 20; if (timeX + iconSize + 80 < W - margin) { drawClockIcon(ctx, timeX, line2Y - iconSize / 2, iconSize, iconColor); const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }); ctx.fillStyle = textColor; ctx.fillText(timeStr, timeX + iconSize + 8, line2Y); const dateX = timeX + iconSize + 8 + ctx.measureText(timeStr).width + 20; if (dateX + iconSize + 100 < W - margin) { drawCalendarIcon(ctx, dateX, line2Y - iconSize / 2, iconSize, iconColor); const dateStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' }); ctx.fillStyle = textColor; ctx.fillText(dateStr, dateX + iconSize + 8, line2Y); } } ctx.restore(); const line3Y = logoY + logoSize * 0.88; ctx.save(); ctx.textBaseline = 'middle'; ctx.shadowColor = shadowConfig.shadowColor; ctx.shadowBlur = shadowConfig.shadowBlur; ctx.shadowOffsetX = shadowConfig.shadowOffsetX; ctx.shadowOffsetY = shadowConfig.shadowOffsetY; ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.font = `700 ${footerFontSize}px 'Plus Jakarta Sans'`; ctx.fillText('UPT PUSDA WS BONDOYUDO BARU', textStart, line3Y); ctx.restore(); 
 }
@@ -691,9 +592,6 @@ function drawMapPinIcon(ctx, x, y, size, color) { ctx.save(); ctx.strokeStyle = 
 function drawClockIcon(ctx, x, y, size, color) { ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = size * 0.1; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; const cx = x + size / 2, cy = y + size / 2, r = size * 0.4; ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, cy - r * 0.7); ctx.moveTo(cx, cy); ctx.lineTo(cx + r * 0.6, cy); ctx.stroke(); ctx.restore(); }
 function drawCalendarIcon(ctx, x, y, size, color) { ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = size * 0.09; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; const pad = size * 0.12, w = size - pad * 2, h = size - pad * 2, rx = x + pad, ry = y + pad; ctx.beginPath(); ctx.roundRect(rx, ry, w, h, size * 0.08); ctx.stroke(); ctx.beginPath(); ctx.moveTo(rx, ry + h * 0.28); ctx.lineTo(rx + w, ry + h * 0.28); ctx.stroke(); ctx.beginPath(); ctx.moveTo(rx + w * 0.28, ry - pad * 0.5); ctx.lineTo(rx + w * 0.28, ry + pad * 0.5); ctx.moveTo(rx + w * 0.72, ry - pad * 0.5); ctx.lineTo(rx + w * 0.72, ry + pad * 0.5); ctx.stroke(); ctx.restore(); }
 
-// ============================================================
-// GEOFENCING
-// ============================================================
 function hitungJarak(a, b, c, d) { if (!a || !b || !c || !d) return 999999; const R = 6371000, dL = (c - a) * Math.PI / 180, dG = (d - b) * Math.PI / 180, x = Math.sin(dL / 2) ** 2 + Math.cos(a * Math.PI / 180) * Math.cos(c * Math.PI / 180) * Math.sin(dG / 2) ** 2; return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x)); }
 function validasiGeoFencing() { 
     const p = activePegawai || dbF[uIdx]; 
@@ -705,20 +603,12 @@ function tampilkanGeoFence() {
     let pts = []; if (p.Koordinat_Tugas) try { pts = JSON.parse(p.Koordinat_Tugas); } catch (e) { } else if (p.Lat_Kantor) pts = [{ lat: p.Lat_Kantor, lng: p.Lng_Kantor, radius: p.Radius_Meter }]; if (window.fenceCircles) window.fenceCircles.forEach(c => map.removeLayer(c)); window.fenceCircles = []; pts.forEach(pt => { if (pt.lat && pt.lng && pt.radius) { const c = L.circle([pt.lat, pt.lng], { color: '#2dd4bf', fillColor: '#2dd4bf', fillOpacity: .15, radius: pt.radius, weight: 2 }).addTo(map); window.fenceCircles.push(c); } }); if (window.fenceCircles.length && !isInitialMapBound) { map.fitBounds(new L.featureGroup(window.fenceCircles).getBounds().pad(.2)); isInitialMapBound = true; } 
 }
 
-// ============================================================
-// UI HELPERS
-// ============================================================
 function toggleSpecialStatus() { const g = document.getElementById('specialStatusGrid'), h = document.getElementById('specialStatusHeader'), i = document.getElementById('collapseIcon'); g.classList.toggle('show'); h.classList.toggle('open'); i.setAttribute('data-lucide', g.classList.contains('show') ? 'chevron-up' : 'chevron-down'); lucide.createIcons(); }
 function clearHeavyData() { sB64 = null; kB64 = null; suratB64 = null; document.getElementById('sImg').src = ""; document.getElementById('kImg').src = ""; document.getElementById('sImg').style.display = 'none'; document.getElementById('kImg').style.display = 'none'; document.getElementById('sPh').style.display = 'block'; document.getElementById('kPh').style.display = 'block'; document.getElementById('specialStatusGrid').classList.remove('show'); document.getElementById('collapseIcon').setAttribute('data-lucide', 'chevron-down'); document.getElementById('statusBadge').classList.remove('show'); document.getElementById('statusInfo').style.display = 'none'; lucide.createIcons(); sessionStorage.removeItem('pusda_recovery'); }
 
-// ============================================================
-// AUTO RECOVERY (SESSION STORAGE)
-// ============================================================
 function saveAutoRecovery() {
     const data = { timestamp: Date.now(), notes: document.getElementById('notes').value, sB64, kB64, suratB64, status: selectedStatus };
-    try {
-        sessionStorage.setItem('pusda_recovery', JSON.stringify(data));
-    } catch (e) {
+    try { sessionStorage.setItem('pusda_recovery', JSON.stringify(data)); } catch (e) {
         console.warn("SessionStorage penuh, menyimpan tanpa foto");
         const dataLite = { timestamp: Date.now(), notes: document.getElementById('notes').value, sB64: null, kB64: null, suratB64: null, status: selectedStatus };
         try { sessionStorage.setItem('pusda_recovery', JSON.stringify(dataLite)); } catch (e2) {}
@@ -735,87 +625,46 @@ function loadAutoRecovery() {
             if (data.suratB64) suratB64 = data.suratB64; 
             if (data.status) { selectedStatus = data.status; updateStatusInfo(selectedStatus); } 
             updateNotesCounter(); updateWorkflow(); 
-        } else {
-            sessionStorage.removeItem('pusda_recovery');
-        }
+        } else { sessionStorage.removeItem('pusda_recovery'); }
     } 
 }
 function updateWorkflow() { const gpsReady = uPos.lat !== 0, statusReady = selectedStatus !== '', notesReady = document.getElementById('notes').value.trim().length >= 5; document.getElementById('statusBox1').classList.toggle('workflow-locked', !gpsReady); document.getElementById('specialStatusHeader').classList.toggle('workflow-locked', !gpsReady); document.getElementById('specialStatusGrid').classList.toggle('workflow-locked', !gpsReady); document.getElementById('notesBox').classList.toggle('workflow-locked', !statusReady); document.getElementById('photoBox').classList.toggle('workflow-locked', !notesReady); }
 function onNotesInput() { updateNotesCounter(); updateWorkflow(); saveAutoRecovery(); }
 
-// ============================================================
-// CACHE LOADING
-// ============================================================
 function loadFromCache() { 
     const c = localStorage.getItem('pusda_pegawai_v1'); 
     if (c) { 
-        try {
-            dbE = JSON.parse(c); 
-            dbF = [...dbE]; 
-            renderChips(); 
-            upUI(); 
-            return true;
-        } catch(e) {
-            localStorage.removeItem('pusda_pegawai_v1');
-            return false;
-        }
+        try { dbE = JSON.parse(c); dbF = [...dbE]; renderChips(); upUI(); return true; } catch(e) { localStorage.removeItem('pusda_pegawai_v1'); return false; }
     } 
     return false; 
 }
 
-// ============================================================
-// LOAD DATA UTAMA (CACHE-FIRST STRATEGY)
-// ============================================================
 async function loadData() { 
     const statusText = document.getElementById('initStatusText'); 
     const hasCache = loadFromCache(); 
-    
     if (hasCache) {
         const o = document.getElementById('initialLoadingOverlay'); 
         if (o) { o.style.opacity = '0'; o.style.pointerEvents = 'none'; setTimeout(() => o.style.display = 'none', 400); }
-        silentBackgroundUpdate();
-        return;
+        silentBackgroundUpdate(); return;
     }
-    
     if (statusText) statusText.innerText = "Menghubungkan ke Server...";
-    
     try { 
         const [r1, r2] = await Promise.all([
             fetchWithRetry(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 2, 2000),
             fetchWithRetry(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 2, 2000)
         ]); 
-        
         const [d1, d2] = await Promise.all([r1.json(), r2.json()]); 
-        dbE = d1.pegawai || []; 
-        dbF = [...dbE]; 
-        dbP = d2.data || []; 
-        
-        try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } 
-        catch (e) { console.warn('LocalStorage penuh'); } 
-        
+        dbE = d1.pegawai || []; dbF = [...dbE]; dbP = d2.data || []; 
+        try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } catch (e) { console.warn('LocalStorage penuh'); } 
         document.getElementById('sidebarLogo').src = d1.config?.Logo || GITHUB_LOGO_URL; 
-        
         const cfg = d1.config || {};
-        appConfig.jHadir = cfg.Jam_Hadir || "08:10";
-        appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:11";
-        appConfig.jPulang = cfg.Jam_Pulang || "10:00";
-        
+        appConfig.jHadir = cfg.Jam_Hadir || "08:10"; appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:11"; appConfig.jPulang = cfg.Jam_Pulang || "10:00";
         STATUS_CONFIG.HADIR.message = `<b>Aturan Waktu:</b><br>• ≤ ${appConfig.jHadir} = Poin 50 (Tepat Waktu)<br>• ${appConfig.jTelat} = Poin 40 (Terlambat Ringan)<br>• > ${appConfig.jTelat} = Poin 25 (Terlambat Berat)`;
-
         if (cfg.Teks_Sambutan) { const el = document.getElementById('dynamicWelcome'); if (el) el.innerText = cfg.Teks_Sambutan; }
         if (cfg.TeksDeskripsi) { const el = document.getElementById('dynamicDesc'); if (el) el.innerText = cfg.TeksDeskripsi; }
-        if (cfg.Teks_Tombol_Mulai) { 
-            const el = document.getElementById('dynamicBtnStart'); 
-            if (el) el.innerHTML = `<i data-lucide="scan-face" size="26"></i> ${cfg.Teks_Tombol_Mulai}`; 
-            lucide.createIcons(); 
-        }
-        if (cfg.URL_Background) { 
-            const bgEl = document.querySelector('.fixed-bg'); 
-            if (bgEl) bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`); 
-        }
-
+        if (cfg.Teks_Tombol_Mulai) { const el = document.getElementById('dynamicBtnStart'); if (el) el.innerHTML = `<i data-lucide="scan-face" size="26"></i> ${cfg.Teks_Tombol_Mulai}`; lucide.createIcons(); }
+        if (cfg.URL_Background) { const bgEl = document.querySelector('.fixed-bg'); if (bgEl) bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`); }
         renderChips(); applyFilters(); 
-        
     } catch (e) { 
         console.error("Load API Error:", e);
         if (statusText) statusText.innerText = "Koneksi Gagal";
@@ -829,48 +678,26 @@ async function loadData() {
     } 
 }
 
-// ============================================================
-// SILENT BACKGROUND UPDATE
-// ============================================================
 async function silentBackgroundUpdate() {
     try {
         const [r1, r2] = await Promise.all([
             fetchWithTimeout(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 15000),
             fetchWithTimeout(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 15000)
         ]);
-        
         const [d1, d2] = await Promise.all([r1.json(), r2.json()]);
-        
-        dbE = d1.pegawai || []; 
-        dbF = [...dbE]; 
-        dbP = d2.data || [];
-        
-        try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } 
-        catch (e) { }
-        
+        dbE = d1.pegawai || []; dbF = [...dbE]; dbP = d2.data || [];
+        try { localStorage.setItem('pusda_pegawai_v1', JSON.stringify(dbE)); } catch (e) { }
         const cfg = d1.config || {};
-        appConfig.jHadir = cfg.Jam_Hadir || "08:10";
-        appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:11";
-        appConfig.jPulang = cfg.Jam_Pulang || "10:00";
-        
+        appConfig.jHadir = cfg.Jam_Hadir || "08:10"; appConfig.jTelat = cfg.Jam_Terlambat_Ringan || "08:11"; appConfig.jPulang = cfg.Jam_Pulang || "10:00";
         STATUS_CONFIG.HADIR.message = `<b>Aturan Waktu:</b><br>• ≤ ${appConfig.jHadir} = Poin 50 (Tepat Waktu)<br>• ${appConfig.jTelat} = Poin 40 (Terlambat Ringan)<br>• > ${appConfig.jTelat} = Poin 25 (Terlambat Berat)`;
-        
         renderChips(); applyFilters();
-        
         if (d1.config?.Logo) document.getElementById('sidebarLogo').src = d1.config.Logo;
-        
         if (cfg.Teks_Sambutan) { const el = document.getElementById('dynamicWelcome'); if (el) el.innerText = cfg.Teks_Sambutan; }
         if (cfg.TeksDeskripsi) { const el = document.getElementById('dynamicDesc'); if (el) el.innerText = cfg.TeksDeskripsi; }
         if (cfg.URL_Background) { const bgEl = document.querySelector('.fixed-bg'); if (bgEl) bgEl.style.setProperty('--dynamic-bg-url', `url('${cfg.URL_Background}')`); }
-        
-    } catch (e) {
-        console.warn("Background update gagal, menggunakan cache:", e.message);
-    }
+    } catch (e) { console.warn("Background update gagal, menggunakan cache:", e.message); }
 }
 
-// ============================================================
-// FILTER & NAVIGASI PEGAWAI
-// ============================================================
 function renderChips() { const w = ["ALL", ...new Set(dbE.map(p => (p.Wilayah || p.wilayah || "").trim()).filter(x => x))]; document.getElementById('wilChips').innerHTML = w.map(x => `<div class="chip-pill ${x === 'ALL' ? 'active' : ''}" data-wil="${x}" onclick="setWil('${x}',this)">${x}</div>`).join(''); }
 function setWil(w, el) { document.querySelectorAll('.chip-pill').forEach(c => c.classList.remove('active')); el.classList.add('active'); applyFilters(); }
 
@@ -878,22 +705,16 @@ function applyFilters() {
     const s = document.getElementById('searchInput').value.toLowerCase().trim();
     const activeChip = document.querySelector('.chip-pill.active');
     const w = (activeChip?.getAttribute('data-wil') || 'ALL').toLowerCase();
-    
     const currentPegId = dbF.length > 0 ? (dbF[uIdx]?.ID || dbF[uIdx]?.id) : null;
-    
     dbF = dbE.filter(p => {
         const pw = (p.Wilayah || p.wilayah || "").trim().toLowerCase();
         const pn = (p.Nama || p.nama || "").toLowerCase();
         return (w === 'all' || pw === w) && (!s || pn.includes(s));
     });
-    
     if (currentPegId) {
         const newIdx = dbF.findIndex(p => (p.ID || p.id) === currentPegId);
         uIdx = newIdx !== -1 ? newIdx : 0;
-    } else {
-        uIdx = 0;
-    }
-    
+    } else { uIdx = 0; }
     upUI(w === 'all' ? 'ALL' : w);
 }
 
@@ -921,23 +742,40 @@ function upUI(w = "ALL") {
     const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
     let finalSrc = placeholderImg;
     if (rawUrl) {
-        let baseUrl = rawUrl.split('=')[0] + '=s500'; 
-        const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        finalSrc = baseUrl + '&v=' + todayStr; 
+        if (rawUrl.includes('drive.google.com') || rawUrl.includes('googleusercontent.com')) {
+            let fileId = "";
+            let match = rawUrl.match(/\/d\/([^\/\?]+)/);
+            if (match && match[1]) fileId = match[1];
+            if (!fileId) {
+                match = rawUrl.match(/[?&]id=([^&]+)/);
+                if (match && match[1]) fileId = match[1];
+            }
+            if (fileId) {
+                finalSrc = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
+            } else {
+                finalSrc = rawUrl;
+            }
+        } else {
+            finalSrc = rawUrl;
+        }
     }
 
-    document.getElementById('pWrap').classList.add('loading'); 
     const img = document.getElementById('pImg'); 
     
-    // ✅ PASANG ONLOAD & ONERROR DULU SEBELUM IMG.SRC!
-    img.onload = () => document.getElementById('pWrap').classList.remove('loading');  
+    // ✅ FIX LAMBAT: Efek Fade-Out saat ganti, Fade-In saat selesai load
+    img.style.transition = 'opacity 0.2s ease'; 
+    img.style.opacity = 0; // Langsung pudar saat ganti pegawai
+    
+    img.onload = () => { 
+        img.style.opacity = 1; // Muncul kembali halus saat foto siap
+    };  
+    
     img.onerror = () => { 
-        img.onerror = null; // Cegah loop
-        img.src = placeholderImg; // Kembali ke avatar default jika gagal load
-        document.getElementById('pWrap').classList.remove('loading'); 
+        img.onerror = null; 
+        img.src = placeholderImg; 
+        img.style.opacity = 1; 
     };
     
-    // BARU SET SRC-NYA
     img.src = finalSrc;  
     
     document.getElementById('pName').innerText = p.Nama || p.nama; 
@@ -946,9 +784,12 @@ function upUI(w = "ALL") {
     lucide.createIcons(); 
 }
 
-// ============================================================
-// MAP
-// ============================================================
+function navU(d) { 
+    if (!dbF.length) return; 
+    uIdx = (uIdx + d + dbF.length) % dbF.length; 
+    upUI(); 
+}
+
 function initMap() { 
     if (map) return; 
     map = L.map('map', { zoomControl: false, attributionControl: false }).setView([-8.13, 113.22], 15); 
@@ -958,9 +799,6 @@ function initMap() {
     requestAnimationFrame(() => { requestAnimationFrame(() => { if (map) map.invalidateSize(); }); }); 
 }
 
-// ============================================================
-// CEK STATUS ABSEN
-// ============================================================
 function checkAtt(id, st) {
     return dbP.some(l => {
         const lid = String(l['ID Pegawai'] || l.id_pegawai || l.ID);
@@ -972,15 +810,10 @@ function checkAtt(id, st) {
     });
 }
 
-// ============================================================
-// BUKA FORM PRESENSI (ANTI RACE CONDITION)
-// ============================================================
 async function openForm() {
     if (!dbF.length || isFormLoading) return;
     isFormLoading = true;
-    
     activePegawai = dbF[uIdx];
-    
     const targetIdx = uIdx;
     const p = activePegawai;
     const targetId = p.ID || p.id;
@@ -994,12 +827,26 @@ async function openForm() {
     document.getElementById('specialStatusGrid').classList.remove('show');
     lucide.createIcons();
 
+    // ✅ FIX: Gunakan parser Google Drive yang robust di halaman presensi juga!
     const rawUrl = p.Link_Foto_Profile || p.link_foto_profile || "";
     let finalSrc = placeholderImg;
     if (rawUrl) {
-        let baseUrl = rawUrl.split('=')[0] + '=s500'; 
-        const todayStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        finalSrc = baseUrl + '&v=' + todayStr; 
+        if (rawUrl.includes('drive.google.com') || rawUrl.includes('googleusercontent.com')) {
+            let fileId = "";
+            let match = rawUrl.match(/\/d\/([^\/\?]+)/);
+            if (match && match[1]) fileId = match[1];
+            if (!fileId) {
+                match = rawUrl.match(/[?&]id=([^&]+)/);
+                if (match && match[1]) fileId = match[1];
+            }
+            if (fileId) {
+                finalSrc = `https://drive.google.com/thumbnail?id=${fileId}&sz=w500`;
+            } else {
+                finalSrc = rawUrl;
+            }
+        } else {
+            finalSrc = rawUrl;
+        }
     }
     document.getElementById('formHeroImg').src = finalSrc;
     
@@ -1015,17 +862,11 @@ async function openForm() {
     try {
         const r = await fetchWithTimeout(API + "?action=getTodayPresensi", { redirect: 'follow', cache: 'no-cache' }, 12000);
         dbP = (await r.json()).data || [];
-    } catch (e) { 
-        console.error("Fetch presensi error:", e);
-    }
+    } catch (e) { console.error("Fetch presensi error:", e); }
 
     const isFormStillOpen = document.getElementById('stepForm').style.display === 'flex';
     const currentPegawaiId = dbF[uIdx]?.ID || dbF[uIdx]?.id;
-    
-    if (!isFormStillOpen || currentPegawaiId !== targetId) {
-        isFormLoading = false;
-        return; 
-    }
+    if (!isFormStillOpen || currentPegawaiId !== targetId) { isFormLoading = false; return; }
 
     btnHadir.classList.remove('btn-done', 'active');
     btnHadir.innerHTML = '<i data-lucide="sun" size="28"></i><span>HADIR</span>';
@@ -1049,13 +890,9 @@ async function openForm() {
     updateNotesCounter();
     updateWorkflow();
     setTimeout(() => { initMap(); upLoc(); loadAutoRecovery(); }, 300);
-    
     isFormLoading = false; 
 }
 
-// ============================================================
-// TUTUP FORM
-// ============================================================
 function closeForm() { 
     document.getElementById('stepSelector').style.display = 'flex'; 
     document.getElementById('stepForm').style.display = 'none'; 
@@ -1063,9 +900,6 @@ function closeForm() {
     activePegawai = null; 
 }
 
-// ============================================================
-// SET STATUS PRESENSI
-// ============================================================
 function setS(el, st) {
     if (uPos.lat === 0) return showToast("Peringatan", "Tunggu GPS mengunci lokasi!", "warning");
     const g = validasiGeoFencing(), outside = g.status === 'OUT_ZONE', exc = ['IZIN', 'SAKIT', 'DINAS', 'QUICK RESPONSE'].includes(st);
@@ -1091,16 +925,10 @@ function setS(el, st) {
         if (!checkAtt(pid, 'HADIR')) { showToast("Urutan Salah", "Anda harus melakukan absen HADIR terlebih dahulu sebelum PULANG.", "error"); return; }
     } else if (st === 'QUICK RESPONSE') {
         if (timeVal < 1000) { 
-            if (checkAtt(pid, 'HADIR')) { 
-                sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR / QR HADIR hari ini.", "error"); return; 
-            }
+            if (checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR / QR HADIR hari ini.", "error"); return; }
         } else { 
-            if (checkAtt(pid, 'PULANG')) { 
-                sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG / QR PULANG hari ini.", "error"); return; 
-            }
-            if (!checkAtt(pid, 'HADIR')) { 
-                sndError.play(); showToast("Belum Absen Masuk", "Anda belum absen HADIR / QR HADIR hari ini. Tidak bisa melakukan QR Pulang.", "error"); return; 
-            }
+            if (checkAtt(pid, 'PULANG')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG / QR PULANG hari ini.", "error"); return; }
+            if (!checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Belum Absen Masuk", "Anda belum absen HADIR / QR HADIR hari ini. Tidak bisa melakukan QR Pulang.", "error"); return; }
         }
     }
 
@@ -1110,9 +938,6 @@ function setS(el, st) {
     updateWorkflow(); saveAutoRecovery();
 }
 
-// ============================================================
-// SUBMIT PRESENSI (IDEMPOTENCY & ANTI INFINITE LOADING)
-// ============================================================
 async function submitWithRetry(attempt = 1, trxId = null) {
     const btn = document.getElementById('btnSubmitPresensi'), n = document.getElementById('notes').value.trim();
     if (!selectedStatus) return showToast("Peringatan", "Pilih status presensi!", "warning");
@@ -1129,19 +954,15 @@ async function submitWithRetry(attempt = 1, trxId = null) {
 
     btn.disabled = true;
     setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
-    
     const p = activePegawai; 
     
-    // ✅ Buat ID Transaksi Unik (Idempotency Key) hanya jika belum ada (percobaan pertama)
-    if (!trxId) {
-        trxId = `${p.ID}_${Date.now()}`;
-    }
+    if (!trxId) { trxId = `${p.ID}_${Date.now()}`; }
     
     const payload = {
         action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus,
         selfie: sB64, workPhoto: kB64, surat: suratB64 || '-', keterangan: n,
         gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-",
-        trxId: trxId // ✅ Kirim trxId yang sama saat retry
+        trxId: trxId
     };
 
     try {
@@ -1149,17 +970,12 @@ async function submitWithRetry(attempt = 1, trxId = null) {
         const j = await r.json();
 
         if (j.status === 'success' || j.result === 'success') {
-            setLoading(false); 
-            btn.disabled = false; 
-
+            setLoading(false); btn.disabled = false; 
             sndSuccess.play().catch(() => { });
             showToast("Presensi Berhasil!", "Data Anda telah tersinkronisasi ke server dengan aman.", "success");
-            
             dbP.push({ 'ID Pegawai': p.ID, 'Status': j.statusFix || selectedStatus, 'Timestamp': new Date().toISOString() });
-            
             const btnHadir = document.getElementById('btnHadirMain');
             const btnPulang = document.getElementById('btnPulangMain');
-            
             if (selectedStatus === 'HADIR') {
                 btnHadir.classList.add('btn-done');
                 btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
@@ -1178,13 +994,9 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 }
             }
             lucide.createIcons();
-
             clearHeavyData();
         } else if (j.status === 'error') {
-            setLoading(false);
-            btn.disabled = false;
-            
-            // ✅ Jika error karena duplikat (sudah ada), anggap SUKSES
+            setLoading(false); btn.disabled = false;
             if (j.message.includes('sudah mengajukan') || j.message.includes('sudah melakukan presensi') || j.message.includes('duplikat')) {
                 sndSuccess.play().catch(() => {});
                 showToast("Presensi Sudah Tercatat", "Data Anda sebelumnya sudah berhasil masuk ke server.", "success");
@@ -1193,26 +1005,20 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 sndError.play().catch(() => { });
                 showToast("Presensi Ditolak", j.message || "Gagal menyimpan data.", "error");
             }
-        } else {
-            throw new Error(j.message || "Format respons server tidak dikenal");
-        }
+        } else { throw new Error(j.message || "Format respons server tidak dikenal"); }
     } catch (e) {
         console.error("Error submit:", e);
         if (attempt < 4) {
             showToastOnce('submit_retry', "Menunggu Antrian...", "Koneksi tidak stabil, mencoba ulang otomatis...", "warning");
-            setTimeout(() => submitWithRetry(attempt + 1, trxId), 3000); // ✅ Pass trxId yang sama
+            setTimeout(() => submitWithRetry(attempt + 1, trxId), 3000);
         } else {
             sndError.play().catch(() => { });
             showToast("Gagal Mengirim", "Koneksi internet terputus atau server sangat sibuk. Coba lagi nanti.", "error");
-            btn.disabled = false;
-            setLoading(false);
+            btn.disabled = false; setLoading(false);
         }
     }
 }
 
-// ============================================================
-// LOADING OVERLAY & VOICE INPUT
-// ============================================================
 function setLoading(s, t) { const o = document.getElementById('sendingOverlay'); document.getElementById('overlayText').innerText = t; o.style.display = s ? 'flex' : 'none'; o.style.pointerEvents = s ? 'all' : 'none'; }
 function startVoice(id, btn) { const S = window.SpeechRecognition || window.webkitSpeechRecognition; if (!S) return; const r = new S(); r.lang = 'id-ID'; r.onstart = () => { btn.classList.add('active'); haptic(); }; r.onresult = e => { const t = e.results[0][0].transcript; if (id === 'searchInput') { document.getElementById('searchInput').value = t; applyFilters(); } else { const n = document.getElementById('notes'); n.value += (n.value ? ' ' : '') + t; onNotesInput(); } }; r.onend = () => btn.classList.remove('active'); r.start(); }
 function haptic() { if (navigator.vibrate) navigator.vibrate(50); }
