@@ -127,21 +127,17 @@ function populateUIFromData(d) {
     filterData();
 }
 
-// ============ ✅ PARALLEL FETCH (ANTI FLICKER & TIMEOUT) ============
-// isAuto = true -> Background refresh (Timeout 12s, Silent Error)
-// isAuto = false -> Initial Load / Manual Filter (Timeout 30s, Tampilkan Skeleton & Error UI)
+// ============ ✅ PARALLEL FETCH (ANTI FLICKER & ELEGANT ERROR) ============
 async function init(isRefresh = false, isAuto = false) {
     const syncToast = document.getElementById('syncToast');
+    const grid = document.getElementById('gridView');
     
-    // Hanya tampilkan skeleton & toast jika BUKAN auto-refresh
-    if (!isAuto) {
-        if (syncToast) syncToast.style.display = 'block';
-        if (isRefresh) {
-            const grid = document.getElementById('gridView');
-            if (grid && dbE.length === 0) { // Hanya skeleton jika grid kosong
-                grid.innerHTML = Array(4).fill('<div class="skeleton-card"><div class="skeleton-circle"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>').join('');
-            }
-        }
+    // Hanya tampilkan toast sync jika manual refresh
+    if (!isAuto && syncToast) syncToast.style.display = 'block';
+    
+    // ✅ HANYA tampilkan skeleton jika BENAR-BENAR belum ada data di layar
+    if (!isAuto && isRefresh && grid && dbE.length === 0) {
+        grid.innerHTML = Array(4).fill('<div class="skeleton-card"><div class="skeleton-circle"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>').join('');
     }
 
     try {
@@ -165,17 +161,22 @@ async function init(isRefresh = false, isAuto = false) {
     } catch(e) {
         const isTimeout = e.name === 'TimeoutError' || (e.message && e.message.includes('Timeout'));
         const isNetwork = e.message && (e.message.includes('Failed to fetch') || e.message.includes('NetworkError'));
+        const is404 = e.message && e.message.includes('HTTP 404');
         
         console.error("❌ Gagal memuat data:", e.message);
         
-        if (isAuto) return; // ✅ Jika background refresh gagal, diam-diam saja. Biarkan data lama tampil.
+        // ✅ Jika ini auto-refresh atau ganti tanggal, biarkan data lama tetap tampil. Jangan rusak UI.
+        if (isAuto || (dbE.length > 0 && isRefresh)) {
+            if (!isAuto && is404) showToast('Server sibuk, menampilkan data sebelumnya.', 'warning');
+            return; 
+        }
 
+        // Jika baru pertama kali buka dan gagal total, tampilkan error
         if (isTimeout) showToast('Server lambat merespon. Coba lagi dalam beberapa saat.', 'warning');
         else if (isNetwork) showToast('Koneksi internet terputus. Periksa jaringan Anda.', 'error');
         else showToast('Gagal memuat data: ' + e.message, 'error');
         
-        const grid = document.getElementById('gridView');
-        if (grid && dbE.length === 0) { // Tampilkan error UI hanya jika benar-benar tidak ada data
+        if (grid && dbE.length === 0) {
             grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;color:var(--danger);padding:50px">
                 <i data-lucide="wifi-off" size="32" style="margin-bottom:10px;opacity:0.5"></i><br>
                 ${isTimeout ? 'Server lambat merespon' : 'Gagal memuat data'}<br>
@@ -189,7 +190,6 @@ async function init(isRefresh = false, isAuto = false) {
         if (syncToast) syncToast.style.display = 'none';
     }
 }
-
 // ============ FILTERING (pakai index) ============
 function filterData() {
     const wil = document.getElementById('fWil').value;
@@ -459,7 +459,8 @@ async function submitAgenda() {
 // ============ UI INTERACTIONS ============
 function onDateChange() {
     clearTimeout(searchTimeout);
-    searchTimeout = setTimeout(() => init(true, false), 300); // false = not auto, will show toast if fails
+    // ✅ Saat ganti tanggal, jangan langsung hapus data. Biarkan init() memproses di background.
+    searchTimeout = setTimeout(() => init(true, false), 300);
 }
 function onSearchInput() { clearTimeout(searchTimeout); searchTimeout = setTimeout(filterData, 300); }
 function toggleView(v) {
