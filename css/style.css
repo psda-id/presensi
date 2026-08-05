@@ -7,6 +7,7 @@
     --success: #10b981;
     --pu-blue: #3b82f6;
     --sda-toska: #2dd4bf;
+    --danger: #ef4444;
     --sidebar-width: 280px;
 }
 
@@ -215,6 +216,29 @@ body {
 .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border); }
 .modal-title { font-size: 1.6rem; font-weight: 800; border-left: 6px solid var(--sda-toska); padding-left: 20px; }
 
+/* ✅ Tombol X (Tutup Modal) Bulat Premium */
+.modal-close-btn {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.8);
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+}
+
+.modal-close-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: var(--danger);
+    transform: rotate(90deg);
+}
+
 .lapkin-grid { 
     display: grid; 
     grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); 
@@ -290,6 +314,37 @@ select option { background-color: #0b1120; color: white; }
 .input-with-mic { position: relative; display: flex; align-items: center; }
 .btn-mic-inside { position: absolute; right: 12px; background: none; border: none; color: var(--sda-toska); cursor: pointer; padding: 8px; display: flex; align-items: center; justify-content: center; }
 .btn-mic-inside.active { color: var(--danger); animation: pulse-mic 1.5s infinite; }
+
+/* ✅ Tombol Upload File Custom Glassmorphism */
+.file-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    padding: 16px 20px;
+    border-radius: 18px;
+    border: 1px dashed var(--glass-border);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+    text-align: center;
+}
+
+.file-upload-btn:hover {
+    border-color: var(--pu-blue);
+    background: rgba(59, 130, 246, 0.1);
+    color: #ffffff;
+}
+
+.file-upload-btn i {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
 
 .btn-submit-action { width: 100%; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); color: white; border: none; padding: 20px; border-radius: 22px; font-weight: 800; cursor: pointer; font-size: 1rem; box-shadow: 0 10px 25px rgba(59, 130, 246, 0.4); margin-top: 15px; text-transform: uppercase; letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-close-modal { width: 100%; background: var(--accent); color: white; padding: 20px; border-radius: 22px; border: none; font-weight: 800; margin-top: 30px; cursor: pointer; text-transform: uppercase; letter-spacing: 2px; }
