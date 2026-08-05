@@ -554,11 +554,25 @@ body {
 
 .map-view-frame { 
     width: 100%; 
-    height: 180px; 
+    height: 200px; 
     border-radius: 25px; 
     overflow: hidden; 
     border: 1.5px solid var(--glass-border); 
-    background: #000; 
+    background: #000 url('https://i.gifer.com/ZZ5H.gif') center/80px no-repeat; /* Gif loading radar */
+    position: relative;
+}
+/* Tambahkan overlay teks agar jelas */
+.map-view-frame::before {
+    content: "MENGUNCI SINYAL GPS...";
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--scan-cyan);
+    z-index: 1;
+    letter-spacing: 2px;
 }
 
 /* =========================================
@@ -621,11 +635,10 @@ body {
 }
 
 .btn-presence-mega.btn-done { 
-    background: rgba(255,255,255,0.05) !important; 
-    border-color: rgba(255,255,255,0.1) !important; 
-    color: rgba(255,255,255,0.3) !important; 
+    background: rgba(16, 185, 129, 0.15) !important; /* Hijau lembut */
+    border-color: rgba(16, 185, 129, 0.4) !important;
+    color: rgba(16, 185, 129, 0.8) !important; /* Teks hijau */
     cursor: not-allowed; 
-    pointer-events: none; 
     animation: none; 
 }
 
@@ -1739,7 +1752,13 @@ body {
         border-radius: 10px; 
         gap: 4px; 
     }
-    
+
+   .cam-slot-frame.cam-required, .cam-slot-kerja.cam-required {
+    border-color: var(--danger) !important;
+    animation: pulseGlow 1.5s infinite; /* Pakai animasi pulse agar kedip merah */
+    background: rgba(239, 68, 68, 0.05);
+}
+   
     .btn-submit-final { 
         padding: 18px 14px; 
         font-size: 0.95rem; 
