@@ -127,36 +127,48 @@ function populateUIFromData(d) {
     filterData();
 }
 
-// ============ ✅ PARALLEL FETCH (ANTI FLICKER, AUTO-RETRY COLD START) ============
+// ============ ✅ PARALLEL FETCH (SEPARATED PROMISES) ============
 async function init(isRefresh = false, isAuto = false, attempt = 1) {
     const syncToast = document.getElementById('syncToast');
     const grid = document.getElementById('gridView');
     
-    // Hanya tampilkan toast sync jika manual refresh
     if (!isAuto && syncToast) syncToast.style.display = 'block';
     
-    // ✅ HANYA tampilkan skeleton jika BENAR-BENAR belum ada data di layar
     if (!isAuto && isRefresh && grid && dbE.length === 0) {
         grid.innerHTML = Array(4).fill('<div class="skeleton-card"><div class="skeleton-circle"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>').join('');
     }
 
     try {
         const selectedDate = document.getElementById('fDate').value;
-        const tOut = isAuto ? 12000 : 30000; // 30s untuk awal buka, 12s untuk auto background
+        const tOut = isAuto ? 12000 : 30000; 
         
-        const [d, dp] = await Promise.all([
-            safeFetchJSON(API_URL + "?action=getDashboardData", {}, tOut),
-            safeFetchJSON(API_URL + `?action=getPresensiByDate&date=${selectedDate}`, {}, tOut)
-        ]);
+        // ✅ Pisahkan promise agar tidak saling menunggu
+        const dashPromise = safeFetchJSON(API_URL + "?action=getDashboardData", {}, tOut);
+        const presensiPromise = safeFetchJSON(API_URL + `?action=getPresensiByDate&date=${selectedDate}`, {}, tOut);
         
-        dbE = d.pegawai || [];
-        dbK = d.korlap || [];
-        dbP = dp.data || [];
-        
-        // Simpan ke cache lokal
-        try { localStorage.setItem('wilayah_dashboard_cache', JSON.stringify(d)); } catch(e) {}
-        
-        populateUIFromData(d);
+        // Ambil data presensi terlebih dahulu (ini yang sering lambat)
+        try {
+            const dp = await presensiPromise;
+            dbP = dp.data || [];
+        } catch (presensiErr) {
+            console.error("Gagal ambil presensi:", presensiErr.message);
+            throw presensiErr; // Lempar ke catch utama untuk retry
+        }
+
+        // Ambil data dashboard (jika gagal, biarkan pakai cache yang sudah ada)
+        try {
+            const d = await dashPromise;
+            dbE = d.pegawai || [];
+            dbK = d.korlap || [];
+            try { localStorage.setItem('wilayah_dashboard_cache', JSON.stringify(d)); } catch(e) {}
+            populateUIFromData(d);
+        } catch (dashErr) {
+            console.warn("Dashboard sync gagal, pakai cache lama:", dashErr.message);
+            // Lanjut render dengan data pegawai lama + data presensi baru
+            indexData();
+            updateKorlapStats();
+            filterData();
+        }
         
     } catch(e) {
         const isTimeout = e.name === 'TimeoutError' || (e.message && e.message.includes('Timeout'));
@@ -165,20 +177,18 @@ async function init(isRefresh = false, isAuto = false, attempt = 1) {
         
         console.error(`❌ Gagal memuat data (Percobaan ${attempt}):`, e.message);
         
-        // ✅ AUTO-RETRY UNTUK COLD START: Jika gagal di awal buka (bukan auto), coba 2x dengan jeda 3 detik
+        // Auto-retry untuk cold start
         if (!isAuto && attempt < 3) {
-            if (syncToast) syncToast.style.display = 'none'; // Sembunyikan toast sebentar
+            if (syncToast) syncToast.style.display = 'none';
             setTimeout(() => init(isRefresh, isAuto, attempt + 1), 3000);
             return;
         }
 
-        // ✅ Jika ini auto-refresh atau ganti tanggal, biarkan data lama tetap tampil. Jangan rusak UI.
         if (isAuto || (dbE.length > 0 && isRefresh)) {
             if (!isAuto && (is404 || isTimeout)) showToast('Server sibuk, menampilkan data sebelumnya.', 'warning');
             return; 
         }
 
-        // Jika baru pertama kali buka dan gagal total setelah 3x coba, tampilkan error
         if (isTimeout) showToast('Server lambat merespon. Coba lagi dalam beberapa saat.', 'warning');
         else if (isNetwork) showToast('Koneksi internet terputus. Periksa jaringan Anda.', 'error');
         else showToast('Gagal memuat data: ' + e.message, 'error');
