@@ -178,7 +178,7 @@ function startHeroSlide() {
     };
 
     loadNext(); 
-    setInterval(loadNext, 5000); // Ganti setiap 5 detik
+    setInterval(loadNext, 8000); // Ganti setiap 8 detik
 }
 
 // ============ RENDER DASHBOARD (BATCH DOM) ============
