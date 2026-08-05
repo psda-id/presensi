@@ -112,16 +112,17 @@
     </nav>
 
     <!-- MODAL LAPKIN -->
-    <div id="lapkinModal" class="modal-overlay">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 class="modal-title">Portal LAPKIN</h3>
-                <i data-lucide="x" size="24" style="cursor:pointer;" onclick="closeModal('lapkinModal')"></i>
-            </div>
-            <div class="lapkin-grid" id="lapkinContainer"></div>
-            <button class="btn-close-modal" onclick="closeModal('lapkinModal')">TUTUP PORTAL</button>
+    <div class="modal-header" style="border-bottom: 1px solid var(--glass-border); padding-bottom: 20px; margin-bottom: 20px;">
+    <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="width: 45px; height: 45px; border-radius: 12px; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px rgba(30, 64, 175, 0.4);">
+            <i data-lucide="layout-dashboard" style="color: white;"></i>
+        </div>
+        <div>
+            <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff;">Portal LAPKIN</h2>
+            <p style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Akses cepat aplikasi eksternal</p>
         </div>
     </div>
+</div>
 
     <!-- MODAL AGENDA -->
     <div id="agendaModal" class="modal-overlay">
