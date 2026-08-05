@@ -139,11 +139,19 @@
         </div>
     </div>
 
-    <!-- MODAL AGENDA -->
+    <!-- MODAL AGENDA (Desain Premium Header Senada) -->
     <div id="agendaModal" class="modal-overlay">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">E-Agenda Harian</h3>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="width: 45px; height: 45px; border-radius: 12px; background: linear-gradient(135deg, var(--pu-blue), var(--primary)); display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 15px rgba(30, 64, 175, 0.4);">
+                        <i data-lucide="calendar-check" style="color: white;"></i>
+                    </div>
+                    <div>
+                        <h2 style="font-size: 1.4rem; font-weight: 800; color: #fff; line-height: 1.2;">E-Agenda Harian</h2>
+                        <p style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Catat aktivitas dan kegiatan harian</p>
+                    </div>
+                </div>
                 <i data-lucide="x" size="24" style="cursor:pointer; color: rgba(255,255,255,0.6);" onclick="closeModal('agendaModal')"></i>
             </div>
             <div class="form-grid">
