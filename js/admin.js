@@ -225,7 +225,14 @@ document.addEventListener('keydown', e => {
     }
 });
 
-// ============ INISIALISASI ============
+// ============ ✅ HELPER: DETEKSI MOBILE ============
+function isMobileDevice() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        || window.innerWidth <= 768
+        || ('ontouchstart' in window);
+}
+
+// ============ ✅ FIXED: INISIALISASI (Render data setelah reload) ============
 window.onload = () => {
     lucide.createIcons();
 
@@ -245,7 +252,8 @@ window.onload = () => {
         token = savedToken;
         document.body.classList.remove('not-logged-in');
         document.body.classList.add('logged-in');
-        fetchInitial();
+        // ✅ FIX: Panggil loadDashboard (yang render data), BUKAN fetchInitial
+        loadDashboard(true);  // forceRefresh=true → bypass cache lama
     } else {
         warmUpBackend();
     }
@@ -253,11 +261,38 @@ window.onload = () => {
     updateFabVisibility();
 };
 
-// ============ WARM-UP BACKEND (Silent) ============
+// ============ ✅ WARM-UP BACKEND (Silent, untuk user belum login) ============
 function warmUpBackend() {
     fetchWithTimeout(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 20000)
         .then(() => console.log('✅ Backend siap'))
         .catch(() => { /* telan diam-diam */ });
+}
+
+// ============ ✅ FETCH INITIAL (Tetap dipakai untuk update logo/config) ============
+async function fetchInitial() {
+    try {
+        const data = await safeFetchJSON(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 25000, 1);
+        if (data.status === 'error') throw new Error(data.message);
+        masterData = {
+            pegawai: data.pegawai || [],
+            korlap: data.korlap || [],
+            tools: data.tools || [],
+            config: data.config || {}
+        };
+        if (masterData.config.Logo) {
+            const sidebarLogo = document.getElementById('sidebarLogo');
+            if (sidebarLogo) sidebarLogo.src = masterData.config.Logo;
+        }
+        if (masterData.config.PlayStore_URL) {
+            const playStoreLink = document.getElementById('playStoreLink');
+            if (playStoreLink) playStoreLink.href = masterData.config.PlayStore_URL;
+        }
+    } catch (e) {
+        console.warn('Fetch initial gagal:', e.message);
+        if (document.body.classList.contains('logged-in')) {
+            showToast("Gagal Terhubung: " + e.message, "error");
+        }
+    }
 }
 
 async function fetchInitial() {
