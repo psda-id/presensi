@@ -177,30 +177,58 @@ function buildCalendarHTML(logs, startDateStr) {
         const log = logMap[i];
         const box = document.createElement('div');
         box.className = 'day-box';
-        box.textContent = String(i).padStart(2,'0');
+        
+        // ✅ Elemen Angka Tanggal
+        const numEl = document.createElement('span');
+        numEl.className = 'day-num';
+        numEl.textContent = String(i).padStart(2,'0');
+        box.appendChild(numEl);
+        
+        // ✅ Elemen Indikator (Teks di bawah angka)
+        const indEl = document.createElement('span');
+        indEl.className = 'day-indicator';
         
         if (log) {
             const status = (log.status||"").toLowerCase().trim();
             const isValid = (log.score > 0) || log.color;
             
             if (isValid) {
-                box.style.background = log.color; 
-                box.style.borderColor = log.color; 
+                box.style.color = 'white';
+                indEl.style.color = 'rgba(255,255,255,0.9)';
                 
-                // ✅ Jika warna muda (50%, Kuning), teks tanggal dibuat gelap agar terbaca
-                const isLightColor = status.includes('50%') || status.includes('ringan');
-                box.style.color = isLightColor ? '#1f2937' : 'white';
+                // ✅ LOGika PEWARNAAN & TEKS INDIKATOR
+                if (status.includes('hadir 100%')) {
+                    box.style.background = '#16a34a'; indEl.textContent = '100%';
+                } else if (status.includes('hadir 50%')) {
+                    box.style.background = 'linear-gradient(to top, #bbf7d0 50%, #ffffff 50%)'; 
+                    box.style.color = '#1f2937'; indEl.style.color = '#1f2937'; indEl.textContent = '50%';
+                } else if (status.includes('qr 100%')) {
+                    box.style.background = '#7c3aed'; indEl.textContent = 'QR';
+                } else if (status.includes('qr 50%')) {
+                    box.style.background = 'linear-gradient(to top, #ddd6fe 50%, #ffffff 50%)'; 
+                    box.style.color = '#1f2937'; indEl.style.color = '#1f2937'; indEl.textContent = 'QR';
+                } else if (status.includes('telat ringan')) {
+                    box.style.background = '#facc15'; box.style.color = '#1f2937'; indEl.style.color = '#1f2937'; indEl.textContent = 'TR';
+                } else if (status.includes('telat berat')) {
+                    box.style.background = '#f97316'; indEl.textContent = 'TB';
+                } else if (status.includes('izin')) {
+                    box.style.background = '#9333ea'; indEl.textContent = 'I';
+                } else if (status.includes('sakit')) {
+                    box.style.background = '#2563eb'; indEl.textContent = 'S';
+                } else if (status.includes('dinas')) {
+                    box.style.background = '#d97706'; indEl.textContent = 'D';
+                }
                 
                 const ket = log.ket || log.keterangan || '-';
                 const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
                 tooltip.innerHTML = `<div class="tooltip-status">${log.status||'-'}</div><div class="tooltip-nilai">Nilai: ${log.score||0}</div><div class="tooltip-ket">${ket}</div>`;
                 box.appendChild(tooltip);
-                if (isWeekend && !status.includes('qr') && !status.includes('quick') && !status.includes('hadir')) box.classList.add('weekend');
+                if (isWeekend) box.classList.add('weekend');
             } else if (isWeekend) {
                 box.classList.add('weekend');
             }
         } else {
-            // ✅ LOGIKA ALPHA DINAMIS (Hari ini vs Lampau vs Masa Depan)
+            // ✅ LOGIKA ALPHA DINAMIS (Hari ini vs Lampau)
             if (isWeekend) {
                 box.classList.add('weekend');
             } else {
@@ -210,36 +238,33 @@ function buildCalendarHTML(logs, startDateStr) {
                 cellDate.setHours(0, 0, 0, 0);
 
                 if (cellDate.getTime() === today.getTime()) {
-                    // Hari ini: Cek jam apakah sudah lewat jam 12 siang
                     if (new Date().getHours() >= 12) {
-                        // Sudah lewat jam 12, jadi Alpha Merah Pekat
                         box.style.background = '#dc2626'; 
-                        box.style.color = 'white';
+                        indEl.textContent = 'A';
                         const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
                         tooltip.innerHTML = '<div class="tooltip-status">Alpha (Terlewat)</div><div class="tooltip-nilai">Nilai: 0</div>';
                         box.appendChild(tooltip);
                     } else {
-                        // Masih pagi, jadi Menunggu (Abu-abu)
                         box.style.background = '#f3f4f6'; 
-                        box.style.color = '#9ca3af';
+                        box.style.color = '#9ca3af'; indEl.style.color = '#9ca3af';
+                        indEl.textContent = 'W'; // W = Waiting
                         const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
                         tooltip.innerHTML = '<div class="tooltip-status">Menunggu Absensi</div><div class="tooltip-nilai">Nilai: 0</div>';
                         box.appendChild(tooltip);
                     }
                 } else if (cellDate < today) {
-                    // Hari lampau yang tidak ada absensinya = Alpha Merah Pekat
                     box.style.background = '#dc2626'; 
-                    box.style.color = 'white';
+                    indEl.textContent = 'A'; // A = Alpha
                     const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
                     tooltip.innerHTML = '<div class="tooltip-status">Alpha (Tidak Hadir)</div><div class="tooltip-nilai">Nilai: 0</div>';
                     box.appendChild(tooltip);
                 } else {
-                    // Masa depan
                     box.style.background = '#f9fafb'; 
                     box.style.color = '#d1d5db';
                 }
             }
         }
+        box.appendChild(indEl);
         grid.appendChild(box);
     }
     wrap.appendChild(grid);
