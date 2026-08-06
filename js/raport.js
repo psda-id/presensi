@@ -171,7 +171,7 @@ function buildCalendarHTML(logs, startDateStr) {
     const grid = document.createElement('div'); grid.className = 'calendar-micro-grid';
     for (let i = 0; i < firstDayOfWeek; i++) { const el = document.createElement('div'); el.className = 'day-box'; el.style.visibility = 'hidden'; grid.appendChild(el); }
     
-        // ✅ Tambahkan validasi dinamis
+    // ✅ Tambahkan validasi dinamis
     const validStatuses = ['hadir','terlambat','terlambat ringan','terlambat berat','izin','sakit','dinas','qr','qr hadir','qr pulang','pulang','quick response','quick response 1','quick response 2','lupa pulang'];
     
     for (let i = 1; i <= totalDays; i++) {
@@ -183,7 +183,8 @@ function buildCalendarHTML(logs, startDateStr) {
         box.className = 'day-box';
         box.textContent = String(i).padStart(2,'0');
         
-        const status = (log.status||"").toLowerCase().trim();
+        if (log) {
+            const status = (log.status||"").toLowerCase().trim();
             // ✅ Gunakan includes agar "Quick Response 1 (Hadir)" terdeteksi
             const isValid = validStatuses.includes(status) || status.includes('quick response') || status.includes('qr');
             
@@ -194,10 +195,13 @@ function buildCalendarHTML(logs, startDateStr) {
                 tooltip.innerHTML = `<div class="tooltip-status">${log.status||'-'}</div><div class="tooltip-nilai">Nilai: ${log.score||0}</div><div class="tooltip-ket">${ket}</div>`;
                 box.appendChild(tooltip);
                 if (isWeekend && !status.includes('qr') && !status.includes('quick')) box.classList.add('weekend');
-            } else if (isWeekend) box.classList.add('weekend');
+            } else if (isWeekend) {
+                box.classList.add('weekend');
+            }
         } else {
-            if (isWeekend) box.classList.add('weekend');
-            else {
+            if (isWeekend) {
+                box.classList.add('weekend');
+            } else {
                 box.style.background = '#fee2e2'; box.style.color = '#dc2626';
                 const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
                 tooltip.innerHTML = '<div class="tooltip-status">Alpha (Tidak Hadir)</div><div class="tooltip-nilai">Nilai: 0</div>';
