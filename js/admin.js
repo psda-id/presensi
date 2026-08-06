@@ -20,17 +20,7 @@ const APP_CONFIG = {
 };
 
 // ============ PWA MANIFEST (FIXED) ============
-(function initManifest() {
-    try {
-        const mf = {
-            name: "E-PUSDA Admin Panel", short_name: "E-PUSDA Admin",
-            start_url: "./admin.html", scope: "./",
-            display: "standalone", background_color: "#0d1b3e", theme_color: "#0d1b3e",
-            icons: [
-                { src: LOGO_INSTANSI, sizes: "192x192", type: "image/png" },
-                { src: LOGO_INSTANSI, sizes: "512x512", type: "image/png", purpose: "any maskable" }
-            ]
-        };
+(function initManifest() {...})
         const blob = new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' });
         const uri = URL.createObjectURL(blob);
         const el = document.getElementById('pwaManifest');
