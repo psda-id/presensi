@@ -1,6 +1,6 @@
 // ============ KONFIGURASI GLOBAL ============
 const GITHUB_LOGO_URL = "https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png";
-const API_URL = "https://script.google.com/macros/s/AKfycbx9QYwnT9Be3vv7wlg1WAcrR-8rxBUvEM4gsPieUj7r19S8eZc-QLKRfxtnxNHxlmSsEQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbxbQqM8rEC3Y60-T9bJlYcydL5y0XTc9yOml62z9YBrP833Pr0svT9b1d1M0MgADnIt/exec";
 const FALLBACK_IMAGE = GITHUB_LOGO_URL;
 const logsMap = new Map();
 let fetchDebounceTimer = null;
