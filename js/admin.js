@@ -20,18 +20,22 @@ const APP_CONFIG = {
 };
 
 // ============ PWA MANIFEST (FIXED) ============
-(function initManifest() {...})
-        const blob = new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' });
-        const uri = URL.createObjectURL(blob);
-        const el = document.getElementById('pwaManifest');
-        if (el) el.setAttribute('href', uri);
-        else {
-            const l = document.createElement('link');
-            l.rel = 'manifest'; l.href = uri;
-            document.head.appendChild(l);
-        }
-    } catch (e) { console.warn('Manifest init failed:', e); }
-})();
+(function initManifest() {
+    try {
+        // ✅ URL absolut (bukan relatif) agar Chrome menerima start_url & scope
+        const pageUrl = location.origin + location.pathname;          // https://host/admin.html
+        const scopeUrl = pageUrl.replace(/[^/]*$/, '');               // https://host/
+        const mf = {
+            name: "E-PUSDA Admin Panel", short_name: "E-PUSDA Admin",
+            start_url: pageUrl,
+            scope: scopeUrl,
+            display: "standalone",
+            background_color: "#0d1b3e", theme_color: "#0d1b3e",
+            icons: [
+                { src: LOGO_INSTANSI, sizes: "192x192", type: "image/png" },
+                { src: LOGO_INSTANSI, sizes: "512x512", type: "image/png", purpose: "any maskable" }
+            ]
+        };
 
 // ============ FETCH DENGAN TIMEOUT & RETRY ============
 function fetchWithTimeout(url, opts = {}, timeout = APP_CONFIG.FETCH_TIMEOUT) {
