@@ -171,7 +171,8 @@ function buildCalendarHTML(logs, startDateStr) {
     const grid = document.createElement('div'); grid.className = 'calendar-micro-grid';
     for (let i = 0; i < firstDayOfWeek; i++) { const el = document.createElement('div'); el.className = 'day-box'; el.style.visibility = 'hidden'; grid.appendChild(el); }
     
-    const validStatuses = ['hadir','terlambat','terlambat ringan','terlambat berat','izin','sakit','dinas','qr','qr hadir','qr pulang','pulang','quick response','lupa pulang'];
+        // ✅ Tambahkan validasi dinamis
+    const validStatuses = ['hadir','terlambat','terlambat ringan','terlambat berat','izin','sakit','dinas','qr','qr hadir','qr pulang','pulang','quick response','quick response 1','quick response 2','lupa pulang'];
     
     for (let i = 1; i <= totalDays; i++) {
         const currentDate = new Date(year, month, i);
@@ -182,9 +183,11 @@ function buildCalendarHTML(logs, startDateStr) {
         box.className = 'day-box';
         box.textContent = String(i).padStart(2,'0');
         
-        if (log) {
-            const status = (log.status||"").toLowerCase().trim();
-            if ((log.score > 0) || validStatuses.includes(status)) {
+        const status = (log.status||"").toLowerCase().trim();
+            // ✅ Gunakan includes agar "Quick Response 1 (Hadir)" terdeteksi
+            const isValid = validStatuses.includes(status) || status.includes('quick response') || status.includes('qr');
+            
+            if ((log.score > 0) || isValid) {
                 box.style.background = log.color; box.style.borderColor = log.color; box.style.color = 'white';
                 const ket = log.ket || log.keterangan || '-';
                 const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
