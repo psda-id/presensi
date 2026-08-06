@@ -84,7 +84,6 @@ async function initApp() {
     }
     
     logsMap.clear();
-    injectRaportUI(); // ✅ Tambahkan baris ini
     triggerReportFetch();
     fetchDashboardDataInBackground();
     
@@ -96,69 +95,6 @@ async function initApp() {
             showToast('Koneksi lambat. Menggunakan mode offline.', 'warning');
         }
     }, 12000);
-}
-
-// ============ UI INJECTOR (FILTER CHIPS & LEGEND) ============
-function injectRaportUI() {
-    const grid = document.getElementById('raportGrid');
-    if (!grid || document.getElementById('raportExtraUI')) return;
-    
-    const container = document.createElement('div');
-    container.id = 'raportExtraUI';
-    container.style.cssText = 'margin-bottom: 25px; display: flex; flex-direction: column; gap: 20px;';
-    
-    // Filter Chips
-    const chipsDiv = document.createElement('div');
-    chipsDiv.className = 'filter-chips-container';
-    chipsDiv.innerHTML = `
-        <div class="filter-chip active" data-filter="all">Semua</div>
-        <div class="filter-chip" data-filter="alpha">Ada Alpha</div>
-        <div class="filter-chip" data-filter="telat">Ada Telat</div>
-        <div class="filter-chip" data-filter="grade-a">Grade A</div>
-    `;
-    
-    // Legend
-    const legendDiv = document.createElement('div');
-    legendDiv.className = 'calendar-legend';
-    legendDiv.innerHTML = `
-        <div class="legend-item"><span style="background:#16a34a"></span> Hadir 100%</div>
-        <div class="legend-item"><span style="background:linear-gradient(to top, #bbf7d0 50%, #ffffff 50%); border:1px solid #ccc"></span> Hadir 50%</div>
-        <div class="legend-item"><span style="background:#7c3aed"></span> QR 100%</div>
-        <div class="legend-item"><span style="background:linear-gradient(to top, #ddd6fe 50%, #ffffff 50%); border:1px solid #ccc"></span> QR 50%</div>
-        <div class="legend-item"><span style="background:#facc15"></span> Telat Ringan</div>
-        <div class="legend-item"><span style="background:#f97316"></span> Telat Berat</div>
-        <div class="legend-item"><span style="background:#dc2626"></span> Alpha</div>
-        <div class="legend-item"><span style="background:#f3f4f6; border:1px solid #ccc"></span> Menunggu</div>
-    `;
-    
-    container.appendChild(chipsDiv);
-    container.appendChild(legendDiv);
-    grid.parentNode.insertBefore(container, grid);
-    
-    // Event Listener untuk Chips
-    chipsDiv.querySelectorAll('.filter-chip').forEach(chip => {
-        chip.addEventListener('click', function() {
-            chipsDiv.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-            this.classList.add('active');
-            applyCardFilter(this.dataset.filter);
-        });
-    });
-}
-
-function applyCardFilter(filter) {
-    const cards = document.querySelectorAll('#raportGrid .pegawai-card');
-    cards.forEach(card => {
-        const alpha = parseInt(card.dataset.alpha || 0);
-        const telat = parseInt(card.dataset.telat || 0);
-        const grade = card.dataset.grade || 'E';
-        
-        let show = true;
-        if (filter === 'alpha' && alpha === 0) show = false;
-        if (filter === 'telat' && telat === 0) show = false;
-        if (filter === 'grade-a' && grade !== 'A') show = false;
-        
-        card.style.display = show ? 'flex' : 'none';
-    });
 }
 
 // ============ FETCH REPORT ============
@@ -359,27 +295,17 @@ function renderCards(data) {
         card.className = 'pegawai-card';
         card.dataset.pegawaiId = p.id || p.ID;
         
-        // ✅ Deklarasi variabel perhitungan
         const telatTotal = (p.stats?.telatRingan||0) + (p.stats?.telatBerat||0);
+        // ✅ Perbaikan Hitungan: S/I/D dipisah dari QR
         const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0);
-        const hadirQrTotal = (p.stats?.hadir||0) + (p.stats?.qrHadir||0);
-        const alphaTotal = p.stats?.alpha||0; // ✅ Deklarasi alphaTotal di sini
-        
-        // ✅ Set data-attribute untuk filter
-        card.dataset.alpha = alphaTotal;
-        card.dataset.telat = telatTotal;
-        card.dataset.grade = p.grade || 'E';
-        
-        // ✅ LOGIKA DINAMIS: Jika > 0 beri class 'pulse', jika 0 beri class 'empty'
-        const hadirClass = hadirQrTotal > 0 ? 'pill-active' : 'pill-empty';
-        const sidClass = sidTotal > 0 ? 'pill-active' : 'pill-empty';
-        const telatClass = telatTotal > 0 ? 'pulse-warning' : 'pill-empty';
-        const alphaClass = alphaTotal > 0 ? 'pulse-danger' : 'pill-empty';
+        // ✅ Perbaikan Hitungan: Hadir digabung dengan QR
+        const hadirQrTotal = (p.stats?.hadir||0) + (p.stats?.qrHadir||0); 
         
         if (p.logs && p.logs.length > 0) logsMap.set(String(p.id||p.ID), p.logs);
         const scoreColor = (p.score||0) >= 75 ? 'var(--success)' : ((p.score||0) >= 60 ? 'var(--warning)' : 'var(--danger)');
         
-        card.innerHTML = `<div class="card-top"><div class="photo-frame-pro"><img data-src="${getSmartUrl(p.foto)}" class="lazy-img" src="${FALLBACK_IMAGE}" onerror="this.src='${FALLBACK_IMAGE}'"></div><div class="id-group"><h3>${p.nama||'N/A'}</h3><p>${p.jabatan||'N/A'}</p><p>${p.wilayah||'N/A'}</p></div><div class="grade-badge">${p.grade||'-'}</div></div><div class="card-body"><div class="performance-main"><span>Kinerja Kumulatif</span><b>${p.score||0}</b><div class="progress-track"><div class="progress-fill" style="width:${Math.min(p.score||0,100)}%;background:${scoreColor}"></div></div></div><div class="stats-summary"><div class="stat-pill stat-hadir ${hadirClass}"><b>${hadirQrTotal}</b><span>Hadir/QR</span></div><div class="stat-pill stat-telat ${telatClass}"><b>${telatTotal}</b><span>Telat</span></div><div class="stat-pill stat-alpha ${alphaClass}"><b>${alphaTotal}</b><span>Alpha</span></div><div class="stat-pill stat-sid ${sidClass}"><b>${sidTotal}</b><span>S/I/D</span></div></div></div><button class="detail-toggle-btn"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button><div class="hidden-calendar-panel"></div>`;
+        // ✅ Label Kotak Statistik diubah
+        card.innerHTML = `<div class="card-top"><div class="photo-frame-pro"><img data-src="${getSmartUrl(p.foto)}" class="lazy-img" src="${FALLBACK_IMAGE}" onerror="this.src='${FALLBACK_IMAGE}'"></div><div class="id-group"><h3>${p.nama||'N/A'}</h3><p>${p.jabatan||'N/A'}</p><p>${p.wilayah||'N/A'}</p></div><div class="grade-badge">${p.grade||'-'}</div></div><div class="card-body"><div class="performance-main"><span>Kinerja Kumulatif</span><b>${p.score||0}</b><div class="progress-track"><div class="progress-fill" style="width:${Math.min(p.score||0,100)}%;background:${scoreColor}"></div></div></div><div class="stats-summary"><div class="stat-pill stat-hadir"><b>${hadirQrTotal}</b><span>Hadir/QR</span></div><div class="stat-pill stat-telat"><b>${telatTotal}</b><span>Telat</span></div><div class="stat-pill stat-alpha"><b>${p.stats?.alpha||0}</b><span>Alpha</span></div><div class="stat-pill stat-sid"><b>${sidTotal}</b><span>S/I/D</span></div></div></div><button class="detail-toggle-btn"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button><div class="hidden-calendar-panel"></div>`;
         fragment.appendChild(card);
     });
     
@@ -395,6 +321,21 @@ function renderCards(data) {
         });
     });
 }
+
+function toggleDetail(btn, card, pegawaiId) {
+    const panel = card.querySelector('.hidden-calendar-panel');
+    const isActive = panel.classList.toggle('active');
+    if (isActive) {
+        btn.innerHTML = '<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas';
+        const logs = logsMap.get(String(pegawaiId)) || [];
+        const startDate = document.getElementById('startD').value;
+        panel.innerHTML = buildCalendarHTML(logs, startDate);
+    } else {
+        btn.innerHTML = '<i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan';
+    }
+    lucide.createIcons({ node: btn });
+}
+
 // ============ PRINT & PDF ============
 window.onbeforeprint = () => { const pg = document.getElementById('printGrid'); if(pg) { pg.innerHTML = document.getElementById('raportGrid').innerHTML; lucide.createIcons(); } };
 function openPDFGenerator() { const start = document.getElementById('startD').value, end = document.getElementById('endD').value, reg = document.getElementById('wilF').value; window.open(`generate-pdf.html?start=${start}&end=${end}&region=${encodeURIComponent(reg)}`, '_blank'); }
