@@ -355,27 +355,47 @@ async function attemptLogin() {
     }
 }
 
-// ============ DASHBOARD & TAB ============
+// ============ ✅ FIXED: LOAD DASHBOARD (Bypass cache di mobile) ============
 async function loadDashboard(forceRefresh = false) {
     const cached = sessionStorage.getItem('dashData');
     const cacheTime = sessionStorage.getItem('dashDataTime');
     const now = Date.now();
-
-    if (!forceRefresh && cached && cacheTime && (now - parseInt(cacheTime) < APP_CONFIG.CACHE_DURATION_MS)) {
-        masterData = JSON.parse(cached);
-        renderPegawai(); renderKorlap(); renderTools(); renderConfig();
-        return;
+    const isMobile = isMobileDevice();
+    
+    // ✅ Cache duration: 30 detik di mobile, 5 menit di desktop
+    const cacheDuration = isMobile ? 30 * 1000 : APP_CONFIG.CACHE_DURATION_MS;
+    
+    // ✅ Gunakan cache HANYA jika: bukan force refresh + cache valid + bukan mobile
+    const useCache = !forceRefresh && cached && cacheTime 
+        && (now - parseInt(cacheTime) < cacheDuration)
+        && !isMobile;  // ← Skip cache di mobile!
+    
+    if (useCache) {
+        try {
+            masterData = JSON.parse(cached);
+            renderPegawai(); renderKorlap(); renderTools(); renderConfig();
+            // Tetap fetch di background untuk update
+            silentBackgroundRefresh();
+            return;
+        } catch (e) {
+            console.warn('Cache corrupt, fetch ulang');
+        }
     }
 
     setLoading(true, "Sinkronisasi Data...");
     try {
-        const data = await safeFetchJSON(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 15000);
+        // ✅ Timeout lebih panjang di mobile (cold-start GAS lambat)
+        const timeout = isMobile ? 30000 : 15000;
+        const data = await safeFetchJSON(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, timeout);
+        
         masterData = {
             pegawai: sanitizeGeoData(data.pegawai || []),
             korlap: sanitizeGeoData(data.korlap || []),
             tools: data.tools || [],
             config: data.config || {}
         };
+        
+        // Simpan cache (ringan, tanpa foto)
         const light = {
             pegawai: masterData.pegawai.map(p => ({
                 id: p.id, nama: p.nama, wilayah: p.wilayah,
@@ -386,13 +406,46 @@ async function loadDashboard(forceRefresh = false) {
             tools: masterData.tools,
             config: masterData.config
         };
-        sessionStorage.setItem('dashData', JSON.stringify(light));
-        sessionStorage.setItem('dashDataTime', now.toString());
+        try {
+            sessionStorage.setItem('dashData', JSON.stringify(light));
+            sessionStorage.setItem('dashDataTime', now.toString());
+        } catch (e) {
+            console.warn('SessionStorage penuh, lanjut tanpa cache');
+        }
+        
         renderPegawai(); renderKorlap(); renderTools(); renderConfig();
     } catch (e) {
         showToast("Gagal memuat data: " + e.message, "error");
+        // Jika ada cache lama sebagai fallback
+        if (cached) {
+            try {
+                masterData = JSON.parse(cached);
+                renderPegawai(); renderKorlap(); renderTools(); renderConfig();
+                showToast("Menampilkan data cache (offline mode)", "warning");
+            } catch (e2) {}
+        }
     } finally {
         setLoading(false);
+    }
+}
+
+// ✅ Background refresh silent (tidak ganggu user)
+async function silentBackgroundRefresh() {
+    try {
+        const data = await safeFetchJSON(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 25000);
+        masterData = {
+            pegawai: sanitizeGeoData(data.pegawai || []),
+            korlap: sanitizeGeoData(data.korlap || []),
+            tools: data.tools || [],
+            config: data.config || {}
+        };
+        const now = Date.now();
+        try {
+            sessionStorage.setItem('dashDataTime', now.toString());
+        } catch (e) {}
+        renderPegawai(); renderKorlap(); renderTools(); renderConfig();
+    } catch (e) {
+        console.warn('Background refresh gagal:', e.message);
     }
 }
 
