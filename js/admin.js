@@ -1,5 +1,5 @@
 // ============================================================
-// ADMIN.JS - v2.2.0 (Fixed for Split Layout Login)
+// ADMIN.JS - v2.3.0 (Syntax Fixed - Complete File)
 // ============================================================
 
 // ============ KONFIGURASI GLOBAL ============
@@ -19,12 +19,11 @@ const APP_CONFIG = {
     FETCH_TIMEOUT: 15000, RETRY_DELAY: 1000
 };
 
-// ============ PWA MANIFEST (FIXED) ============
+// ============ ✅ PWA MANIFEST (LENGKAP - No Syntax Error) ============
 (function initManifest() {
     try {
-        // ✅ URL absolut (bukan relatif) agar Chrome menerima start_url & scope
-        const pageUrl = location.origin + location.pathname;          // https://host/admin.html
-        const scopeUrl = pageUrl.replace(/[^/]*$/, '');               // https://host/
+        const pageUrl = location.origin + location.pathname;
+        const scopeUrl = pageUrl.replace(/[^/]*$/, '');
         const mf = {
             name: "E-PUSDA Admin Panel", short_name: "E-PUSDA Admin",
             start_url: pageUrl,
@@ -36,6 +35,18 @@ const APP_CONFIG = {
                 { src: LOGO_INSTANSI, sizes: "512x512", type: "image/png", purpose: "any maskable" }
             ]
         };
+        const blob = new Blob([JSON.stringify(mf)], { type: 'application/manifest+json' });
+        const uri = URL.createObjectURL(blob);
+        const el = document.getElementById('pwaManifest');
+        if (el) el.setAttribute('href', uri);
+        else {
+            const l = document.createElement('link');
+            l.rel = 'manifest';
+            l.href = uri;
+            document.head.appendChild(l);
+        }
+    } catch (e) { console.warn('Manifest init failed:', e); }
+})();
 
 // ============ FETCH DENGAN TIMEOUT & RETRY ============
 function fetchWithTimeout(url, opts = {}, timeout = APP_CONFIG.FETCH_TIMEOUT) {
@@ -147,7 +158,7 @@ function dismissToast(t) {
     setTimeout(() => t.remove(), 400);
 }
 
-// ============ ✅ BARU: PASSWORD VISIBILITY TOGGLE ============
+// ============ PASSWORD VISIBILITY TOGGLE ============
 function togglePasswordVisibility() {
     const input = document.getElementById('adminPass');
     const icon = document.getElementById('eyeIcon');
@@ -162,7 +173,7 @@ function togglePasswordVisibility() {
     lucide.createIcons();
 }
 
-// ============ ✅ BARU: LOGOUT ============
+// ============ LOGOUT ============
 function logoutAdmin() {
     if (!confirm("Yakin ingin keluar dari panel admin?")) return;
     sessionStorage.removeItem('adminToken');
@@ -214,7 +225,7 @@ document.addEventListener('keydown', e => {
     }
 });
 
-// ============ INISIALISASI (FIXED: tidak fetch berat saat belum login) ============
+// ============ INISIALISASI ============
 window.onload = () => {
     lucide.createIcons();
 
@@ -231,29 +242,26 @@ window.onload = () => {
 
     const savedToken = sessionStorage.getItem('adminToken');
     if (savedToken) {
-        // ✅ Sudah login → muat data
         token = savedToken;
         document.body.classList.remove('not-logged-in');
         document.body.classList.add('logged-in');
         fetchInitial();
     } else {
-        // ✅ Belum login → HANYA warm-up silent (tanpa retry/toast/log spam)
         warmUpBackend();
     }
 
     updateFabVisibility();
 };
 
-// ✅ Warm-up silent: memanaskan GAS (kurangi cold-start) tanpa mengganggu UI
+// ============ WARM-UP BACKEND (Silent) ============
 function warmUpBackend() {
-    fetchWithTimeout(API + "?action=ping", { redirect: 'follow', cache: 'no-cache' }, 20000)
+    fetchWithTimeout(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 20000)
         .then(() => console.log('✅ Backend siap'))
-        .catch(() => { /* telan diam-diam, jangan spam console */ });
+        .catch(() => { /* telan diam-diam */ });
 }
 
 async function fetchInitial() {
     try {
-        // ✅ Timeout lebih panjang (25s) + retry dikurangi (1x)
         const data = await safeFetchJSON(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 25000, 1);
         if (data.status === 'error') throw new Error(data.message);
         masterData = {
@@ -278,7 +286,7 @@ async function fetchInitial() {
     }
 }
 
-// ============ ✅ AUTH (dengan animasi success) ============
+// ============ AUTH ============
 async function attemptLogin() {
     setLoading(true, "Otentikasi...");
     try {
@@ -287,16 +295,14 @@ async function attemptLogin() {
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'loginAdmin', password: document.getElementById('adminPass').value })
         }, 15000);
-        
+
         if (d.status === 'success') {
             token = d.token;
             sessionStorage.setItem('adminToken', token);
-            
-            // ✅ Animasi success pada split layout
+
             const splitLayout = document.querySelector('.login-split-layout');
             if (splitLayout) splitLayout.classList.add('success');
-            
-            // ✅ Tunggu animasi selesai baru pindah state
+
             setTimeout(() => {
                 document.body.classList.remove('not-logged-in');
                 document.body.classList.add('logged-in');
@@ -314,18 +320,18 @@ async function attemptLogin() {
     }
 }
 
-// ============ DASHBOARD & TAB SWITCHING ============
+// ============ DASHBOARD & TAB ============
 async function loadDashboard(forceRefresh = false) {
     const cached = sessionStorage.getItem('dashData');
     const cacheTime = sessionStorage.getItem('dashDataTime');
     const now = Date.now();
-    
+
     if (!forceRefresh && cached && cacheTime && (now - parseInt(cacheTime) < APP_CONFIG.CACHE_DURATION_MS)) {
         masterData = JSON.parse(cached);
         renderPegawai(); renderKorlap(); renderTools(); renderConfig();
         return;
     }
-    
+
     setLoading(true, "Sinkronisasi Data...");
     try {
         const data = await safeFetchJSON(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 15000);
@@ -359,17 +365,16 @@ function switchTab(tab) {
     document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
     const tabEl = document.getElementById('tab-' + tab);
     if (tabEl) tabEl.style.display = 'block';
-    
+
     document.querySelectorAll('.nav-link,.b-nav-item').forEach(l => l.classList.remove('active'));
     document.querySelectorAll(`.nav-link[onclick*="'${tab}'"],.b-nav-item[onclick*="'${tab}']`).forEach(el => el.classList.add('active'));
-    
-    // ✅ Render ulang tab yang dibuka
+
     if (tab === 'pegawai') renderPegawai();
     else if (tab === 'korlap') renderKorlap();
     else if (tab === 'tools') renderTools();
     else if (tab === 'logs') loadLogs();
     else if (tab === 'config') renderConfig();
-    
+
     lucide.createIcons();
     updateFabVisibility();
 }
@@ -388,7 +393,7 @@ function updateQRRealtime() {
 function setView(view) {
     currentView = view;
     document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
-    
+
     if (view === 'list') {
         const btnList = document.getElementById('btnListView');
         const btnListK = document.getElementById('btnListViewKorlap');
@@ -404,8 +409,7 @@ function setView(view) {
         document.querySelectorAll('.personel-table').forEach(t => t.classList.add('hidden'));
         document.querySelectorAll('.desktop-card-grid').forEach(g => g.classList.add('active'));
     }
-    
-    // ✅ Re-render setelah ganti mode
+
     renderPegawai();
     renderKorlap();
 }
@@ -434,7 +438,7 @@ function renderPersonelList(list, tableId, gridId, mobileGridId, type) {
     const tE = document.getElementById(tableId);
     const gE = document.getElementById(gridId);
     const mE = document.getElementById(mobileGridId);
-    
+
     if (!list || list.length === 0) {
         if (tE) tE.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;opacity:.6">Tidak ada data.</td></tr>';
         if (gE) gE.innerHTML = '<div class="empty-state" style="grid-column:1/-1;text-align:center;padding:40px 20px;opacity:.5"><i data-lucide="users" size="40"></i><p>Belum ada data</p></div>';
@@ -442,7 +446,7 @@ function renderPersonelList(list, tableId, gridId, mobileGridId, type) {
         lucide.createIcons();
         return;
     }
-    
+
     if (currentView === 'list') {
         if (tE) {
             tE.innerHTML = list.map(p => {
@@ -515,7 +519,7 @@ function showDetail(type, id) {
     const list = type === 'pegawai' ? masterData.pegawai : masterData.korlap;
     const p = (list || []).find(x => String(x.id || x.ID) === String(id));
     if (!p) return;
-    
+
     const foto = p.urlFoto || p.link_foto_profile || p.Link_Foto_Profile || placeholderImg;
     const st = p.status || p.Status || 'Aktif';
     const sc = st === 'Aktif' ? 'badge-aktif' : 'badge-nonaktif';
@@ -525,13 +529,13 @@ function showDetail(type, id) {
         const r = p.Koordinat_Tugas || p.koordinat_tugas;
         if (r) { const j = JSON.parse(r); if (Array.isArray(j)) gc = j.length; }
     } catch (e) { }
-    
+
     const detailImg = document.getElementById('detailImg');
     if (detailImg) {
         detailImg.src = foto;
         detailImg.onerror = function () { this.src = placeholderImg; };
     }
-    
+
     const setText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = sanitizeHTML(val || '-'); };
     setText('detailNama', p.nama || p.Nama);
     setText('detailJabatan', p.jabatan || p.Jabatan);
@@ -539,16 +543,16 @@ function showDetail(type, id) {
     setText('detailWilayah', p.wilayah || p.Wilayah);
     setText('detailHP', p.nohp || p.NoHP);
     setText('detailLokasi', p.lokasi_kerja || p.Lokasi_Kerja);
-    
+
     const badgeEl = document.getElementById('detailStatusBadge');
     if (badgeEl) badgeEl.innerHTML = `<span class="badge-status ${sc}"><i data-lucide="${si}" size="12"></i> ${sanitizeHTML(st)}</span>`;
-    
+
     const geoEl = document.getElementById('detailGeo');
     if (geoEl) geoEl.innerHTML = gc > 0 ? `<span class="geo-indicator"><i data-lucide="map-pin" size="12"></i> ${gc} Titik</span>` : '<span style="opacity:.5">Tidak diatur</span>';
-    
+
     const qrEl = document.getElementById('detailQR');
     if (qrEl) qrEl.src = getQRUrl(p.nama || p.Nama, p.nohp || p.NoHP);
-    
+
     openModal('detailModal');
     lucide.createIcons();
 }
@@ -562,10 +566,10 @@ async function loadLogs() {
     const skeleton = Array(5).fill('<tr><td class="skeleton-cell"><div class="skeleton-line"></div></td>'.repeat(8)).join('');
     const logsBody = document.getElementById('logsBody');
     if (logsBody) logsBody.innerHTML = skeleton;
-    
+
     const selectedDate = document.getElementById('logDateFilter')?.value || new Date().toISOString().split('T')[0];
     currentLogPage = 1;
-    
+
     try {
         const d = await safeFetchJSON(API + `?action=getPresensiByDate&date=${selectedDate}`, { redirect: 'follow', cache: 'no-cache' }, 15000);
         if (d.status === 'error') throw new Error(d.message);
@@ -583,12 +587,12 @@ function renderLogsFiltered(resetPage = false) {
     if (resetPage) currentLogPage = 1;
     const fD = document.getElementById('logDateFilter')?.value;
     const q = (document.getElementById('logSearch')?.value || '').toLowerCase();
-    
+
     const all = logsCache.filter(l => {
         const t = l.timestamp || l.Timestamp;
         return t ? getLocalDateStr(t) === fD : false;
     });
-    
+
     let s = { h: 0, t: 0, i: 0, a: 0 };
     all.forEach(l => {
         const st = (l.status || l.Status || '').toLowerCase();
@@ -597,24 +601,24 @@ function renderLogsFiltered(resetPage = false) {
         else if (st.includes('izin') || st.includes('sakit') || st.includes('dinas')) s.i++;
         else s.a++;
     });
-    
+
     const sumHadir = document.getElementById('sumHadir'); if (sumHadir) sumHadir.innerText = s.h;
     const sumTelat = document.getElementById('sumTelat'); if (sumTelat) sumTelat.innerText = s.t;
     const sumIzin = document.getElementById('sumIzin'); if (sumIzin) sumIzin.innerText = s.i;
     const sumAlpha = document.getElementById('sumAlpha'); if (sumAlpha) sumAlpha.innerText = s.a;
-    
+
     const f = all.filter(l => (l.nama || l.Nama || "").toLowerCase().includes(q));
     const tbody = document.getElementById('logsBody');
-    
+
     if (f.length === 0) {
         if (tbody) tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;opacity:.3;padding:50px">Tidak Ada Aktivitas.<br><span style="font-size:0.8rem; margin-top:10px; display:inline-block;">Coba <a href="#" onclick="document.getElementById('logSearch').value=''; renderLogsFiltered(true);" style="color:var(--sda-toska)">reset pencarian</a>.</span></td></tr>`;
         lucide.createIcons();
         return;
     }
-    
+
     const endIndex = currentLogPage * APP_CONFIG.LOGS_PER_PAGE;
     const paginatedData = f.slice(0, endIndex);
-    
+
     if (tbody) {
         tbody.innerHTML = paginatedData.map(l => {
             const ts = l.timestamp || l.Timestamp;
@@ -640,7 +644,7 @@ function renderLogsFiltered(resetPage = false) {
                 </div></td>
             </tr>`;
         }).join('');
-        
+
         if (endIndex < f.length) {
             tbody.innerHTML += `<tr><td colspan="8" style="text-align:center; padding: 20px;">
                 <button class="btn-premium" style="width: auto; margin: 0 auto; height: 40px; font-size: 0.8rem;" onclick="currentLogPage++; renderLogsFiltered(false);">
@@ -658,9 +662,9 @@ function exportLogsToCSV() {
         const t = l.timestamp || l.Timestamp;
         return t ? getLocalDateStr(t) === fD : false;
     });
-    
+
     if (data.length === 0) { showToast("Tidak ada data untuk diekspor", "warning"); return; }
-    
+
     let csv = "Waktu,Nama,Status,Skor,Wilayah,Keterangan\n";
     data.forEach(l => {
         const ts = new Date(l.timestamp || l.Timestamp).toLocaleString('id-ID');
@@ -671,7 +675,7 @@ function exportLogsToCSV() {
         const ket = (l.keterangan || l.Keterangan || "-").replace(/,/g, ";");
         csv += `${ts},${nama},${status},${nilai},${wilayah},${ket}\n`;
     });
-    
+
     const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -693,10 +697,10 @@ function renderTools() {
         const n = String(t.Nama || t.nama || "").trim();
         return n !== "" && n.toLowerCase().includes(q);
     });
-    
+
     const tbody = document.getElementById('toolsBody');
     if (!tbody) return;
-    
+
     if (!f.length) {
         tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;padding:50px 20px;">
             <i data-lucide="layout-grid" size="40" style="opacity:0.3;margin-bottom:10px"></i>
@@ -735,12 +739,12 @@ function renderConfig() {
     const configData = masterData.config || {};
     const keys = Object.keys(configData).filter(k => k.toLowerCase().includes(q));
     const container = document.getElementById('configContainer');
-    
+
     if (!keys.length) {
         if (container) container.innerHTML = '<p style="opacity:.6;padding:20px;text-align:center">Tidak ada pengaturan.</p>';
         return;
     }
-    
+
     const g = { '🎨 Tampilan': [], '📍 Geo-Fencing': [], '🔗 Link': [], '⚙️ Umum': [] };
     keys.forEach(k => {
         const l = k.toLowerCase();
@@ -749,7 +753,7 @@ function renderConfig() {
         else if (l.includes('url') || l.includes('link') || l.includes('playstore') || l.includes('api')) g['🔗 Link'].push(k);
         else g['⚙️ Umum'].push(k);
     });
-    
+
     let h = '';
     for (const [n, ks] of Object.entries(g)) {
         if (!ks.length) continue;
@@ -772,10 +776,8 @@ function renderConfig() {
             </div>
         </div>`;
     }
-    
+
     if (container) container.innerHTML = h;
-    
-    // Render System Health Widget
     renderSystemHealth();
     lucide.createIcons();
 }
@@ -794,19 +796,19 @@ function renderSystemHealth() {
         box = document.getElementById('sysHealthBox');
         lucide.createIcons();
     }
-    
+
     const log = JSON.parse(localStorage.getItem('pusda_perf_log') || '[]');
     if (!log.length) {
         box.innerHTML = '<p style="opacity:.6">Belum ada data performa. Data terisi setelah melakukan absen dari presensi.html.</p>';
         return;
     }
-    
+
     const t = log.map(x => x.ms);
     const avg = t.reduce((a, b) => a + b, 0) / t.length;
     const max = Math.max(...t);
     const min = Math.min(...t);
     const [emoji, label, color] = avg < 5000 ? ['🟢', 'BAIK', '#10b981'] : avg < 10000 ? ['🟡', 'SEDANG', '#f59e0b'] : ['🔴', 'LAMBAT', '#ef4444'];
-    
+
     box.innerHTML = `
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:12px;text-align:center">
             <div><div style="font-size:1.3rem;font-weight:800;color:${color}">${(avg / 1000).toFixed(1)}s</div><div style="font-size:.65rem;opacity:.6">RATA-RATA</div></div>
@@ -902,7 +904,7 @@ function editP(type, id) {
     const list = type === 'pegawai' ? masterData.pegawai : masterData.korlap;
     const p = (list || []).find(x => String(x.id || x.ID) === String(id));
     if (!p) return;
-    
+
     const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
     setVal('p-mode', type);
     setVal('p-old-id', id);
@@ -913,10 +915,10 @@ function editP(type, id) {
     setVal('p-nohp', p.nohp || p.NoHP || "");
     setVal('p-lokasi', p.lokasi_kerja || p.Lokasi_Kerja || "");
     setVal('p-status', p.status || p.Status || 'Aktif');
-    
+
     currentGeoFences = parseGeoData(p.Koordinat_Tugas || p.koordinat_tugas);
     renderGeoList();
-    
+
     const img = p.urlFoto || p.link_foto_profile || p.Link_Foto_Profile;
     if (img) {
         const previewImg = document.getElementById('p-preview-img');
@@ -934,11 +936,11 @@ async function savePAction() {
     const nama = document.getElementById('p-nama')?.value;
     if (!id || !nama) return showToast("ID dan Nama Wajib!", "error");
     if (!Array.isArray(currentGeoFences)) currentGeoFences = [];
-    
+
     const cLat = document.getElementById('geo-lat')?.value.trim();
     const cLng = document.getElementById('geo-lng')?.value.trim();
     if (cLat && cLng) addGeoPoint();
-    
+
     const oldId = document.getElementById('p-old-id')?.value;
     const payload = {
         token,
@@ -954,7 +956,7 @@ async function savePAction() {
         linkQR: getQRUrl(nama, document.getElementById('p-nohp')?.value),
         fotoProfile: base64Foto
     };
-    
+
     setLoading(true, "Menyimpan...");
     try {
         const d = await safeFetchJSON(API, {
@@ -1108,7 +1110,7 @@ async function saveLogAction() {
     let p = { token };
     const id = document.getElementById('manualLogPegawai')?.value;
     const pg = [...(masterData.pegawai || []), ...(masterData.korlap || [])].find(x => String(x.id || x.ID) === String(id));
-    
+
     if (logMode === 'add') {
         p.action = 'addLog';
         p.idPegawai = id;
@@ -1125,7 +1127,7 @@ async function saveLogAction() {
         p.status = document.getElementById('editLogStatus')?.value;
         p.nilai = document.getElementById('editLogNilai')?.value;
     }
-    
+
     setLoading(true, "Menyimpan Log...");
     try {
         await safeFetchJSON(API, {
@@ -1183,7 +1185,7 @@ async function saveConfig() {
     }
 }
 
-// ============ FILE HANDLING (Support PNG/WebP Transparan) ============
+// ============ FILE HANDLING ============
 function handleFile(input) {
     if (!input.files || !input.files[0]) return;
     const file = input.files[0];
@@ -1197,7 +1199,7 @@ function handleFile(input) {
         input.value = '';
         return;
     }
-    
+
     setLoading(true, "Mengompres Gambar...");
     const r = new FileReader();
     r.onload = e => {
@@ -1212,11 +1214,11 @@ function handleFile(input) {
             c.width = w;
             c.height = h;
             const ctx = c.getContext('2d');
-            
+
             const isPng = file.type === 'image/png';
             const isWebp = file.type === 'image/webp';
             const hasTransparency = isPng || isWebp;
-            
+
             if (hasTransparency) {
                 ctx.clearRect(0, 0, w, h);
                 ctx.drawImage(img, 0, 0, w, h);
@@ -1227,7 +1229,7 @@ function handleFile(input) {
                 ctx.drawImage(img, 0, 0, w, h);
                 base64Foto = c.toDataURL('image/jpeg', APP_CONFIG.IMAGE_QUALITY);
             }
-            
+
             const previewImg = document.getElementById('p-preview-img');
             if (previewImg) { previewImg.src = base64Foto; previewImg.style.display = 'block'; }
             const placeholder = document.getElementById('p-placeholder');
