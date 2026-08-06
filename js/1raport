@@ -20,13 +20,13 @@ const imageObserver = new IntersectionObserver((entries, obs) => {
 }, { rootMargin: '200px' });
 
 // ============ FETCH DENGAN TIMEOUT (FIXED RACE CONDITION) ============
-function fetchWithTimeout(url, opts = {}, timeout = 15000) {
+function fetchWithTimeout(url, opts = {}, timeout = 30000) {
     const localController = new AbortController();
     const tid = setTimeout(() => localController.abort(new DOMException('Timeout ' + timeout + 'ms', 'AbortError')), timeout);
     return fetch(url, { ...opts, signal: localController.signal }).finally(() => clearTimeout(tid));
 }
 
-async function safeFetchJSON(url, opts = {}, timeout = 15000) {
+async function safeFetchJSON(url, opts = {}, timeout = 30000) {
     const res = await fetchWithTimeout(url, opts, timeout);
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const txt = await res.text();
@@ -170,8 +170,6 @@ function buildCalendarHTML(logs, startDateStr) {
     const grid = document.createElement('div'); grid.className = 'calendar-micro-grid';
     for (let i = 0; i < firstDayOfWeek; i++) { const el = document.createElement('div'); el.className = 'day-box'; el.style.visibility = 'hidden'; grid.appendChild(el); }
     
-    const validStatuses = ['hadir','terlambat','terlambat ringan','terlambat berat','izin','sakit','dinas','qr','qr hadir','qr pulang','pulang','quick response','quick response 1','quick response 2','lupa pulang'];
-    
     for (let i = 1; i <= totalDays; i++) {
         const currentDate = new Date(year, month, i);
         const dayOfWeek = currentDate.getDay();
@@ -183,26 +181,63 @@ function buildCalendarHTML(logs, startDateStr) {
         
         if (log) {
             const status = (log.status||"").toLowerCase().trim();
-            const isValid = validStatuses.includes(status) || status.includes('quick response') || status.includes('qr');
+            const isValid = (log.score > 0) || log.color;
             
-            if ((log.score > 0) || isValid) {
-                box.style.background = log.color; box.style.borderColor = log.color; box.style.color = 'white';
+            if (isValid) {
+                box.style.background = log.color; 
+                box.style.borderColor = log.color; 
+                
+                // ✅ Jika warna muda (50%, Kuning), teks tanggal dibuat gelap agar terbaca
+                const isLightColor = status.includes('50%') || status.includes('ringan');
+                box.style.color = isLightColor ? '#1f2937' : 'white';
+                
                 const ket = log.ket || log.keterangan || '-';
                 const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
                 tooltip.innerHTML = `<div class="tooltip-status">${log.status||'-'}</div><div class="tooltip-nilai">Nilai: ${log.score||0}</div><div class="tooltip-ket">${ket}</div>`;
                 box.appendChild(tooltip);
-                if (isWeekend && !status.includes('qr') && !status.includes('quick')) box.classList.add('weekend');
+                if (isWeekend && !status.includes('qr') && !status.includes('quick') && !status.includes('hadir')) box.classList.add('weekend');
             } else if (isWeekend) {
                 box.classList.add('weekend');
             }
         } else {
+            // ✅ LOGIKA ALPHA DINAMIS (Hari ini vs Lampau vs Masa Depan)
             if (isWeekend) {
                 box.classList.add('weekend');
             } else {
-                box.style.background = '#fee2e2'; box.style.color = '#dc2626';
-                const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
-                tooltip.innerHTML = '<div class="tooltip-status">Alpha (Tidak Hadir)</div><div class="tooltip-nilai">Nilai: 0</div>';
-                box.appendChild(tooltip);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const cellDate = new Date(year, month, i);
+                cellDate.setHours(0, 0, 0, 0);
+
+                if (cellDate.getTime() === today.getTime()) {
+                    // Hari ini: Cek jam apakah sudah lewat jam 12 siang
+                    if (new Date().getHours() >= 12) {
+                        // Sudah lewat jam 12, jadi Alpha Merah Pekat
+                        box.style.background = '#dc2626'; 
+                        box.style.color = 'white';
+                        const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
+                        tooltip.innerHTML = '<div class="tooltip-status">Alpha (Terlewat)</div><div class="tooltip-nilai">Nilai: 0</div>';
+                        box.appendChild(tooltip);
+                    } else {
+                        // Masih pagi, jadi Menunggu (Abu-abu)
+                        box.style.background = '#f3f4f6'; 
+                        box.style.color = '#9ca3af';
+                        const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
+                        tooltip.innerHTML = '<div class="tooltip-status">Menunggu Absensi</div><div class="tooltip-nilai">Nilai: 0</div>';
+                        box.appendChild(tooltip);
+                    }
+                } else if (cellDate < today) {
+                    // Hari lampau yang tidak ada absensinya = Alpha Merah Pekat
+                    box.style.background = '#dc2626'; 
+                    box.style.color = 'white';
+                    const tooltip = document.createElement('div'); tooltip.className = 'day-tooltip';
+                    tooltip.innerHTML = '<div class="tooltip-status">Alpha (Tidak Hadir)</div><div class="tooltip-nilai">Nilai: 0</div>';
+                    box.appendChild(tooltip);
+                } else {
+                    // Masa depan
+                    box.style.background = '#f9fafb'; 
+                    box.style.color = '#d1d5db';
+                }
             }
         }
         grid.appendChild(box);
@@ -234,12 +269,18 @@ function renderCards(data) {
         const card = document.createElement('div');
         card.className = 'pegawai-card';
         card.dataset.pegawaiId = p.id || p.ID;
+        
         const telatTotal = (p.stats?.telatRingan||0) + (p.stats?.telatBerat||0);
-        const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0) + (p.stats?.qrHadir||0) + (p.stats?.qrPulang||0);
+        // ✅ Perbaikan Hitungan: S/I/D dipisah dari QR
+        const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0);
+        // ✅ Perbaikan Hitungan: Hadir digabung dengan QR
+        const hadirQrTotal = (p.stats?.hadir||0) + (p.stats?.qrHadir||0); 
+        
         if (p.logs && p.logs.length > 0) logsMap.set(String(p.id||p.ID), p.logs);
         const scoreColor = (p.score||0) >= 75 ? 'var(--success)' : ((p.score||0) >= 60 ? 'var(--warning)' : 'var(--danger)');
         
-        card.innerHTML = `<div class="card-top"><div class="photo-frame-pro"><img data-src="${getSmartUrl(p.foto)}" class="lazy-img" src="${FALLBACK_IMAGE}" onerror="this.src='${FALLBACK_IMAGE}'"></div><div class="id-group"><h3>${p.nama||'N/A'}</h3><p>${p.jabatan||'N/A'}</p><p>${p.wilayah||'N/A'}</p></div><div class="grade-badge">${p.grade||'-'}</div></div><div class="card-body"><div class="performance-main"><span>Kinerja Kumulatif</span><b>${p.score||0}</b><div class="progress-track"><div class="progress-fill" style="width:${Math.min(p.score||0,100)}%;background:${scoreColor}"></div></div></div><div class="stats-summary"><div class="stat-pill stat-hadir"><b>${p.stats?.hadir||0}</b><span>Hadir</span></div><div class="stat-pill stat-telat"><b>${telatTotal}</b><span>Telat</span></div><div class="stat-pill stat-alpha"><b>${p.stats?.alpha||0}</b><span>Alpha</span></div><div class="stat-pill stat-sid"><b>${sidTotal}</b><span>S/I/D/QR</span></div></div></div><button class="detail-toggle-btn"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button><div class="hidden-calendar-panel"></div>`;
+        // ✅ Label Kotak Statistik diubah
+        card.innerHTML = `<div class="card-top"><div class="photo-frame-pro"><img data-src="${getSmartUrl(p.foto)}" class="lazy-img" src="${FALLBACK_IMAGE}" onerror="this.src='${FALLBACK_IMAGE}'"></div><div class="id-group"><h3>${p.nama||'N/A'}</h3><p>${p.jabatan||'N/A'}</p><p>${p.wilayah||'N/A'}</p></div><div class="grade-badge">${p.grade||'-'}</div></div><div class="card-body"><div class="performance-main"><span>Kinerja Kumulatif</span><b>${p.score||0}</b><div class="progress-track"><div class="progress-fill" style="width:${Math.min(p.score||0,100)}%;background:${scoreColor}"></div></div></div><div class="stats-summary"><div class="stat-pill stat-hadir"><b>${hadirQrTotal}</b><span>Hadir/QR</span></div><div class="stat-pill stat-telat"><b>${telatTotal}</b><span>Telat</span></div><div class="stat-pill stat-alpha"><b>${p.stats?.alpha||0}</b><span>Alpha</span></div><div class="stat-pill stat-sid"><b>${sidTotal}</b><span>S/I/D</span></div></div></div><button class="detail-toggle-btn"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button><div class="hidden-calendar-panel"></div>`;
         fragment.appendChild(card);
     });
     
