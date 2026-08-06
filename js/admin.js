@@ -210,42 +210,47 @@ document.addEventListener('keydown', e => {
     }
 });
 
-// ============ ✅ FIXED: INISIALISASI (No loginBrandLogo reference) ============
+// ============ INISIALISASI (FIXED: tidak fetch berat saat belum login) ============
 window.onload = () => {
     lucide.createIcons();
-    
-    // Live clock
+
     setInterval(() => {
         const el = document.getElementById('liveClock');
         if (el) el.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
     }, 1000);
-    
-    // ✅ Set logo hanya untuk sidebar (loginBrandLogo sudah dihapus)
+
     const sidebarLogo = document.getElementById('sidebarLogo');
     if (sidebarLogo) sidebarLogo.src = LOGO_INSTANSI;
-    
-    // Set date filter default
+
     const logDateFilter = document.getElementById('logDateFilter');
     if (logDateFilter) logDateFilter.value = new Date().toISOString().split('T')[0];
-    
-    // ✅ Cek apakah sudah login sebelumnya
+
     const savedToken = sessionStorage.getItem('adminToken');
     if (savedToken) {
+        // ✅ Sudah login → muat data
         token = savedToken;
         document.body.classList.remove('not-logged-in');
         document.body.classList.add('logged-in');
         fetchInitial();
     } else {
-        // Fetch untuk load config (logo)
-        fetchInitial();
+        // ✅ Belum login → HANYA warm-up silent (tanpa retry/toast/log spam)
+        warmUpBackend();
     }
-    
+
     updateFabVisibility();
 };
 
+// ✅ Warm-up silent: memanaskan GAS (kurangi cold-start) tanpa mengganggu UI
+function warmUpBackend() {
+    fetchWithTimeout(API + "?action=ping", { redirect: 'follow', cache: 'no-cache' }, 20000)
+        .then(() => console.log('✅ Backend siap'))
+        .catch(() => { /* telan diam-diam, jangan spam console */ });
+}
+
 async function fetchInitial() {
     try {
-        const data = await safeFetchJSON(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 10000);
+        // ✅ Timeout lebih panjang (25s) + retry dikurangi (1x)
+        const data = await safeFetchJSON(API + "?action=getDashboardData", { redirect: 'follow', cache: 'no-cache' }, 25000, 1);
         if (data.status === 'error') throw new Error(data.message);
         masterData = {
             pegawai: data.pegawai || [],
@@ -263,7 +268,6 @@ async function fetchInitial() {
         }
     } catch (e) {
         console.warn('Fetch initial gagal:', e.message);
-        // Jangan toast jika belum login (tidak mengganggu user)
         if (document.body.classList.contains('logged-in')) {
             showToast("Gagal Terhubung: " + e.message, "error");
         }
