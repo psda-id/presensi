@@ -5,25 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Admin Panel - UPT PUSDA</title>
     
-    <!-- PWA META TAGS -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="E-PUSDA Admin">
     <meta name="theme-color" content="#0d1b3e">
     
-    <!-- APP ICONS -->
     <link rel="manifest" id="pwaManifest">
     <link rel="icon" type="image/png" sizes="192x192" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
     <link rel="apple-touch-icon" sizes="180x180" href="https://raw.githubusercontent.com/tpopbwi/presensi-pusda/main/assets/logo.png">
 
-    <!-- EXTERNAL LIBS -->
     <script src="https://unpkg.com/lucide@0.344.0/dist/umd/lucide.min.js" defer></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet>
     
-    <!-- CUSTOM CSS -->
     <link rel="stylesheet" href="css/admin.css">
 </head>
 <body>
@@ -67,6 +63,7 @@
                     <div class="gp-text-wrap">
                         <span class="gp-text-top">GET IT ON</span>
                         <span class="gp-text-main">Google Play</span>
+                    </div>
                 </a>
             </div>
         </div>
@@ -92,7 +89,8 @@
         </div>
     </div>
 
-    <aside class="sidebar">
+    <!-- ✅ SIDEBAR DISEMBUNYIKAN SEBELUM LOGIN -->
+    <aside class="sidebar" id="adminSidebar" style="display: none;">
         <div class="brand">
             <img src="" id="sidebarLogo" alt="Logo">
             <div>
@@ -111,7 +109,8 @@
         <div class="sidebar-clock"><h2 id="liveClock">00:00</h2></div>
     </aside>
 
-    <main class="main-content" id="mainContent">
+    <!-- ✅ MAIN CONTENT DISEMBUNYIKAN SEBELUM LOGIN -->
+    <main class="main-content" id="mainContent" style="display: none;">
         <div class="dashboard-container">
             <section id="tab-pegawai" class="admin-tab">
                 <div class="header-actions">
@@ -236,245 +235,4 @@
                 <div class="admin-card">
                     <div class="table-scroll">
                         <table>
-                            <thead><tr><th>Icon</th><th>Nama</th><th>Tipe</th><th>Warna</th><th>Link URL</th><th>Aksi</th></tr></thead>
-                            <tbody id="toolsBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <section id="tab-config" class="admin-tab" style="display:none">
-                <div class="header-actions">
-                    <div class="header-top-row"><div class="header-title-box"><h1>Pengaturan</h1></div></div>
-                    <div class="header-controls-row">
-                        <div class="search-container">
-                            <i data-lucide="search" size="16"></i>
-                            <input type="text" id="configSearch" placeholder="Cari kata kunci..." autocomplete="off" oninput="debounce(renderConfig, 300)">
-                        </div>
-                    </div>
-                </div>
-                <div class="admin-card">
-                    <div id="configContainer"></div>
-                    <button class="btn-premium" style="max-width:250px;height:48px;font-size:.85rem;margin-top:20px;margin-left:auto;display:flex" onclick="saveConfig()">
-                        <i data-lucide="save" size="18"></i> SIMPAN PENGATURAN
-                    </button>
-                </div>
-            </section>
-        </div>
-    </main>
-
-    <!-- MODAL: DATA PERSONEL (PREMIUM HEADER) -->
-    <div id="pModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <div class="modal-title-icon">
-                        <i data-lucide="users" style="color: white;"></i>
-                    </div>
-                    <div>
-                        <h2 id="pModalTitle">Data Personel</h2>
-                        <p>Tambah atau ubah data pegawai/korlap</p>
-                    </div>
-                </div>
-                <button class="modal-close-btn" onclick="closeModal('pModal')">
-                    <i data-lucide="x" size="20"></i>
-                </button>
-            </div>
-            <div class="modal-body-p">
-                <div style="text-align:center">
-                    <div class="p-preview-frame" onclick="document.getElementById('p-file').click()">
-                        <img id="p-preview-img" style="display:none" alt="Pratinjau">
-                        <div id="p-placeholder"><i data-lucide="camera" size="24"></i><p style="font-size:.5rem;font-weight:800;margin-top:5px">FOTO</p></div>
-                    </div>
-                    <input type="file" id="p-file" hidden accept="image/*" onchange="handleFile(this)">
-                    <div id="qr-display-container" style="display:none;margin-top:15px">
-                        <div style="background:white;padding:8px;border-radius:12px;display:inline-block">
-                            <img id="p-qr-img" src="" style="width:80px;height:80px" alt="QR Code">
-                        </div>
-                    </div>
-                </div>
-                <div style="display:grid;gap:12px">
-                    <input type="hidden" id="p-mode"><input type="hidden" id="p-old-id">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                        <div class="form-group"><label>ID Unik</label><input type="text" id="p-id"></div>
-                        <div class="form-group"><label>Status</label>
-                            <select id="p-status"><option value="Aktif">Aktif</option><option value="Non-Aktif">Non-Aktif</option></select>
-                        </div>
-                    </div>
-                    <div class="form-group"><label>Nama Lengkap</label><input type="text" id="p-nama" oninput="updateQRRealtime()"></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-                        <div class="form-group"><label>Jabatan</label><input type="text" id="p-jabatan"></div>
-                        <div class="form-group"><label>Wilayah</label><input type="text" id="p-wilayah"></div>
-                    </div>
-                    <div class="form-group"><label>WhatsApp</label><input type="text" id="p-nohp" oninput="updateQRRealtime()"></div>
-                    <div class="form-group"><label>Lokasi Kerja</label><input type="text" id="p-lokasi"></div>
-                    <div class="geo-section">
-                        <label style="margin-bottom:10px;color:var(--accent)">📍 Titik Geo-Fencing</label>
-                        <div id="geo-list" class="geo-list-container"></div>
-                        <div class="geo-inputs">
-                            <input type="text" id="geo-nama" placeholder="Nama Lokasi">
-                            <input type="number" id="geo-radius" placeholder="Radius (m)">
-                            <input type="number" step="any" id="geo-lat" placeholder="Latitude">
-                            <input type="number" step="any" id="geo-lng" placeholder="Longitude">
-                        </div>
-                        <div class="geo-actions">
-                            <button type="button" class="btn-get-loc" onclick="fillCurrentLocation()"><i data-lucide="map-pin" size="14"></i> Lokasi Saya</button>
-                            <button type="button" class="btn-add-geo" onclick="addGeoPoint()"><i data-lucide="plus" size="14"></i> Tambah</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <button class="btn-premium" style="margin-top:20px" onclick="savePAction()">SIMPAN DATA</button>
-        </div>
-    </div>
-
-    <!-- MODAL: LAYANAN DIGITAL (PREMIUM HEADER) -->
-    <div id="toolModal" class="modal">
-        <div class="modal-content" style="max-width:800px">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <div class="modal-title-icon">
-                        <i data-lucide="layout-dashboard" style="color: white;"></i>
-                    </div>
-                    <div>
-                        <h2>Atur Layanan Digital</h2>
-                        <p>Kelola tautan dan aplikasi eksternal</p>
-                    </div>
-                </div>
-                <button class="modal-close-btn" onclick="closeModal('toolModal')">
-                    <i data-lucide="x" size="20"></i>
-                </button>
-            </div>
-            <div style="display:grid;grid-template-columns:1fr 300px;gap:25px">
-                <div style="display:grid;gap:15px">
-                    <input type="hidden" id="t-old-name">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
-                        <div class="form-group"><label>Nama Layanan</label><input type="text" id="t-nama" oninput="updateToolPreview()"></div>
-                        <div class="form-group"><label>Ikon (Lucide)</label><input type="text" id="t-ikon" placeholder="cth: layers" oninput="updateToolPreview()"></div>
-                    </div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
-                        <div class="form-group"><label>Warna</label><input type="color" id="t-warna" value="#3b82f6" style="height:48px;padding:5px" oninput="updateToolPreview()"></div>
-                        <div class="form-group"><label>Tipe</label>
-                            <select id="t-type"><option value="Folder">Folder LAPKIN</option><option value="Direct">Beranda Utama</option></select>
-                        </div>
-                    </div>
-                    <div class="form-group"><label>URL Link</label><input type="text" id="t-url"></div>
-                    <div class="form-group"><label>Deskripsi</label><textarea id="t-desc" rows="2"></textarea></div>
-                </div>
-                <div style="background:rgba(0,0,0,.2);border-radius:20px;padding:25px;border:1px dashed var(--glass-border);display:flex;flex-direction:column;align-items:center;justify-content:center">
-                    <label style="margin-bottom:20px;text-align:center;width:100%;font-size:.8rem;letter-spacing:1px">PRATINJAU</label>
-                    <div style="background:rgba(255,255,255,.05);border:1px solid var(--glass-border);border-radius:16px;padding:20px;display:flex;align-items:center;gap:15px;width:100%;box-shadow:0 10px 25px rgba(0,0,0,.3)">
-                        <div id="previewIconBox" style="width:48px;height:48px;border-radius:14px;background:#3b82f6;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 5px 15px rgba(59,130,246,.3)">
-                            <i data-lucide="layers" size="22" color="white"></i>
-                        </div>
-                        <div style="overflow:hidden">
-                            <div id="previewName" style="font-weight:700;font-size:1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:white">Nama Layanan</div>
-                            <div style="font-size:.75rem;opacity:.6;margin-top:3px">Ketuk untuk membuka</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div style="display:flex;gap:12px;margin-top:30px">
-                <button class="btn-premium" style="flex:1" onclick="saveTool()">SIMPAN</button>
-                <button class="modal-close-btn" style="width:50px; height: 50px;" onclick="closeModal('toolModal')"><i data-lucide="x" size="20"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: LOG (PREMIUM HEADER) -->
-    <div id="logEditModal" class="modal">
-        <div class="modal-content" style="max-width:450px">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <div class="modal-title-icon">
-                        <i data-lucide="history" style="color: white;"></i>
-                    </div>
-                    <div>
-                        <h2>Sinkronisasi Log</h2>
-                        <p>Catat atau ubah riwayat presensi</p>
-                    </div>
-                </div>
-                <button class="modal-close-btn" onclick="closeModal('logEditModal')">
-                    <i data-lucide="x" size="20"></i>
-                </button>
-            </div>
-            <div style="display:grid;gap:15px">
-                <div class="form-group"><label>Nama Personel</label><select id="manualLogPegawai"></select></div>
-                <input type="hidden" id="editLogOriginalTs"><input type="hidden" id="editLogIdPeg">
-                <div class="form-group"><label>Waktu</label><input type="datetime-local" id="editLogTime"></div>
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px">
-                    <div class="form-group"><label>Status</label>
-                        <select id="editLogStatus">
-                            <option value="Hadir">Hadir</option>
-                            <option value="Terlambat">Terlambat</option>
-                            <option value="Pulang">Pulang</option>
-                            <option value="Izin">Izin</option>
-                            <option value="Sakit">Sakit</option>
-                            <option value="Dinas">Dinas</option>
-                        </select>
-                    </div>
-                    <div class="form-group"><label>Skor</label><input type="number" id="editLogNilai"></div>
-                </div>
-            </div>
-            <button class="btn-premium" style="margin-top:25px;background:linear-gradient(135deg,var(--warning),var(--accent))" onclick="saveLogAction()">TERAPKAN LOG</button>
-        </div>
-    </div>
-
-    <!-- MODAL: DETAIL (PREMIUM HEADER) -->
-    <div id="detailModal" class="modal">
-        <div class="modal-content" style="max-width:550px">
-            <div class="modal-header">
-                <div class="modal-title-wrap">
-                    <div class="modal-title-icon">
-                        <i data-lucide="info" style="color: white;"></i>
-                    </div>
-                    <div>
-                        <h2>Detail Personel</h2>
-                        <p>Informasi lengkap pegawai</p>
-                    </div>
-                </div>
-                <button class="modal-close-btn" onclick="closeModal('detailModal')">
-                    <i data-lucide="x" size="20"></i>
-                </button>
-            </div>
-            <div class="detail-hero">
-                <div class="detail-hero-img"><img id="detailImg" src="" alt="Foto"></div>
-                <div>
-                    <h3 id="detailNama" style="font-size:1.3rem;font-weight:800;margin-bottom:5px;text-transform:uppercase"></h3>
-                    <p id="detailJabatan" style="font-size:.85rem;opacity:.7;margin-bottom:10px"></p>
-                    <div id="detailStatusBadge"></div>
-                </div>
-            </div>
-            <div>
-                <div class="detail-info-row"><span class="detail-label">ID</span><span class="detail-value" id="detailID"></span></div>
-                <div class="detail-info-row"><span class="detail-label">Wilayah</span><span class="detail-value" id="detailWilayah"></span></div>
-                <div class="detail-info-row"><span class="detail-label">WhatsApp</span><span class="detail-value" id="detailHP"></span></div>
-                <div class="detail-info-row"><span class="detail-label">Lokasi</span><span class="detail-value" id="detailLokasi"></span></div>
-                <div class="detail-info-row"><span class="detail-label">Geo-Fence</span><span class="detail-value" id="detailGeo"></span></div>
-                <div class="detail-info-row" style="flex-direction:column;align-items:center;gap:10px;padding-top:15px">
-                    <span class="detail-label">QR Code</span>
-                    <div style="background:white;padding:10px;border-radius:12px"><img id="detailQR" src="" style="width:150px;height:150px" alt="QR Code"></div>
-                </div>
-            </div>
-            <div class="detail-modal-actions">
-                <button class="btn-edit" onclick="editFromDetail()"><i data-lucide="edit-3" size="14"></i> EDIT</button>
-                <button class="btn-delete" onclick="deleteFromDetail()"><i data-lucide="trash-2" size="14"></i> HAPUS</button>
-            </div>
-            <button class="btn-premium" style="margin-top:12px" onclick="closeModal('detailModal')">TUTUP</button>
-        </div>
-    </div>
-
-    <button class="fab-add" id="fabAdd" onclick="handleFabClick()"><i data-lucide="plus" size="24"></i></button>
-
-    <nav class="bottom-nav-admin">
-        <div class="b-nav-item active" onclick="switchTab('pegawai')"><i data-lucide="users" size="18"></i><span>Pegawai</span></div>
-        <div class="b-nav-item" onclick="switchTab('korlap')"><i data-lucide="award" size="18"></i><span>Korlap</span></div>
-        <div class="b-nav-item" onclick="switchTab('logs')"><i data-lucide="history" size="18"></i><span>Logs</span></div>
-        <div class="b-nav-item" onclick="switchTab('tools')"><i data-lucide="layout-grid" size="18"></i><span>Layanan</span></div>
-        <div class="b-nav-item" onclick="switchTab('config')"><i data-lucide="settings" size="18"></i><span>Config</span></div>
-    </nav>
-
-    <!-- CUSTOM JS -->
-    <script src="js/admin.js"></script>
-</body>
-</html>
+                            <thead
