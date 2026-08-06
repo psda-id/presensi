@@ -21,7 +21,6 @@ const imageObserver = new IntersectionObserver((entries, obs) => {
 
 // ============ FETCH DENGAN TIMEOUT (FIXED RACE CONDITION) ============
 function fetchWithTimeout(url, opts = {}, timeout = 15000) {
-    // ✅ Buat controller lokal agar tidak saling membatalkan antar request
     const localController = new AbortController();
     const tid = setTimeout(() => localController.abort(new DOMException('Timeout ' + timeout + 'ms', 'AbortError')), timeout);
     return fetch(url, { ...opts, signal: localController.signal }).finally(() => clearTimeout(tid));
@@ -171,7 +170,6 @@ function buildCalendarHTML(logs, startDateStr) {
     const grid = document.createElement('div'); grid.className = 'calendar-micro-grid';
     for (let i = 0; i < firstDayOfWeek; i++) { const el = document.createElement('div'); el.className = 'day-box'; el.style.visibility = 'hidden'; grid.appendChild(el); }
     
-    // ✅ Tambahkan validasi dinamis
     const validStatuses = ['hadir','terlambat','terlambat ringan','terlambat berat','izin','sakit','dinas','qr','qr hadir','qr pulang','pulang','quick response','quick response 1','quick response 2','lupa pulang'];
     
     for (let i = 1; i <= totalDays; i++) {
@@ -185,7 +183,6 @@ function buildCalendarHTML(logs, startDateStr) {
         
         if (log) {
             const status = (log.status||"").toLowerCase().trim();
-            // ✅ Gunakan includes agar "Quick Response 1 (Hadir)" terdeteksi
             const isValid = validStatuses.includes(status) || status.includes('quick response') || status.includes('qr');
             
             if ((log.score > 0) || isValid) {
