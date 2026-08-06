@@ -358,22 +358,28 @@ function renderCards(data) {
         const card = document.createElement('div');
         card.className = 'pegawai-card';
         card.dataset.pegawaiId = p.id || p.ID;
-        // ✅ Tambahan untuk Filter Cepat
+        
+        // ✅ Deklarasi variabel perhitungan
+        const telatTotal = (p.stats?.telatRingan||0) + (p.stats?.telatBerat||0);
+        const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0);
+        const hadirQrTotal = (p.stats?.hadir||0) + (p.stats?.qrHadir||0);
+        const alphaTotal = p.stats?.alpha||0; // ✅ Deklarasi alphaTotal di sini
+        
+        // ✅ Set data-attribute untuk filter
         card.dataset.alpha = alphaTotal;
         card.dataset.telat = telatTotal;
         card.dataset.grade = p.grade || 'E';
         
-        const telatTotal = (p.stats?.telatRingan||0) + (p.stats?.telatBerat||0);
-        // ✅ Perbaikan Hitungan: S/I/D dipisah dari QR
-        const sidTotal = (p.stats?.izin||0) + (p.stats?.sakit||0) + (p.stats?.dinas||0);
-        // ✅ Perbaikan Hitungan: Hadir digabung dengan QR
-        const hadirQrTotal = (p.stats?.hadir||0) + (p.stats?.qrHadir||0); 
+        // ✅ LOGIKA DINAMIS: Jika > 0 beri class 'pulse', jika 0 beri class 'empty'
+        const hadirClass = hadirQrTotal > 0 ? 'pill-active' : 'pill-empty';
+        const sidClass = sidTotal > 0 ? 'pill-active' : 'pill-empty';
+        const telatClass = telatTotal > 0 ? 'pulse-warning' : 'pill-empty';
+        const alphaClass = alphaTotal > 0 ? 'pulse-danger' : 'pill-empty';
         
         if (p.logs && p.logs.length > 0) logsMap.set(String(p.id||p.ID), p.logs);
         const scoreColor = (p.score||0) >= 75 ? 'var(--success)' : ((p.score||0) >= 60 ? 'var(--warning)' : 'var(--danger)');
         
-        // ✅ Label Kotak Statistik diubah
-        card.innerHTML = `<div class="card-top"><div class="photo-frame-pro"><img data-src="${getSmartUrl(p.foto)}" class="lazy-img" src="${FALLBACK_IMAGE}" onerror="this.src='${FALLBACK_IMAGE}'"></div><div class="id-group"><h3>${p.nama||'N/A'}</h3><p>${p.jabatan||'N/A'}</p><p>${p.wilayah||'N/A'}</p></div><div class="grade-badge">${p.grade||'-'}</div></div><div class="card-body"><div class="performance-main"><span>Kinerja Kumulatif</span><b>${p.score||0}</b><div class="progress-track"><div class="progress-fill" style="width:${Math.min(p.score||0,100)}%;background:${scoreColor}"></div></div></div><div class="stats-summary"><div class="stat-pill stat-hadir"><b>${hadirQrTotal}</b><span>Hadir/QR</span></div><div class="stat-pill stat-telat"><b>${telatTotal}</b><span>Telat</span></div><div class="stat-pill stat-alpha"><b>${p.stats?.alpha||0}</b><span>Alpha</span></div><div class="stat-pill stat-sid"><b>${sidTotal}</b><span>S/I/D</span></div></div></div><button class="detail-toggle-btn"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button><div class="hidden-calendar-panel"></div>`;
+        card.innerHTML = `<div class="card-top"><div class="photo-frame-pro"><img data-src="${getSmartUrl(p.foto)}" class="lazy-img" src="${FALLBACK_IMAGE}" onerror="this.src='${FALLBACK_IMAGE}'"></div><div class="id-group"><h3>${p.nama||'N/A'}</h3><p>${p.jabatan||'N/A'}</p><p>${p.wilayah||'N/A'}</p></div><div class="grade-badge">${p.grade||'-'}</div></div><div class="card-body"><div class="performance-main"><span>Kinerja Kumulatif</span><b>${p.score||0}</b><div class="progress-track"><div class="progress-fill" style="width:${Math.min(p.score||0,100)}%;background:${scoreColor}"></div></div></div><div class="stats-summary"><div class="stat-pill stat-hadir ${hadirClass}"><b>${hadirQrTotal}</b><span>Hadir/QR</span></div><div class="stat-pill stat-telat ${telatClass}"><b>${telatTotal}</b><span>Telat</span></div><div class="stat-pill stat-alpha ${alphaClass}"><b>${alphaTotal}</b><span>Alpha</span></div><div class="stat-pill stat-sid ${sidClass}"><b>${sidTotal}</b><span>S/I/D</span></div></div></div><button class="detail-toggle-btn"><i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan</button><div class="hidden-calendar-panel"></div>`;
         fragment.appendChild(card);
     });
     
@@ -389,21 +395,6 @@ function renderCards(data) {
         });
     });
 }
-
-function toggleDetail(btn, card, pegawaiId) {
-    const panel = card.querySelector('.hidden-calendar-panel');
-    const isActive = panel.classList.toggle('active');
-    if (isActive) {
-        btn.innerHTML = '<i data-lucide="chevron-up" size="14"></i> Sembunyikan Aktivitas';
-        const logs = logsMap.get(String(pegawaiId)) || [];
-        const startDate = document.getElementById('startD').value;
-        panel.innerHTML = buildCalendarHTML(logs, startDate);
-    } else {
-        btn.innerHTML = '<i data-lucide="chevron-down" size="14"></i> Detail Aktivitas Bulanan';
-    }
-    lucide.createIcons({ node: btn });
-}
-
 // ============ PRINT & PDF ============
 window.onbeforeprint = () => { const pg = document.getElementById('printGrid'); if(pg) { pg.innerHTML = document.getElementById('raportGrid').innerHTML; lucide.createIcons(); } };
 function openPDFGenerator() { const start = document.getElementById('startD').value, end = document.getElementById('endD').value, reg = document.getElementById('wilF').value; window.open(`generate-pdf.html?start=${start}&end=${end}&region=${encodeURIComponent(reg)}`, '_blank'); }
