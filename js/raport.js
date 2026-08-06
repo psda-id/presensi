@@ -100,7 +100,7 @@ async function initApp() {
 // ============ FETCH REPORT ============
 async function fetchReportDataInBackground(attempt = 1) {
     try {
-        const result = await safeFetchJSON(buildReportUrl(), {}, 15000);
+        const result = await safeFetchJSON(buildReportUrl(), {}, 30000);
         if (result.status === 'success' || Array.isArray(result.data)) {
             renderCards(result.data || []);
             toggleLoading(false);
