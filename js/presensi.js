@@ -981,7 +981,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
     if (!sB64) return showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning");
     if (!kB64) return showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning");
     
-    // [FIX #12] VALIDASI GPS SEBELUM SUBMIT
     if (uPos.lat === 0 || !uPos.lat) {
         return showToast("GPS Belum Siap", "Tunggu hingga GPS terkunci sebelum submit.", "warning");
     }
@@ -989,15 +988,19 @@ async function submitWithRetry(attempt = 1, trxId = null) {
     const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus);
     if (needSurat && !suratB64) {
         const userChoice = await showSuratModal();
-        if (userChoice === 'attach') { uploadSurat(); return; }
+        if (userChoice === 'attach') { 
+            uploadSurat(); 
+            return; 
+        }
     }
 
     btn.disabled = true;
     setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
     const p = activePegawai; 
     
-    // [FIX #1] TrxID lebih unik dengan random string
-    if (!trxId) { trxId = `${p.ID}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`; }
+    if (!trxId) { 
+        trxId = `${p.ID}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`; 
+    }
     
     const payload = {
         action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus,
@@ -1007,15 +1010,17 @@ async function submitWithRetry(attempt = 1, trxId = null) {
     };
 
     try {
-        // [FIX #2] Timeout dinaikkan ke 25s karena upload gambar berat
         const r = await fetchWithTimeout(API, { 
-            method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) 
+            method: 'POST', 
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
+            body: JSON.stringify(payload) 
         }, 25000);
         
         const j = await r.json();
 
         if (j.status === 'success') {
-            setLoading(false); btn.disabled = false; 
+            setLoading(false); 
+            btn.disabled = false; 
             sndSuccess.play().catch(() => {});
             showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
             
@@ -1023,7 +1028,6 @@ async function submitWithRetry(attempt = 1, trxId = null) {
             const btnHadir = document.getElementById('btnHadirMain');
             const btnPulang = document.getElementById('btnPulangMain');
             
-            // [FIX #3] Menentukan tombol status menggunakan j.statusFix dari server agar pasti sinkron
             if (j.statusFix.includes('Pulang')) {
                 btnPulang.classList.add('btn-done');
                 btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
@@ -1032,23 +1036,27 @@ async function submitWithRetry(attempt = 1, trxId = null) {
                 btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
             }
             lucide.createIcons();
-            clearHeavyData(); // [FIX #14] Bersihkan state
+            clearHeavyData();
         } else if (j.status === 'error') {
-            setLoading(false); btn.disabled = false;
+            setLoading(false); 
+            btn.disabled = false;
             if (j.message.includes('duplikat') || j.message.includes('sudah')) {
                 showToast("Sudah Tercatat", "Data sebelumnya sudah masuk.", "success");
                 clearHeavyData();
             } else {
                 showToast("Ditolak", j.message || "Gagal.", "error");
             }
-        } else { throw new Error(j.message); }
+        } else { 
+            throw new Error(j.message); 
+        }
     } catch (e) {
         if (attempt < 4) {
             showToastOnce('submit_retry', "Menunggu Antrian...", "Mencoba ulang...", "warning");
             setTimeout(() => submitWithRetry(attempt + 1, trxId), 3000);
         } else {
             showToast("Gagal Mengirim", "Koneksi gagal.", "error");
-            btn.disabled = false; setLoading(false);
+            btn.disabled = false; 
+            setLoading(false);
         }
     }
 }
