@@ -913,217 +913,123 @@ function closeForm() {
     activePegawai = null; 
 }
 
-/* ============================================================
- * FUNCTION: setS
- * Deskripsi: Memilih status presensi dari tombol yang diklik.
- * ============================================================ */
 function setS(el, st) {
     if (uPos.lat === 0) return showToast("Peringatan", "Tunggu GPS mengunci lokasi!", "warning");
-    
-    const g = validasiGeoFencing();
-    const outside = g.status === 'OUT_ZONE';
-    const exc = ['IZIN', 'SAKIT', 'DINAS', 'QUICK RESPONSE'].includes(st);
-    
+    const g = validasiGeoFencing(), outside = g.status === 'OUT_ZONE', exc = ['IZIN', 'SAKIT', 'DINAS', 'QUICK RESPONSE'].includes(st);
     if (outside && !exc) {
         sndError.play();
         showToast("Ditolak", `Anda berada di luar area geo-fencing (${g.jarak}m). Silakan mendekat atau gunakan status khusus.`, "error");
         const info = document.getElementById('statusInfo');
-        info.style.display = 'block'; 
-        info.style.color = "var(--danger)"; 
-        info.style.borderLeftColor = "var(--danger)";
+        info.style.display = 'block'; info.style.color = "var(--danger)"; info.style.borderLeftColor = "var(--danger)";
         info.innerHTML = `<div class="info-title"><i data-lucide="alert-triangle" size="18"></i><span>⚠️ GEO-FENCING DITOLAK</span></div><div class="info-body">Anda berada <strong>${g.jarak}m</strong> dari ${g.nama} (radius: ${g.radius}m). Silakan mendekat atau gunakan Status Khusus.</div>`;
-        lucide.createIcons(); 
-        return;
+        lucide.createIcons(); return;
     }
 
     haptic();
     const p = activePegawai || dbF[uIdx];
     const pid = p.ID || p.id;
-    const timeVal = getJakartaTimeVal();
+    const now = new Date();
+    const timeVal = (now.getHours() * 100) + now.getMinutes();
 
     if (st === 'HADIR') {
-        if (checkAtt(pid, 'HADIR')) { 
-            sndError.play(); 
-            showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR hari ini.", "error"); 
-            return; 
-        }
+        if (checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR hari ini.", "error"); return; }
     } else if (st === 'PULANG') {
-        if (checkAtt(pid, 'PULANG')) { 
-            sndError.play(); 
-            showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG hari ini.", "error"); 
-            return; 
-        }
-        if (!checkAtt(pid, 'HADIR')) { 
-            showToast("Urutan Salah", "Anda harus melakukan absen HADIR terlebih dahulu sebelum PULANG.", "error"); 
-            return; 
-        }
+        if (checkAtt(pid, 'PULANG')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG hari ini.", "error"); return; }
+        if (!checkAtt(pid, 'HADIR')) { showToast("Urutan Salah", "Anda harus melakukan absen HADIR terlebih dahulu sebelum PULANG.", "error"); return; }
     } else if (st === 'QUICK RESPONSE') {
-        // ✅ PERBAIKAN: Cek dengan lebih spesifik
-        const jamPulangLimit = parseInt(appConfig.jPulang.split(':')[0]) * 100 + parseInt(appConfig.jPulang.split(':')[1]);
-        const isMorning = timeVal < jamPulangLimit;
-        
-        if (isMorning) { 
-            // QR HADIR
-            if (checkAtt(pid, 'HADIR')) { 
-                sndError.play(); 
-                showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR / QR HADIR hari ini.", "error"); 
-                return; 
-            }
+        if (timeVal < 1000) { 
+            if (checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi HADIR / QR HADIR hari ini.", "error"); return; }
         } else { 
-            // QR PULANG
-            if (checkAtt(pid, 'PULANG')) { 
-                sndError.play(); 
-                showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG / QR PULANG hari ini.", "error"); 
-                return; 
-            }
-            if (!checkAtt(pid, 'HADIR')) { 
-                sndError.play(); 
-                showToast("Belum Absen Masuk", "Anda belum absen HADIR / QR HADIR hari ini. Tidak bisa melakukan QR Pulang.", "error"); 
-                return; 
-            }
+            if (checkAtt(pid, 'PULANG')) { sndError.play(); showToast("Sudah Absen", "Anda sudah melakukan presensi PULANG / QR PULANG hari ini.", "error"); return; }
+            if (!checkAtt(pid, 'HADIR')) { sndError.play(); showToast("Belum Absen Masuk", "Anda belum absen HADIR / QR HADIR hari ini. Tidak bisa melakukan QR Pulang.", "error"); return; }
         }
     }
 
-    // ✅ Update status yang dipilih
     document.querySelectorAll('.btn-presence-mega,.btn-special-status').forEach(i => i.classList.remove('active'));
-    el.classList.add('active'); 
-    selectedStatus = st; 
-    updateStatusInfo(st);
+    el.classList.add('active'); selectedStatus = st; updateStatusInfo(st);
     updateAttendanceStatusIndicator();
-    updateWorkflow(); 
-    saveAutoRecovery();
-}
-/* ============================================================
- * FUNCTION: getJakartaTimeVal
- * Deskripsi: Mendapatkan waktu Jakarta (WIB) dalam format HHmm.
- * ============================================================ */
-function getJakartaTimeVal() {
-    const now = new Date();
-    const jakartaString = now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta' });
-    const jakartaDate = new Date(jakartaString);
-    return (jakartaDate.getHours() * 100) + jakartaDate.getMinutes();
+    updateWorkflow(); saveAutoRecovery();
 }
 
-/* ============================================================
- * FUNCTION: submitWithRetry
- * Deskripsi: Mengirim data presensi ke server dengan retry mechanism.
- * ============================================================ */
 async function submitWithRetry(attempt = 1, trxId = null) {
     const btn = document.getElementById('btnSubmitPresensi'), n = document.getElementById('notes').value.trim();
-    
-    // Validasi awal
     if (!selectedStatus) return showToast("Peringatan", "Pilih status presensi!", "warning");
-    if (n.length < 5) return showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning");
+    if (!n || n.length < 5) return showToast("Peringatan", "Keterangan minimal 5 karakter!", "warning");
     if (!sB64) return showToast("Data Belum Lengkap", "Foto selfie wajib!", "warning");
     if (!kB64) return showToast("Data Belum Lengkap", "Foto lokasi wajib!", "warning");
-    
-    // Validasi GPS
-    if (uPos.lat === 0 || !uPos.lat) {
-        return showToast("GPS Belum Siap", "Tunggu hingga GPS terkunci sebelum submit.", "warning");
-    }
 
-    // Validasi Surat untuk status khusus
     const needSurat = ['IZIN', 'SAKIT', 'DINAS'].includes(selectedStatus);
     if (needSurat && !suratB64) {
+        setLoading(true, "Memeriksa kelengkapan...");
         const userChoice = await showSuratModal();
-        if (userChoice === 'attach') { uploadSurat(); return; }
+        if (userChoice === 'attach') { setLoading(false); uploadSurat(); return; }
     }
-
-    // ✅ MAPPING STATUS KE FORMAT YANG DIKENALI BACKEND
-    const statusMapping = {
-        'HADIR': 'hadir',
-        'PULANG': 'pulang',
-        'IZIN': 'izin',
-        'SAKIT': 'sakit',
-        'DINAS': 'dinas',
-        'QUICK RESPONSE': 'quick response'
-    };
-    
-    const payloadStatus = statusMapping[selectedStatus] || selectedStatus.toLowerCase();
-    console.log("Mapping status:", selectedStatus, "→", payloadStatus); // ✅ DEBUG
 
     btn.disabled = true;
     setLoading(true, attempt > 1 ? `Mencoba ulang ${attempt - 1}/3...` : "Mengunggah Data...");
     const p = activePegawai; 
     
-    // Generate TrxID unik
-    if (!trxId) { trxId = `${p.ID}_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`; }
+    if (!trxId) { trxId = `${p.ID}_${Date.now()}`; }
     
     const payload = {
-        action: 'presensi', 
-        idPegawai: p.ID, 
-        nama: p.Nama, 
-        status: payloadStatus, // ✅ KIRIM STATUS YANG SUDAH DI-MAP
-        selfie: sB64, 
-        workPhoto: kB64, 
-        surat: suratB64 || '-', 
-        keterangan: n,
-        gps: `${uPos.lat},${uPos.lng}`, 
-        wilayah: p.Wilayah || "-",
+        action: 'presensi', idPegawai: p.ID, nama: p.Nama, status: selectedStatus,
+        selfie: sB64, workPhoto: kB64, surat: suratB64 || '-', keterangan: n,
+        gps: `${uPos.lat},${uPos.lng}`, wilayah: p.Wilayah || "-",
         trxId: trxId
     };
-    
-    console.log("Payload yang dikirim:", JSON.stringify({...payload, selfie: '[HIDDEN]', workPhoto: '[HIDDEN]', surat: '[HIDDEN]'})); // ✅ DEBUG
 
     try {
-        const r = await fetchWithTimeout(API, { 
-            method: 'POST', 
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-            body: JSON.stringify(payload) 
-        }, 25000);
-        
+        const r = await fetchWithTimeout(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) }, 15000);
         const j = await r.json();
-        console.log("Response server:", j); // ✅ DEBUG
 
-        if (j.status === 'success') {
-            setLoading(false); 
-            btn.disabled = false; 
-            sndSuccess.play().catch(() => {});
-            showToast("Presensi Berhasil!", "Data tersinkronisasi.", "success");
-            
-            // Update status tombol
-            dbP.push({ 'ID Pegawai': p.ID, 'Status': j.statusFix, 'Timestamp': new Date().toISOString() });
+        if (j.status === 'success' || j.result === 'success') {
+            setLoading(false); btn.disabled = false; 
+            sndSuccess.play().catch(() => { });
+            showToast("Presensi Berhasil!", "Data Anda telah tersinkronisasi ke server dengan aman.", "success");
+            dbP.push({ 'ID Pegawai': p.ID, 'Status': j.statusFix || selectedStatus, 'Timestamp': new Date().toISOString() });
             const btnHadir = document.getElementById('btnHadirMain');
             const btnPulang = document.getElementById('btnPulangMain');
-            
-            if (j.statusFix && (j.statusFix.includes('Pulang') || j.statusFix.toLowerCase().includes('pulang'))) {
-                btnPulang.classList.add('btn-done');
-                btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
-            } else {
+            if (selectedStatus === 'HADIR') {
                 btnHadir.classList.add('btn-done');
                 btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
+            } else if (selectedStatus === 'PULANG') {
+                btnPulang.classList.add('btn-done');
+                btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
+            } else if (selectedStatus === 'QUICK RESPONSE') {
+                const now = new Date();
+                const timeVal = (now.getHours() * 100) + now.getMinutes();
+                if (timeVal < 1000) {
+                    btnHadir.classList.add('btn-done');
+                    btnHadir.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH HADIR</span>';
+                } else {
+                    btnPulang.classList.add('btn-done');
+                    btnPulang.innerHTML = '<i data-lucide="check-circle" size="28"></i><span>SUDAH PULANG</span>';
+                }
             }
             lucide.createIcons();
             clearHeavyData();
-            
         } else if (j.status === 'error') {
-            setLoading(false); 
-            btn.disabled = false;
-            
-            if (j.message.includes('duplikat') || j.message.includes('sudah')) {
-                showToast("Sudah Tercatat", "Data sebelumnya sudah masuk.", "success");
+            setLoading(false); btn.disabled = false;
+            if (j.message.includes('sudah mengajukan') || j.message.includes('sudah melakukan presensi') || j.message.includes('duplikat')) {
+                sndSuccess.play().catch(() => {});
+                showToast("Presensi Sudah Tercatat", "Data Anda sebelumnya sudah berhasil masuk ke server.", "success");
                 clearHeavyData();
             } else {
-                sndError.play().catch(() => {});
-                showToast("Ditolak", j.message || "Gagal menyimpan data.", "error");
+                sndError.play().catch(() => { });
+                showToast("Presensi Ditolak", j.message || "Gagal menyimpan data.", "error");
             }
-        } else { 
-            throw new Error(j.message || "Format respons tidak dikenal"); 
-        }
-        
+        } else { throw new Error(j.message || "Format respons server tidak dikenal"); }
     } catch (e) {
-        console.error("Submit error:", e);
+        console.error("Error submit:", e);
         if (attempt < 4) {
-            showToastOnce('submit_retry', "Menunggu Antrian...", "Mencoba ulang...", "warning");
+            showToastOnce('submit_retry', "Menunggu Antrian...", "Koneksi tidak stabil, mencoba ulang otomatis...", "warning");
             setTimeout(() => submitWithRetry(attempt + 1, trxId), 3000);
         } else {
-            sndError.play().catch(() => {});
-            showToast("Gagal Mengirim", "Koneksi gagal. Coba lagi nanti.", "error");
-            btn.disabled = false; 
-            setLoading(false);
+            sndError.play().catch(() => { });
+            showToast("Gagal Mengirim", "Koneksi internet terputus atau server sangat sibuk. Coba lagi nanti.", "error");
+            btn.disabled = false; setLoading(false);
         }
     }
-}
 }
 
 function setLoading(s, t) { const o = document.getElementById('sendingOverlay'); document.getElementById('overlayText').innerText = t; o.style.display = s ? 'flex' : 'none'; o.style.pointerEvents = s ? 'all' : 'none'; }
